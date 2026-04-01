@@ -3,13 +3,14 @@ package sh.reece.events;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,11 +28,13 @@ import sh.reece.utiltools.Util;
 
 public class AntiCraft extends BaseCommand implements Listener {
 
-	protected static FileConfiguration storage;
-	private static File f;
+	private static java.io.File f;
+	private static org.bukkit.configuration.file.FileConfiguration storage;
 	private String Message, bypass, AdminPerm;
-
 	private ConfigUtils configUtils;
+
+	// cached: material -> durability for O(1) lookups
+	private static Map<Material, List<Short>> blockedCache = new HashMap<>();
 
 	public AntiCraft(Main instance) {
 		super(instance, "Events.AntiCraft", "AntiCraft");
@@ -49,20 +52,29 @@ public class AntiCraft extends BaseCommand implements Listener {
 			Message = instance.getConfig().getString(section + ".MSG");
 			bypass = instance.getConfig().getString(section + ".Bypass");
 			AdminPerm = instance.getConfig().getString(section + ".AdminPerm");
+
+			rebuildCache();
+		}
+	}
+
+	private static void rebuildCache() {
+		blockedCache.clear();
+		List<String> raw = storage.getStringList("BlockedCrafting");
+		if (raw == null) return;
+		for (String s : raw) {
+			ItemStack item = toItemStack(s);
+			blockedCache.computeIfAbsent(item.getType(), k -> new ArrayList<>()).add(item.getDurability());
 		}
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onPrepare(PrepareItemCraftEvent e) {
-		if (e.getRecipe() == null || e.getRecipe().getResult() == null) {
-			return;
-		}
+		if (e.getRecipe() == null || e.getRecipe().getResult() == null) return;
 
 		ItemStack item = e.getRecipe().getResult();
-
 		if (isBlocked(item) && perms(item, e.getViewers())) {
 			e.getInventory().setItem(0, null);
-			if (Message != null && !Message.equals("")) {
+			if (Message != null && !Message.isEmpty()) {
 				for (HumanEntity h : e.getViewers()) {
 					h.sendMessage(Util.color(Message.replace("%item%", item.getType().toString().replace("_", " ").toLowerCase())));
 				}
@@ -72,22 +84,17 @@ public class AntiCraft extends BaseCommand implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onClick(InventoryClickEvent e) {
+		if (e.getClickedInventory() == null || e.getClickedInventory().getType() != InventoryType.CRAFTING) return;
 
-		if (e.getClickedInventory() == null || e.getClickedInventory().getType() != InventoryType.CRAFTING) {
-			return;
-		}
 		ItemStack item = ((CraftingInventory) e.getClickedInventory()).getResult();
-		if (item == null) {
-			return;
-		}
+		if (item == null) return;
+
 		if (isBlocked(item) && perms(item, e.getClickedInventory().getViewers())) {
-			Util.log("cancel");
 			e.setCancelled(true);
 			e.getInventory().setItem(0, null);
 		}
 	}
 
-	// command
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (args.length == 0) {
 			sender.sendMessage(" ");
@@ -108,7 +115,7 @@ public class AntiCraft extends BaseCommand implements Listener {
 		}
 
 		if (args.length == 1) {
-			ItemStack hand = getItemInHand((Player) sender);
+			ItemStack hand = ((Player) sender).getItemInHand();
 			String msg = "";
 
 			if (args[0].equalsIgnoreCase("block")) {
@@ -144,91 +151,59 @@ public class AntiCraft extends BaseCommand implements Listener {
 		return false;
 	}
 
-	public ItemStack getItemInHand(Player arg0) {
-		return (ItemStack) arg0.getItemInHand();
+	private static boolean isBlocked(ItemStack item) {
+		List<Short> durabilities = blockedCache.get(item.getType());
+		if (durabilities == null) return false;
+		return durabilities.contains(item.getDurability());
 	}
 
-	public static List<ItemStack> getBlockedItems() {
-		if (storage.getStringList("BlockedCrafting") == null) {
-			return new ArrayList<>();
-		}
-		List<ItemStack> toReturn = new ArrayList<>();
-		for (String s : storage.getStringList("BlockedCrafting")) {
-			toReturn.add(toItemStack(s));
-		}
-		return toReturn;
-	}
-
-	public static boolean isBlocked(ItemStack arg0) {
-		List<ItemStack> items = getBlockedItems();
-		if (items.contains(arg0)) {
-			return true;
-		}
-		for (ItemStack item : items) {
-			if (item.getType() == arg0.getType() && item.getDurability() == arg0.getDurability()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static void add(ItemStack arg0) {
+	private static void add(ItemStack item) {
 		List<String> blocked = storage.getStringList("BlockedCrafting");
-		if (blocked == null) {
-			blocked = new ArrayList<>();
-		}
-		blocked.add(toConfigString(arg0));
+		if (blocked == null) blocked = new ArrayList<>();
+		blocked.add(toConfigString(item));
 		storage.set("BlockedCrafting", blocked);
 		save();
+		rebuildCache();
 	}
 
-	public static void remove(ItemStack arg0) {
+	private static void remove(ItemStack item) {
 		List<String> blocked = storage.getStringList("BlockedCrafting");
-		if (blocked == null) {
-			blocked = new ArrayList<>();
-		}
-		blocked.remove(toConfigString(arg0));
+		if (blocked == null) blocked = new ArrayList<>();
+		blocked.remove(toConfigString(item));
 		storage.set("BlockedCrafting", blocked);
 		save();
+		rebuildCache();
 	}
 
-	private boolean perms(ItemStack arg0, List<HumanEntity> arg1) {
-		for (HumanEntity h : arg1) {
-			for (String s : getPermissions(arg0)) {
-				if (h.hasPermission(s)) {
-					return false;
-				}
-			}
+	private boolean perms(ItemStack item, List<HumanEntity> viewers) {
+		String basePerm = bypass + item.getType().name().toLowerCase().replace("legacy_", "");
+		String durabPerm = basePerm + ":" + item.getDurability();
+		for (HumanEntity h : viewers) {
+			if (item.getDurability() == 0 && h.hasPermission(basePerm)) return false;
+			if (h.hasPermission(durabPerm)) return false;
 		}
 		return true;
-	}
-
-	private List<String> getPermissions(ItemStack arg0) {
-		List<String> p = new ArrayList<>();
-		if (arg0.getDurability() == 0) {
-			p.add(bypass + "" + arg0.getType().name().toLowerCase().replace("legacy_", ""));
-		}
-		p.add(bypass + "" + arg0.getType().name().toLowerCase().replace("legacy_", "") + ":" + arg0.getDurability());
-		return p;
 	}
 
 	private static void save() {
 		try {
 			storage.save(f);
-		} catch (IOException iOException) {
-		}
+		} catch (IOException ignored) {}
 	}
 
-	public static String toConfigString(ItemStack arg0) {
-		return String.valueOf(arg0.getType().name().toLowerCase(Locale.ENGLISH)) + ((arg0.getDurability() != 0) ? ("-" + arg0.getDurability()) : "");
+	private static String toConfigString(ItemStack item) {
+		return item.getType().name().toLowerCase(Locale.ENGLISH) + ((item.getDurability() != 0) ? ("-" + item.getDurability()) : "");
 	}
 
-	public static ItemStack toItemStack(String arg0) {
-		arg0 = arg0.toUpperCase();
+	private static ItemStack toItemStack(String s) {
+		s = s.toUpperCase();
 		short data = 0;
-		if (arg0.contains("-") && arg0.split("-")[1] != null && !arg0.split("-")[1].isEmpty()) {
-			data = Short.valueOf(arg0.split("-")[1]).shortValue();
+		int dashIdx = s.indexOf('-');
+		if (dashIdx >= 0) {
+			String durStr = s.substring(dashIdx + 1);
+			if (!durStr.isEmpty()) data = Short.parseShort(durStr);
+			s = s.substring(0, dashIdx);
 		}
-		return new ItemStack(Material.getMaterial(arg0.contains("-") ? arg0.split("-")[0] : arg0), 1, data);
+		return new ItemStack(Material.getMaterial(s), 1, data);
 	}
 }
