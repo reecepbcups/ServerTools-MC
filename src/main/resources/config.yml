@@ -412,7 +412,7 @@ Events:
   Launchpads:
     Enabled: true
     BlockType: EMERALD_BLOCK
-    PlateType: STONE_PLATE
+    PlateType: STONE_PRESSURE_PLATE
     LaunchPower: 1
     RunnableTicksperCheck: 7
 

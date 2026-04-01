@@ -14,8 +14,11 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import me.clip.placeholderapi.PlaceholderAPI;
 
 
 // TODO
@@ -168,7 +171,13 @@ public class Main extends JavaPlugin implements Listener {
 	public static void announcement(final Boolean center, String line) {
 		String manipulatedLine = "";
 
-		line = replaceVariable(line).trim(); // puts in variables such as website
+		line = replaceVariable(line).trim();
+		if (isPAPIEnabled && line.contains("%")) {
+			Player any = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
+			if (any != null) {
+				line = PlaceholderAPI.setPlaceholders(any, line);
+			}
+		}
 		
 		if (line.contains("<command=")) {
 			final String cmd = StringUtils.substringBetween(line, "<command=", "/>");
