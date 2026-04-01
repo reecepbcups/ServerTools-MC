@@ -7,7 +7,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -21,6 +23,7 @@ public class Loader {
 	private final Main plugin;
 	private final Timings executionTimer;
 	private final List<Unloadable> unloadables = new ArrayList<>();
+	private Map<String, List<Class<?>>> classIndex;
 
 	public Loader(Main instance) {
 		plugin = instance;
@@ -43,6 +46,9 @@ public class Loader {
 	public void loadAll() {
 		loadPlaceholderAPI();
 
+		// scan JAR once, bucket classes by package
+		classIndex = scanJar();
+
 		discover("Commands",      "sh.reece.cmds", "sh.reece.bungee");
 		discover("Core Features", "sh.reece.core", "sh.reece.core.warp");
 		discover("Chat",          "sh.reece.chat");
@@ -52,6 +58,8 @@ public class Loader {
 		discover("Moderation",    "sh.reece.moderation");
 		discover("GUIs",          "sh.reece.GUI");
 		discover("Runnables",     "sh.reece.runnables");
+
+		classIndex = null; // free memory
 	}
 
 	private void loadPlaceholderAPI() {
@@ -66,7 +74,8 @@ public class Loader {
 
 	private void discover(String timingLabel, String... packageNames) {
 		for (String pkg : packageNames) {
-			for (Class<?> clazz : findClasses(pkg)) {
+			List<Class<?>> classes = classIndex.getOrDefault(pkg, List.of());
+			for (Class<?> clazz : classes) {
 				instantiate(clazz);
 			}
 		}
@@ -108,9 +117,8 @@ public class Loader {
 		}
 	}
 
-	private List<Class<?>> findClasses(String packageName) {
-		List<Class<?>> classes = new ArrayList<>();
-		String packagePath = packageName.replace('.', '/');
+	private Map<String, List<Class<?>>> scanJar() {
+		Map<String, List<Class<?>>> index = new HashMap<>();
 		try {
 			URI jarUri = plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI();
 			try (JarFile jar = new JarFile(new File(jarUri))) {
@@ -118,22 +126,23 @@ public class Loader {
 				while (entries.hasMoreElements()) {
 					JarEntry entry = entries.nextElement();
 					String name = entry.getName();
-					if (!name.startsWith(packagePath + "/") || !name.endsWith(".class")) continue;
-					if (name.contains("$")) continue;
-					// only direct members, not sub-packages
-					String relative = name.substring(packagePath.length() + 1);
-					if (relative.contains("/")) continue;
+					if (!name.endsWith(".class") || name.contains("$")) continue;
 
+					int lastSlash = name.lastIndexOf('/');
+					if (lastSlash < 0) continue;
+
+					String packageName = name.substring(0, lastSlash).replace('/', '.');
 					String className = name.replace('/', '.').replace(".class", "");
 					try {
-						classes.add(Class.forName(className, false, plugin.getClass().getClassLoader()));
+						Class<?> clazz = Class.forName(className, false, plugin.getClass().getClassLoader());
+						index.computeIfAbsent(packageName, k -> new ArrayList<>()).add(clazz);
 					} catch (ClassNotFoundException | NoClassDefFoundError ignored) {}
 				}
 			}
 		} catch (Exception e) {
-			Util.log("&cFailed to scan package " + packageName + ": " + e.getMessage());
+			Util.log("&cFailed to scan JAR: " + e.getMessage());
 		}
-		return classes;
+		return index;
 	}
 
 	// lifecycle

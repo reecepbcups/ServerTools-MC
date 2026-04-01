@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -34,6 +35,7 @@ public class ConfigUtils {
 	public static final List<String> SERVER_VARIABLE_KEYS = new ArrayList<>();
 	public static final List<String> ENV_VARIABLE_PATHS = new ArrayList<>();
 	public final List<String> modulesList = new ArrayList<>();
+	private final Map<String, String> envCache = new HashMap<>();
 
 	public ConfigUtils(Main instance) {
 		plugin = instance;
@@ -50,48 +52,41 @@ public class ConfigUtils {
 	}
 
 	public void loadConfig() {
-		// check if file exist
-		// if yes, get version key from file & check against current version
-		// if version is different, zip plugin.getDataFolder() & save in the
-		// plugin.getDataFolder() /Backup directory
-		// if it does not exist, create file & save current version
-
-		// check if "VERSION.yml" exists in plugin.getDataDirectory()
-
 		FileConfiguration versionConfig = createConfig(VERSION_FILE);
 
-		// December-20-2021_10:14:53-AM
-		
 		String ver = plugin.getDescription().getVersion();
-
 		String verString = versionConfig.getString("version");
-		if (verString != null) {
-			if (!verString.equalsIgnoreCase(ver)) {				
+		boolean versionChanged = verString == null || !verString.equalsIgnoreCase(ver);
+
+		if (versionChanged) {
+			if (verString != null) {
 				Util.log("Versions do not match " + verString + "->" + ver + ". Creating backup");
 				createBackup(null);
 			}
-		} 
+			versionConfig.set("version", ver);
+			saveConfig(versionConfig, VERSION_FILE);
+		}
 
-		// // update version to new version every reload
-		versionConfig.set("version", ver);
-		saveConfig(versionConfig, VERSION_FILE);
-
-		// BStats Metrics
-		new Metrics(plugin, 11289);
+		// BStats - defer to next tick so it doesn't block onEnable
+		Bukkit.getScheduler().runTaskLater(plugin, () -> new Metrics(plugin, 11289), 1L);
 
 		createConfig("config.yml");
 		plugin.getConfig().options().copyDefaults(true);
 
 		reloadLanguage(plugin.getConfig().getString("Language"));
 
-		try {
-			ConfigUpdater.update(plugin, "config.yml", new File(plugin.getDataFolder(), "config.yml"),
-					new ArrayList<String>());
-		} catch (final IOException e) {
-			e.printStackTrace();
+		// only re-merge config template when the plugin version changes
+		if (versionChanged) {
+			try {
+				ConfigUpdater.update(plugin, "config.yml", new File(plugin.getDataFolder(), "config.yml"),
+						new ArrayList<String>());
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		_loadLocalServerVariableKeys();
+		_cacheEnvironmentOverrides();
 	}
 
 	
@@ -146,6 +141,15 @@ public class ConfigUtils {
 		for (String key : plugin.getConfig().getConfigurationSection("PluginVariables").getKeys(false)) {
 			SERVER_VARIABLES.put(key, plugin.getConfig().getString("PluginVariables." + key));
 			SERVER_VARIABLE_KEYS.add(key);
+		}
+	}
+
+	private void _cacheEnvironmentOverrides() {
+		String prefix = "SERVERTOOLS_";
+		for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+			if (entry.getKey().startsWith(prefix)) {
+				envCache.put(entry.getKey(), entry.getValue());
+			}
 		}
 	}
 
@@ -222,47 +226,30 @@ public class ConfigUtils {
 
 	public static String resolveValue(String path) {
 		String key = getPathENVKey(path);
-		String value = System.getenv(key);
-		if (value != null) {
-			Util.log("[ServerTools] Found value from environment variable " + key + ": " + value);
-		}
-		return value;
+		return System.getenv(key);
 	}
 
 	public boolean enabledInConfig(final String path) {
-		String module = "";
-		try {
-			if (!plugin.getConfig().contains(path)) {
-				Util.consoleMSG(Util.color("&c[TOOLS] " + path + " does not exist!!!"));
-				return false;
-			}
-
-			String configValue = plugin.getConfig().getString(path);
-			ENV_VARIABLE_PATHS.add(path);
-			if (!configValue.equalsIgnoreCase("true")) {
-				configValue = "false";
-			}
-
-			String myEnvVariable = resolveValue(path);
-			if (myEnvVariable != null) {
-				Util.log(getPathENVKey(path) + " set too: " + myEnvVariable);
-				configValue = myEnvVariable;
-			}
-
-			final String pathInfo = replaceUnNeededInfo(path);
-			boolean isEnabled = configValue.equalsIgnoreCase("true");
-			if (isEnabled) {
-				module = "&a" + pathInfo;
-			} else {
-				module = "&c" + pathInfo;
-			}
-			modulesList.add(module + "&f,&r ");
-			return isEnabled;
-
-		} catch (final Exception e) {
-			modulesList.add("&4" + module + "&f,&r ");
+		if (!plugin.getConfig().contains(path)) {
+			Util.consoleMSG(Util.color("&c[TOOLS] " + path + " does not exist!!!"));
+			modulesList.add("&4" + replaceUnNeededInfo(path) + "&f,&r ");
+			return false;
 		}
-		return false;
+
+		boolean isEnabled = plugin.getConfig().getString(path).equalsIgnoreCase("true");
+
+		// env variable override (from cached lookup)
+		String envKey = getPathENVKey(path);
+		String envValue = envCache.get(envKey);
+		if (envValue != null) {
+			Util.log(envKey + " set to: " + envValue);
+			isEnabled = envValue.equalsIgnoreCase("true");
+		}
+
+		ENV_VARIABLE_PATHS.add(path);
+		String color = isEnabled ? "&a" : "&c";
+		modulesList.add(color + replaceUnNeededInfo(path) + "&f,&r ");
+		return isEnabled;
 	}
 
 	public static String replaceVariable(String line) {
