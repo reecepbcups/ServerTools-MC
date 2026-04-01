@@ -1,5 +1,8 @@
 package sh.reece.utiltools;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum DefaultFontInfo {
 
 	A ('A', 5),
@@ -121,10 +124,14 @@ public enum DefaultFontInfo {
 		return this.length + 1;
 	}
 	
-	public static DefaultFontInfo getDefaultFontInfo (char c) {
-		for (DefaultFontInfo dFI: DefaultFontInfo.values()) {
-			if (dFI.getCharacter () == c) return dFI;
+	private static final Map<Character, DefaultFontInfo> BY_CHAR = new HashMap<>();
+	static {
+		for (DefaultFontInfo dFI : values()) {
+			BY_CHAR.put(dFI.character, dFI);
 		}
-		return DefaultFontInfo.DEFAULT;
+	}
+
+	public static DefaultFontInfo getDefaultFontInfo (char c) {
+		return BY_CHAR.getOrDefault(c, DEFAULT);
 	}
 }
