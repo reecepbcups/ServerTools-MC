@@ -182,19 +182,11 @@ public class Messaging implements CommandExecutor, Listener, TabCompleter { //,,
 		
 		String sendName = sender.getName();
 		String toName = target.getName();
-		
-		String tFROM = FORMAT_FROM.replace("%name%", sendName);
-		tFROM = tFROM.replace("%msg%", msg);
-		Util.coloredMessage(target, tFROM);
-		
-		String tSEND = FORMAT_SEND.replace("%name%", target.getName());
-		tSEND = tSEND.replace("%msg%", msg);
-		Util.coloredMessage(sender, tSEND);
-		
-		String SocialSpyMSG = "&7From &b%name%&7 to &9%target%&7: &3%msg%";
-		SocialSpyMSG = SocialSpyMSG.replace("%name%", sendName);
-		SocialSpyMSG = SocialSpyMSG.replace("%target%", toName);
-		SocialSpyMSG = SocialSpyMSG.replace("%msg%", msg);
+
+		Util.coloredMessage(target, FORMAT_FROM.replace("%name%", sendName).replace("%msg%", msg));
+		Util.coloredMessage(sender, FORMAT_SEND.replace("%name%", toName).replace("%msg%", msg));
+
+		String SocialSpyMSG = "&7From &b" + sendName + "&7 to &9" + toName + "&7: &3" + msg;
 	
 		for(UUID uuid : socialSpyEnabled) {
 			Player SocialSpyPlayer = Bukkit.getPlayer(uuid);
