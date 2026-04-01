@@ -37,7 +37,7 @@ public class GodAppleCooldown implements Listener {
 		}
 	}
 
-	@EventHandler(ignoreCancelled = true)
+	@EventHandler
 	public void gappleCooldown(final PlayerItemConsumeEvent e) {
 		final Player p = e.getPlayer();
 		final ItemStack TYPE = e.getItem();
