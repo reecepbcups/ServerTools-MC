@@ -23,16 +23,15 @@ describe("launchpads", () => {
   });
 
   it("pressure plate over emerald block launches player upward", async () => {
-    // tp bot next to the launchpad
-    rcon("tp e2e_move 49 100 50 90 0");
+    // tp bot away first to ensure block-change triggers PlayerMoveEvent
+    rcon("tp e2e_move 48 100 50");
     await sleep(1000);
 
     const startY = bot.entity.position.y;
 
-    // walk onto the plate
-    bot.setControlState("forward", true);
+    // tp directly onto the pressure plate to trigger the move event
+    rcon("tp e2e_move 50 100 50");
     await sleep(500);
-    bot.setControlState("forward", false);
 
     // should get launched upward
     const pos = await waitForPosition(bot, (p) => p.y > startY + 1, 5000);
@@ -53,8 +52,8 @@ describe("spawn void protection", () => {
   it("falling into void teleports player to spawn", async () => {
     const startY = bot.entity.position.y;
     // tp below the world
-    rcon("tp e2e_void 0 -10 0");
-    await sleep(2000);
+    rcon("tp e2e_void 0 -100 0");
+    await sleep(3000);
     // should be back above ground (spawn or safe location)
     assert.ok(
       bot.entity.position.y > 0,

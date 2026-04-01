@@ -32,7 +32,7 @@ public abstract class BaseCommand implements CommandExecutor, TabCompleter {
         if (enabled) {
             String permPath = section + ".Permission";
             this.permission = plugin.getConfig().contains(permPath)
-                ? plugin.getConfig().getString(permPath) : null;
+                ? plugin.getConfig().getString(permPath, "") : "";
             for (String cmd : commands) {
                 PluginCommand pc = plugin.getCommand(cmd);
                 if (pc != null) {
@@ -44,7 +44,7 @@ public abstract class BaseCommand implements CommandExecutor, TabCompleter {
                 Bukkit.getPluginManager().registerEvents((Listener) this, plugin);
             }
         } else {
-            this.permission = null;
+            this.permission = "";
             for (String cmd : commands) {
                 AlternateCommandHandler.addDisableCommand(cmd);
             }
@@ -55,8 +55,12 @@ public abstract class BaseCommand implements CommandExecutor, TabCompleter {
         return enabled;
     }
 
+    protected boolean hasPermission(CommandSender sender, String perm) {
+        return perm == null || perm.isEmpty() || sender.isOp() || sender.hasPermission(perm);
+    }
+
     protected boolean noPermission(CommandSender sender, Command cmd) {
-        if (permission != null && !sender.hasPermission(permission)) {
+        if (!hasPermission(sender, permission)) {
             sender.sendMessage(Util.color("&cYou do not have access to &n/" + cmd.getName() + "&c."));
             return true;
         }
@@ -79,7 +83,7 @@ public abstract class BaseCommand implements CommandExecutor, TabCompleter {
         if (args.length == 0) {
             return playerOrNull(sender);
         }
-        if (permission != null && !sender.hasPermission(permission + ".others")) {
+        if (!hasPermission(sender, permission.isEmpty() ? "" : permission + ".others")) {
             sender.sendMessage(Util.color("&cYou do not have access to &n/" + cmd.getName() + "&c for others."));
             return null;
         }

@@ -27,7 +27,7 @@ public class Fly extends BaseCommand {
 		}
 
 		if (args.length == 1) {
-			if (sender.hasPermission(permission + ".others")) {
+			if (hasPermission(sender, permission.isEmpty() ? "" : permission + ".others")) {
 				Player target = resolveTarget(sender, args, cmd);
 				if (target != null) {
 					toggleFlying(target);

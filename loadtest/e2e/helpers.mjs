@@ -33,6 +33,39 @@ export function createBot(username) {
   });
 }
 
+// connect a bot and collect all messages from the moment it connects
+// resolves with { bot, messages } after spawn + extra wait
+export function createBotCollecting(username, extraMs = 3000) {
+  return new Promise((resolve, reject) => {
+    const bot = mineflayer.createBot({
+      host: "localhost",
+      port: 25565,
+      username,
+      version: "1.20.4",
+    });
+
+    const messages = [];
+    bot.on("messagestr", (msg) => {
+      messages.push(typeof msg === "string" ? msg : String(msg));
+    });
+
+    const timeout = setTimeout(() => {
+      try { bot.quit(); } catch {}
+      reject(new Error(`${username} spawn timed out`));
+    }, 15_000);
+
+    bot.once("spawn", () => {
+      clearTimeout(timeout);
+      setTimeout(() => resolve({ bot, messages }), extraMs);
+    });
+
+    bot.once("error", (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
+  });
+}
+
 // run a command on the server via rcon
 export function rcon(cmd) {
   return execSync(`docker compose exec mc rcon-cli "${cmd}"`, {

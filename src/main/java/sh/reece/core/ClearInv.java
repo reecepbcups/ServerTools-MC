@@ -27,7 +27,7 @@ public class ClearInv extends BaseCommand {
 			}
 
 		} else if (args.length == 1) {
-			if (sender.hasPermission(permission + ".others")) {
+			if (hasPermission(sender, permission.isEmpty() ? "" : permission + ".others")) {
 				Player target = Bukkit.getPlayer(args[0]);
 				String output = "&f[&c!&f] &cTarget " + args[0] + " is not online.";
 

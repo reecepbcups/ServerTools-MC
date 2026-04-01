@@ -10,6 +10,7 @@ services:
       MEMORY: ${MC_MEMORY:-4G}
       ONLINE_MODE: "FALSE"
       ENABLE_COMMAND_BLOCK: "TRUE"
+      ALLOW_FLIGHT: "TRUE"
       SPAWN_PROTECTION: 0
       DIFFICULTY: easy
       MAX_PLAYERS: 200

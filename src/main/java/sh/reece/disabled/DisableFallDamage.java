@@ -20,7 +20,7 @@ public class DisableFallDamage extends ToggleableListener {
 		if (e.getCause() != DamageCause.FALL) return;
 		if (e.getEntityType() != EntityType.PLAYER) return;
 		Player p = (Player) e.getEntity();
-		if (permission.length() == 0 || p.hasPermission(permission)) {
+		if (permission.isEmpty() || hasPermission(p)) {
 			e.setCancelled(true);
 		}
 	}

@@ -111,7 +111,7 @@ public class Visibility extends BaseCommand {
 		for(Player online : Bukkit.getOnlinePlayers()) {
 			if(online != p) {
 				if(hidePlayer) {
-					if(!online.hasPermission(permission)) {
+					if(!hasPermission(online, permission)) {
 						p.hidePlayer(online);
 						hiddenPlayers.add(online);
 					}

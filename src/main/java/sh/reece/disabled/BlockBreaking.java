@@ -26,7 +26,7 @@ public class BlockBreaking extends ToggleableListener {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();
 
-		if(player.hasPermission(permission)) { // can break
+		if(hasPermission(player)) { // can break
 			if(!allowed_to_break.contains(uuid)){
 				allowed_to_break.add(uuid);
 				Util.coloredMessage(player, "&f&lSERVERTOOLS &8» &aDue to being staff, you can break blocks here");

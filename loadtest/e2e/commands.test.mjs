@@ -7,6 +7,7 @@ describe("commands (single bot)", () => {
 
   before(async () => {
     bot = await createBot("e2e_cmd");
+    rcon("op e2e_cmd");
     rcon("tp e2e_cmd 0 100 0");
     await sleep(1000);
   });
@@ -65,6 +66,8 @@ describe("messaging (two bots)", () => {
   before(async () => {
     bot1 = await createBot("e2e_msg1");
     bot2 = await createBot("e2e_msg2");
+    rcon("op e2e_msg1");
+    rcon("op e2e_msg2");
     await sleep(1000);
   });
 

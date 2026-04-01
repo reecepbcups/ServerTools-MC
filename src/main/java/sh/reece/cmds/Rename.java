@@ -105,7 +105,7 @@ public class Rename extends BaseCommand implements Listener {
 
 		case "name":
 
-			if (!(p.hasPermission(permission))) {
+			if (!hasPermission(p, permission)) {
 				Util.coloredMessage(p, "&cNo Permission to Rename item Names :(");
 				return true;
 			}
@@ -120,7 +120,7 @@ public class Rename extends BaseCommand implements Listener {
 
 		case "lore":
 
-			if (!(p.hasPermission(lorePermisssion))) {
+			if (!hasPermission(p, lorePermisssion)) {
 				Util.coloredMessage(p, "&cNo Permission to Rename item Lores :(");
 				return true;
 			}

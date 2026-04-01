@@ -163,7 +163,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 			return true;
 		}
 
-		if (!(sender.hasPermission(permission))) {
+		if (!sender.isOp() && !sender.hasPermission(permission)) {
 			sender.sendMessage(Util.color("&cNo Permission to use "+label+" :("));
 			return true;
 		}

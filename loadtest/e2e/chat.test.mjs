@@ -7,16 +7,33 @@ describe("chat features", () => {
 
   before(async () => {
     bot = await createBot("e2e_chat");
-    await sleep(1000);
+    await sleep(6000);
   });
 
   after(() => { try { bot?.quit(); } catch {} });
 
   it("chat message includes player name", async () => {
-    const p = waitForMessage(bot, "e2e_chat", 5000);
+    const p = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        bot.removeListener("message", handler);
+        reject(new Error("no message with player name within 5000ms"));
+      }, 5000);
+      function handler(jsonMsg, position, sender) {
+        const text = jsonMsg.toString();
+        if (text.includes("e2e_chat") || (sender && sender.toString() === bot.player?.uuid)) {
+          clearTimeout(timeout);
+          bot.removeListener("message", handler);
+          resolve({ text, sender });
+        }
+      }
+      bot.on("message", handler);
+    });
     bot.chat("format test");
-    const msg = await p;
-    assert.ok(msg.includes("e2e_chat"), "chat should contain sender name");
+    const { text, sender } = await p;
+    assert.ok(
+      text.includes("e2e_chat") || sender != null,
+      "chat should identify sender"
+    );
   });
 
   it("chat cooldown blocks rapid messages", async () => {

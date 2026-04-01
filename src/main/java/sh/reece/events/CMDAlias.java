@@ -156,7 +156,7 @@ public class CMDAlias extends ToggleableListener {
 				Location loc = p.getLocation();
 				int sec = worldCooldowns.get(command);
 
-				if (!p.hasPermission(permission)) {
+				if (!hasPermission(p)) {
 					Util.coloredMessage(p, configUtils.lang("CMDALIAS_DELAYED").replace("%cmd%", command).replace("%time%", sec + ""));
 					new BukkitRunnable() {
 						@Override

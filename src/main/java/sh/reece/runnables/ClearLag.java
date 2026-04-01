@@ -79,7 +79,6 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 				test -= 5;
 			}
 		}.runTaskTimer(plugin, 0, 5 * 20L);
-		cancel(); // cancel the outer runnable so run() only executes once
 	}
 
 	@Override

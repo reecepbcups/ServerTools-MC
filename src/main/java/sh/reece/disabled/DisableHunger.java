@@ -18,7 +18,7 @@ public class DisableHunger extends ToggleableListener {
 	public void foodChangeEvent(FoodLevelChangeEvent event) {
 		if (event.getEntityType() == EntityType.PLAYER) {
 			Player player = (Player) event.getEntity();
-			if (permission.length() == 0 || player.hasPermission(permission)) {
+			if (permission.isEmpty() || hasPermission(player)) {
 				if (player.getFoodLevel() < 19.0D)
 					player.setFoodLevel(20);
 			}

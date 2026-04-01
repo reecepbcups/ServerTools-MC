@@ -27,7 +27,7 @@ public class BlockPlacement extends ToggleableListener {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();
 
-		if(player.hasPermission(permission)) { // can break
+		if(hasPermission(player)) { // can place
 			if(!allowed_to_place.contains(uuid)){
 				allowed_to_place.add(uuid);
 				Util.coloredMessage(player, "&f&lSERVERTOOLS &8» &cDue to being staff, you can place blocks here");

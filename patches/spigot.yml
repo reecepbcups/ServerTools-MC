@@ -1,0 +1,3 @@
+settings:
+  moved-wrongly-threshold: 100.0
+  moved-too-quickly-multiplier: 100.0

@@ -27,7 +27,7 @@ public class DisableVillagerTrading extends ToggleableListener {
 			return;
 	    }
 
-		if(!event.getPlayer().hasPermission(permission)) {
+		if(!hasPermission(event.getPlayer())) {
 			Util.coloredMessage(event.getPlayer(), Message);
 			event.setCancelled(true);
 		}
