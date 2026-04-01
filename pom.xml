@@ -5,7 +5,7 @@
 
   <groupId>sh.reece</groupId>
   <artifactId>servertools</artifactId>
-  <version>7.0.4</version>
+  <version>7.1.0</version>
 
   <name>servertools</name>
   <url>https://reece.sh</url>
@@ -41,14 +41,14 @@
   </repositories>
 
 
-  <dependencies>    
+  <dependencies>
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
       <version>1.18.2-R0.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
-     
+
 
     <!--  https://mvnrepository.com/artifact/me.lucko.luckperms/luckperms-api  -->
     <dependency>
