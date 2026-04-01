@@ -26,7 +26,7 @@ public class Freeze extends BaseCommand implements Listener {
 	private final List<String> Messages;
 
 	public Freeze(Main instance) {
-        super(instance, "Moderation.Freeze", "Freeze");
+        super(instance, "Moderation.Freeze", "freeze");
 
 		frozenPlayerList = new HashSet<>();
 		Messages = instance.getConfig().getStringList("Moderation.Freeze.Message");
