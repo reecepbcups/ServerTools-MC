@@ -30,16 +30,21 @@ public class FeaturesGUI extends ToggleableListener {
 
 	private ConfigUtils configUtils;
 
+	private boolean configLoaded = false;
+
 	public FeaturesGUI(Main instance) {
 		super(instance, "FeaturesGUI");
 
 		if (isEnabled()) {
 			configUtils = instance.getConfigUtils();
-
 			configUtils.createConfig("FeaturesGUI.yml");
 			config = configUtils.getConfigFile("FeaturesGUI.yml");
 			command = "/" + config.getString("Command");
+		}
+	}
 
+	private void ensureConfigLoaded() {
+		if (!configLoaded) {
 			InvName = Util.color(config.getString("Name"));
 			rows = config.getInt("Rows") * 9;
 
@@ -47,6 +52,7 @@ public class FeaturesGUI extends ToggleableListener {
 			DefaultItemIfNotSet = config.getString("DefaultItemIfNotSet");
 
 			featuresInv = Bukkit.createInventory(null, rows, InvName);
+			configLoaded = true;
 		}
 	}
 
@@ -58,7 +64,8 @@ public class FeaturesGUI extends ToggleableListener {
 			return;
 		}
 
-		// This auto updates it on every open
+		ensureConfigLoaded();
+		// reload items from disk on every open
 		config = configUtils.getConfigFile("FeaturesGUI.yml");
 
 		Set<String> keys = config.getConfigurationSection("Items").getKeys(false);
@@ -90,6 +97,7 @@ public class FeaturesGUI extends ToggleableListener {
 	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
+		ensureConfigLoaded();
 
 		if (event.getView().getTitle().equalsIgnoreCase(InvName)) {
 			if (clicked == null) {

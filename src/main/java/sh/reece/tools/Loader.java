@@ -48,6 +48,7 @@ public class Loader {
 
 		// scan JAR once, bucket classes by package
 		classIndex = scanJar();
+		executionTimer.info("JAR Scan");
 
 		discover("Commands",      "sh.reece.cmds", "sh.reece.bungee");
 		discover("Core Features", "sh.reece.core", "sh.reece.core.warp");

@@ -50,20 +50,22 @@ public class Tags extends BaseCommand implements Listener {
 
 			String Section = "Chat.Tags";
 			giveTagCMD = instance.getConfig().getString(Section + ".giveTagCmd");
-
-			FILENAME = "Tags.yml";
-			configUtils.createFile(FILENAME);
-			tagsconfig = configUtils.getConfigFile(FILENAME);
-			InvName = Util.color("&lTags");
-
 			selectedmsg = instance.getConfig().getString(Section + ".selected");
 			removedmsg = instance.getConfig().getString(Section + ".removed");
-
 			CustomTagPerm = instance.getConfig().getString(Section + ".CustomTagPerm");
 			CustomTagMaxLen = instance.getConfig().getInt(Section + ".CustomMaxLength");
 			CustomTagFormat = instance.getConfig().getString(Section + ".CustomTagFormat");
 
+			FILENAME = "Tags.yml";
+			InvName = Util.color("&lTags");
 			rows = 5 * 9;
+		}
+	}
+
+	private FileConfiguration getTagsConfig() {
+		if (tagsconfig == null) {
+			configUtils.createFile(FILENAME);
+			tagsconfig = configUtils.getConfigFile(FILENAME);
 
 			if (!tagsconfig.contains("Tags")) {
 				tagsconfig.set("Tags.Boss", "&8&l<&6BossTag&8&l>");
@@ -88,6 +90,7 @@ public class Tags extends BaseCommand implements Listener {
 				configUtils.saveConfig(tagsconfig, "Tags.yml");
 			}
 		}
+		return tagsconfig;
 	}
 
 	private boolean setupChat() {
@@ -101,11 +104,11 @@ public class Tags extends BaseCommand implements Listener {
 		tagsGUI = Bukkit.createInventory(null, rows, InvName);
 
 		int i = 0;
-		Set<String> TAGS = tagsconfig.getConfigurationSection("Tags").getKeys(false);
+		Set<String> TAGS = getTagsConfig().getConfigurationSection("Tags").getKeys(false);
 
 		for (String tag : TAGS) {
 			String perm = "Tags." + tag;
-			String format = tagsconfig.getString(perm);
+			String format = getTagsConfig().getString(perm);
 			List<String> lore = new ArrayList<String>();
 
 			lore.add("");
@@ -207,7 +210,7 @@ public class Tags extends BaseCommand implements Listener {
 
 			case "list":
 				String tagList = "";
-				for (String tagname : tagsconfig.getConfigurationSection("Tags").getKeys(false)) {
+				for (String tagname : getTagsConfig().getConfigurationSection("Tags").getKeys(false)) {
 					tagList += "&f" + tagname + "&7,  ";
 				}
 				Util.coloredMessage(sender, tagList);
@@ -237,13 +240,13 @@ public class Tags extends BaseCommand implements Listener {
 		String name = args[1];
 		String tag = Util.argsToSingleString(2, args);
 
-		if (tagsconfig.contains("Tags." + name)) {
+		if (getTagsConfig().contains("Tags." + name)) {
 			Util.coloredMessage(p, "&cThe tag: " + name + " already exist!");
 			return;
 		}
 
-		tagsconfig.set("Tags." + name, tag);
-		configUtils.saveConfig(tagsconfig, "Tags.yml");
+		getTagsConfig().set("Tags." + name, tag);
+		configUtils.saveConfig(getTagsConfig(), "Tags.yml");
 		Util.coloredMessage(p, "&a[!] Created tag &r" + tag + "&a successfully!");
 	}
 
@@ -268,7 +271,7 @@ public class Tags extends BaseCommand implements Listener {
 			}
 
 			if (p.hasPermission("Tags." + tag)) {
-				addTagToUser(p, tagsconfig.getString("Tags." + tag));
+				addTagToUser(p, getTagsConfig().getString("Tags." + tag));
 			}
 
 			p.closeInventory();

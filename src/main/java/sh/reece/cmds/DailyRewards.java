@@ -28,26 +28,32 @@ public class DailyRewards extends BaseCommand implements Unloadable {
 	private String FILENAME;
 	public FileConfiguration CooldownData;
 
+	private boolean dataLoaded = false;
+
 	public DailyRewards(Main instance) {
 	    super(instance, "Commands.DailyRewards", "reward");
 
 	    if (isEnabled()) {
-	    	configUtils.createDirectory("DATA");
 			FILENAME = File.separator + "DATA" + File.separator + "DailyRewardCooldown.yml";
+			rewards = instance.getConfig().getStringList(section+".rewards");
+			COOLDOWN_SECONDS = 86400;
+		}
+	}
+
+	private void ensureDataLoaded() {
+		if (!dataLoaded) {
+			configUtils.createDirectory("DATA");
 			configUtils.createFile(FILENAME);
 			CooldownData = configUtils.getConfigFile(FILENAME);
-
 			loadCooldownsToMemory();
-
-			rewards = instance.getConfig().getStringList(section+".rewards");
-			COOLDOWN_SECONDS= 86400;
+			dataLoaded = true;
 		}
 	}
 
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
+    	ensureDataLoaded();
     	long unixTime = System.currentTimeMillis() / 1000L;
 
     	if (cmd.getName().equalsIgnoreCase("reward")) {

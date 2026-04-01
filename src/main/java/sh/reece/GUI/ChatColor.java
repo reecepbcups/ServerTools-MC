@@ -59,6 +59,8 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 		put("&0", Material.BLACK_STAINED_GLASS_PANE);
 	}};
 
+	private boolean dataLoaded = false;
+
 	public ChatColor(Main instance) {
 		super(instance, "Chat.ChatColor", "chatcolor");
 
@@ -67,20 +69,21 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 		if (isEnabled()) {
 			isEnabled = true;
-
-			// plugins/ServerTools/DATA
-			configUtils.createDirectory("DATA");
 			FILENAME = File.separator + "DATA" + File.separator + "ChatColor.yml";
-			configUtils.createFile(FILENAME);
-			config = configUtils.getConfigFile(FILENAME);
-
 			perm = "Chatcolor.";
-
 			InvName = configUtils.lang("CHATCOLOR_GUI");
 			RainbowColors = instance.getConfig().getStringList("Chat.ChatColor.RainbowColors");
-
 			initCreateInv();
+		}
+	}
+
+	private void ensureDataLoaded() {
+		if (!dataLoaded) {
+			configUtils.createDirectory("DATA");
+			configUtils.createFile(FILENAME);
+			config = configUtils.getConfigFile(FILENAME);
 			loadToMemory();
+			dataLoaded = true;
 		}
 	}
 
@@ -91,6 +94,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		ensureDataLoaded();
 		Player p = (Player) sender;
 		p.openInventory(ColorINV);
 		return true;
@@ -203,6 +207,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 	@EventHandler(ignoreCancelled = true)
 	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {
+		ensureDataLoaded();
 		String color = getColor(e.getPlayer().getUniqueId().toString());
 
 		if (color != null) {
