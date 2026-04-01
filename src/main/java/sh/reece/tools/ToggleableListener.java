@@ -15,7 +15,7 @@ public abstract class ToggleableListener implements Listener {
         if (enabled) {
             String permPath = section + ".Permission";
             this.permission = plugin.getConfig().contains(permPath)
-                ? plugin.getConfig().getString(permPath) : null;
+                ? plugin.getConfig().getString(permPath, "") : "";
             Bukkit.getPluginManager().registerEvents(this, plugin);
         } else {
             this.permission = null;

@@ -1,0 +1,8 @@
+{
+  "name": "servertools-loadtest",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "mineflayer": "^4.20.0"
+  }
+}

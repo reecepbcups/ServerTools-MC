@@ -32,3 +32,6 @@ src/test/*
 
 # Local server data
 server/
+
+# Load test
+loadtest/node_modules/

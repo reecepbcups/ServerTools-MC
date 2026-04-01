@@ -18,3 +18,40 @@ server-down:
 # send a command to the mc console (e.g. just mc-cmd "reload confirm")
 mc-cmd cmd:
     docker compose exec mc rcon-cli {{cmd}}
+
+# --- load testing ---
+
+# install loadtest deps (one-time)
+loadtest-setup:
+    cd loadtest && npm install
+
+# run load test (e.g. just loadtest 20 move 3)
+loadtest bots="10" scenario="all" ramp="3":
+    node loadtest/loadtest.mjs --bots {{bots}} --scenario {{scenario}} --ramp {{ramp}}
+
+# run load test for a fixed duration in seconds
+loadtest-timed bots="10" scenario="all" duration="60":
+    node loadtest/loadtest.mjs --bots {{bots}} --scenario {{scenario}} --ramp 3 --duration {{duration}}
+
+# ramp bots until TPS drops below 18 (finds your breaking point)
+loadtest-ramp bots="100":
+    node loadtest/loadtest.mjs --bots {{bots}} --scenario all --ramp-test true
+
+# start spark profiler for N seconds
+loadtest-profile duration="60":
+    just mc-cmd "spark profiler start --timeout {{duration}}"
+
+# stop spark profiler and get results
+loadtest-results:
+    just mc-cmd "spark profiler stop"
+
+# check current TPS via spark
+loadtest-tps:
+    just mc-cmd "spark tps"
+
+# full cycle: build plugin, start spark, run bots, collect results
+loadtest-full bots="50" duration="120":
+    just build
+    just mc-cmd "spark profiler start --timeout {{duration}}"
+    node loadtest/loadtest.mjs --bots {{bots}} --scenario all --ramp 3 --duration {{duration}}
+    just mc-cmd "spark profiler stop"

@@ -12,11 +12,14 @@ services:
       ENABLE_COMMAND_BLOCK: "TRUE"
       SPAWN_PROTECTION: 0
       DIFFICULTY: easy
-      MAX_PLAYERS: 5
+      MAX_PLAYERS: 200
       MOTD: "ServerTools E2E"
       MODRINTH_PROJECTS: "luckperms,plugmanx,placeholderapi,vaultunlocked"
+      SPIGET_RESOURCES: "57242" # spark (https://modrinth.com/mod/spark)
+      PATCH_DEFINITIONS: "/patches"
       OPS: "reecepbcups"
     volumes:
       - ./server:/data
+      - ./patches:/patches:ro
     stdin_open: true
     tty: true
