@@ -6,7 +6,6 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.chat.Chat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -152,10 +151,7 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	public static String replaceVariable(String line) {
-		// if line contains a key from ServerVariableKeys (line has discord written in it)
-		if (Arrays.stream(SERVER_VARIABLE_KEYS.toArray(new String[SERVER_VARIABLE_KEYS.size()])).anyMatch(line::contains)) {
-
-			//loop through keys, and if the line contains %TYPE%, replace it
+		if (SERVER_VARIABLE_KEYS.stream().anyMatch(line::contains)) {
 			for (String key : SERVER_VARIABLE_KEYS) {
 				if(line.contains("%"+key+"%")) {
 					line = line.replace("%"+key+"%", SERVER_VARIABLES.get(key));
