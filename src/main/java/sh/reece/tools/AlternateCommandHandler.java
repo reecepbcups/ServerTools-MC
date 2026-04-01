@@ -1,8 +1,8 @@
 package sh.reece.tools;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -23,7 +23,7 @@ public class AlternateCommandHandler implements Listener {
 
     // on check of config.yml enabled, if false is added here. Used to give CMD aliases to other commands
 	// wehn disabled
-	private static final List<String> DISABLED_COMMANDS = new ArrayList<>();
+	private static final Set<String> DISABLED_COMMANDS = new HashSet<>();
 	private static final HashMap<String, String> COMMAND_ALIASES = new HashMap<String, String>(); // fly: essentials, 
 
     

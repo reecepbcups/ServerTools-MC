@@ -12,7 +12,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CommandProtection extends BaseCommand implements Listener {
 
@@ -20,9 +22,9 @@ public class CommandProtection extends BaseCommand implements Listener {
 	private String FILENAME;
 	private String password;
 
-	private List<String> ProtectedCommands;
-	private List<String> AllowedPlayers;
-	private List<String> PasswordView; // hardcoded people only can view password
+	private Set<String> ProtectedCommands;
+	private Set<String> AllowedPlayers;
+	private Set<String> PasswordView; // hardcoded people only can view password
 
 	private HashMap<String, Long> FailedPassAttempts;
 
@@ -35,10 +37,10 @@ public class CommandProtection extends BaseCommand implements Listener {
 			configUtils.createConfig(FILENAME);
 			config = configUtils.getConfigFile(FILENAME);
 
-			AllowedPlayers = config.getStringList("AllowedPlayers");
-			PasswordView = config.getStringList("AllowedPlayers");
+			AllowedPlayers = new HashSet<>(config.getStringList("AllowedPlayers"));
+			PasswordView = new HashSet<>(config.getStringList("AllowedPlayers"));
 
-			ProtectedCommands = config.getStringList("ProtectedCommands");
+			ProtectedCommands = new HashSet<>(config.getStringList("ProtectedCommands"));
 			password = config.getString("password");
 
 			FailedPassAttempts = new HashMap<String, Long>();
@@ -54,9 +56,11 @@ public class CommandProtection extends BaseCommand implements Listener {
 			command = command.split(" ")[0];
 		}
 
-		// Util.consoleMSG(command);
+		// strip plugin prefix (e.g. "/servertools:op" -> "/op")
+		if(command.contains(":")) {
+			command = "/" + command.substring(command.indexOf(':') + 1);
+		}
 
-		// if the cmd is protected
 		if(ProtectedCommands.contains(command)) {
 
 			// if the IGN or UUID is allowed
