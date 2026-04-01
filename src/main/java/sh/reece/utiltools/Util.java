@@ -337,25 +337,27 @@ public class Util {
 	}
 
 	private static final Pattern HEX_PATTERN = Pattern.compile("([&]?)?(#[a-fA-f0-9]{6})");
-	private static final Class<net.md_5.bungee.api.ChatColor> COLOR_CLASS = net.md_5.bungee.api.ChatColor.class;
-	/**
-	 * @author Y2K_
-	 * Added hex support
-	 */
-	public static String color(String message) {		
-		Matcher matcher = HEX_PATTERN.matcher(message);
-		try{
-			Method chatColorOf = COLOR_CLASS.getMethod("of", String.class);
-			while (matcher.find()) {
-				String color = message.substring(matcher.start(), matcher.end());
-				
-				// Util.log(color);
+	private static final Method CHAT_COLOR_OF;
+	static {
+		Method m = null;
+		try {
+			m = net.md_5.bungee.api.ChatColor.class.getMethod("of", String.class);
+		} catch (NoSuchMethodException ignored) {}
+		CHAT_COLOR_OF = m;
+	}
 
-				message = message.replace(color, chatColorOf.invoke(COLOR_CLASS, matcher.group(0).replace("&#", "#")) + "");
-				matcher = HEX_PATTERN.matcher(message);
+	public static String color(String message) {
+		if (CHAT_COLOR_OF != null) {
+			Matcher matcher = HEX_PATTERN.matcher(message);
+			try {
+				while (matcher.find()) {
+					String color = message.substring(matcher.start(), matcher.end());
+					message = message.replace(color, CHAT_COLOR_OF.invoke(null, matcher.group(0).replace("&#", "#")) + "");
+					matcher = HEX_PATTERN.matcher(message);
+				}
+			} catch (IllegalAccessException | InvocationTargetException e) {
+				// hex colors unsupported on this server version
 			}
-		} catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException e){
-			// do nothing
 		}
 		
 		if(message == null){
