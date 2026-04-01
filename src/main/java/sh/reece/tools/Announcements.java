@@ -22,7 +22,7 @@ public class Announcements {
         }
 
         if (line.contains("<command=")) {
-            String cmd = StringUtils.substringBetween(line, "<command=", "/>");
+            String cmd = StringUtils.substringBetween(line, "<command=", "/>").trim();
             String actualMessage = Util.color(line.split("/>")[1]);
             if (actualMessage.contains("<center>")) {
                 actualMessage = Util.centerMessage(actualMessage.replace("<center>", ""));
@@ -34,7 +34,7 @@ public class Announcements {
         }
 
         if (line.contains("<link=")) {
-            String url = StringUtils.substringBetween(line, "<link=", "/>");
+            String url = StringUtils.substringBetween(line, "<link=", "/>").trim();
             String actualMessage = Util.color(line.split("/>")[1]);
             if (actualMessage.contains("<center>")) {
                 actualMessage = Util.centerMessage(actualMessage.replace("<center>", ""));
