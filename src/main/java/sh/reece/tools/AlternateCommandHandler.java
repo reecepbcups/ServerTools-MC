@@ -42,7 +42,7 @@ public class AlternateCommandHandler implements Listener {
 		return COMMAND_ALIASES.get(command)+":"+command;
 	}
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
         // Main.logging("ServerTools AltCommandListenr event: " + event.getMessage());
         // make sure its a cmd

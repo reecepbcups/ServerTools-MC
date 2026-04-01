@@ -99,7 +99,7 @@ public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Liste
 		return true;
 	}
 
-	@EventHandler(priority = EventPriority.LOWEST)
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onInventoryClickEvent(final InventoryClickEvent event) {
 
 		Player refreshPlayer = null;
@@ -115,9 +115,9 @@ public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Liste
             if (invHolder instanceof HumanEntity) {
                 final Player invOwner = (Player) invHolder;
 
-                if (isInvsee(player) 
-				 	&& (!player.hasPermission(ModifyOthers) 
-					|| invOwner.hasPermission(preventModify) 
+                if (isInvsee(player)
+				 	&& (!player.hasPermission(ModifyOthers)
+					|| invOwner.hasPermission(preventModify)
 					|| !invOwner.isOnline())) {
 
                     event.setCancelled(true);
@@ -133,7 +133,7 @@ public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Liste
 				if(!player.hasPermission(ModifyOthers)){
 					//Main.logging("canceled event correctly");
 					event.setCancelled(true);
-				}				
+				}
 				refreshPlayer = player;
 			}
 		}
@@ -142,7 +142,7 @@ public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Liste
         }
 	}
 
-	@EventHandler(priority = EventPriority.LOWEST)
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onInvClose(final InventoryCloseEvent e) {
 
 		final Inventory top = e.getView().getTopInventory();
@@ -163,7 +163,7 @@ public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Liste
 		for(Player p : Bukkit.getOnlinePlayers()) {
 			if(openInvsee.contains(p.getUniqueId())){
 				p.getOpenInventory().close();
-			}						
+			}
 		}
 		openInvsee.clear();
 	}

@@ -29,7 +29,7 @@ public class BlockBreaking implements Listener {
 	}
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onBlockBlock(BlockBreakEvent e) {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();

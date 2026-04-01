@@ -21,7 +21,7 @@ public class ThreeHitGlitch implements Listener {
     	}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void hurt(EntityDamageByEntityEvent event) {
 		if (event.getDamager() instanceof Player) {
 			Player player = (Player)event.getDamager();

@@ -49,7 +49,7 @@ public class ShopClickWorkAround implements Listener {
 		
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInvClick(InventoryClickEvent e) {
 		
 		if(e.getCurrentItem() == null) {

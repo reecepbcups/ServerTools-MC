@@ -24,7 +24,7 @@ public class DisableLeaveDecay implements Listener {
 	}
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onDecay(LeavesDecayEvent e) {
 		if(LeaveDecayWorlds.contains(e.getBlock().getWorld().getName().toString())) {
 			e.setCancelled(true);

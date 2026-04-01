@@ -19,7 +19,7 @@ public class DisableCactusDamage implements Listener {
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onDamage(EntityDamageEvent e) {		
 		if(e.getEntity() instanceof Player){
 			if (e.getCause() == EntityDamageEvent.DamageCause.CONTACT)

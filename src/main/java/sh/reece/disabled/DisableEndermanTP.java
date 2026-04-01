@@ -30,7 +30,7 @@ public class DisableEndermanTP implements Listener {//, CommandExecutor {
 	}
 
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void DisableEmanTP(EntityTeleportEvent e) {	
 		if(e.getEntity().getType() == EntityType.ENDERMAN) {
 			e.setCancelled(true);

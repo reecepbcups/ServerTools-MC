@@ -28,7 +28,7 @@ public class NoBedExplosion implements Listener {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInteract(PlayerInteractEvent e){
 		Player p = e.getPlayer();
 		if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {

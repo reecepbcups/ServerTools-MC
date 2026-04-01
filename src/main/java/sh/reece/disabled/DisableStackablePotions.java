@@ -28,7 +28,7 @@ public class DisableStackablePotions implements Listener {
     	}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void plashEvent(PotionSplashEvent e) {
 		//Util.consoleMSG("PotionSplashEvent");		
 		if(e.getPotion().getShooter() instanceof Player) {

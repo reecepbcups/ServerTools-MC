@@ -49,7 +49,7 @@ public class XPBottle implements Listener, CommandExecutor {
 		}
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onExpBottleEvent(PlayerInteractEvent e) {
 		Player p = e.getPlayer();
 
@@ -102,7 +102,7 @@ public class XPBottle implements Listener, CommandExecutor {
 	
 
 	// /xp command
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 		if (!e.getMessage().toLowerCase().startsWith("/xp")){
 			return;

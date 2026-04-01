@@ -19,7 +19,7 @@ public class EnderPearlCooldown implements Listener {
 	private final Integer cooldownSeconds;
 	private final String cooldownMessage;
 	private final HashMap<String, Date> cooldownHash;
-	
+
 	public EnderPearlCooldown(final Main instance) {
         plugin = instance;
 
@@ -27,25 +27,25 @@ public class EnderPearlCooldown implements Listener {
         cooldownHash = new HashMap<>();
 
         cooldownMessage = plugin.getConfig().getString("Cooldowns.EnderPearlCooldown.Message");
-        
+
         if (plugin.enabledInConfig("Cooldowns.EnderPearlCooldown.Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);			
+			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 		}
 	}
-	
-	
-	
-	@EventHandler
+
+
+
+	@EventHandler(ignoreCancelled = true)
     public void onInteract(final PlayerInteractEvent e) {
         final Player p = e.getPlayer();
         final Action a = e.getAction();
 
         if (a == Action.RIGHT_CLICK_AIR || a == Action.RIGHT_CLICK_BLOCK) {
             if (p.getItemInHand().getType() == Material.ENDER_PEARL) {
-            	
+
             	if (!(Util.cooldown(cooldownHash, cooldownSeconds, p.getName(), cooldownMessage))) {
-            		e.setCancelled(true);        	
-            	}                 
+            		e.setCancelled(true);
+            	}
             }
         }
     }

@@ -161,7 +161,7 @@ public class NameColor implements Listener, CommandExecutor {
 		Util.coloredMessage(p, configUtils.lang("NAMECOLOR_SET").replace("%color%", colorcode+color));
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerColoredNameEvent(AsyncPlayerChatEvent e) {
 		if(isEnabled) {
 			Player p = e.getPlayer();
@@ -177,8 +177,8 @@ public class NameColor implements Listener, CommandExecutor {
 		}			
 	}
 	
-	@EventHandler
-	public void onInventoryClick(InventoryClickEvent event) {		
+	@EventHandler(ignoreCancelled = true)
+	public void onInventoryClick(InventoryClickEvent event) {
 		if(event.getView().getTitle().equalsIgnoreCase(InvName)) {
 
 			ItemStack clicked = event.getCurrentItem();

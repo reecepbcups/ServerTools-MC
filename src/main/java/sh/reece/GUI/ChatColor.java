@@ -218,7 +218,7 @@ public class ChatColor implements Listener, CommandExecutor {
 		}				
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {
 		String color = getColor(e.getPlayer().getUniqueId().toString());
 		
@@ -236,7 +236,7 @@ public class ChatColor implements Listener, CommandExecutor {
 	}
 	
 	//Checks for Clicks
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {			
 		if(event.getView().getTitle().equalsIgnoreCase(InvName)) {
 

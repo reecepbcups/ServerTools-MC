@@ -267,7 +267,7 @@ public class Tags implements CommandExecutor, Listener { //
 		
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		Player p = (Player) event.getWhoClicked();
 		ItemStack clicked = event.getCurrentItem();

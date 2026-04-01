@@ -30,7 +30,7 @@ public class WhitelistBypass implements Listener {
 		}
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onLogin(PlayerLoginEvent e) {
 		if (e.getResult() == PlayerLoginEvent.Result.KICK_WHITELIST) {
 
@@ -49,7 +49,7 @@ public class WhitelistBypass implements Listener {
 	}
 
 	
-	@EventHandler // does not affect console, for that ServerCommandEvent would be needed
+	@EventHandler(ignoreCancelled = true) // does not affect console, for that ServerCommandEvent would be needed
 	public void playerCMD(PlayerCommandPreprocessEvent e) {
 		if(DisableWhitelistCMDInGame && e.getMessage().startsWith("/whitelist add")) {
 			Util.coloredMessage(e.getPlayer(), "&e[ServerTools] &cRunning /whitelist add is disabled! &fPlease perform this in console if you need to use, or give user permission: &e" + Whitelistperm);

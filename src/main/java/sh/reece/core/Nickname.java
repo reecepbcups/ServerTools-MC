@@ -43,7 +43,7 @@ public class Nickname implements CommandExecutor, Listener {// ,TabCompleter,Lis
 
 	}
 
-	@EventHandler(priority = EventPriority.LOW)
+	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onChat(AsyncPlayerChatEvent e) {
 		// replaces username in format to nickname
 		// {prefix}%1$s{suffix}%2$s

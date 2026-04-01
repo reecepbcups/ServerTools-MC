@@ -28,12 +28,12 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 	private String lorePermisssion;
 	private List<String> disabledRenameItems;
 	private ConfigUtils configUtils;
-	
+
 	public Rename(Main instance) {
 		plugin = instance;
 		configUtils = plugin.getConfigUtils();
 
-		Section = "Misc.Rename";        
+		Section = "Misc.Rename";
 
 		if(plugin.enabledInConfig(Section+".Enabled")) {
 
@@ -52,7 +52,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void disabledRenamedItems(InventoryClickEvent event) {
 		if (!(event.getInventory() instanceof AnvilInventory)) {
 			return;
@@ -74,8 +74,8 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 		if(possibleArugments.isEmpty()) {
 			possibleArugments.add("name");
 			possibleArugments.add("lore");
-			
-		}		
+
+		}
 		result.clear();
 		if(args.length == 1) {
 			for(String a : possibleArugments) {
@@ -84,23 +84,23 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 				}
 			}
 			return result;
-		}	
+		}
 		return null;
 	}
-	
+
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		Player p = (Player) sender;
-		
+
 		if (args.length == 0) {
 			helpMenu(p);
 			return false;
-		}	
+		}
 
 		ItemStack item = getItem(p);
 		ItemMeta im = item.getItemMeta();
-		
+
 		String itemType = item.getType().toString().replace("LEGACY_", "");
 		if(disabledRenameItems.contains(itemType)) {
 			Util.coloredMessage(p, configUtils.lang("RENAME_DENYITEM").replace("%item%", itemType));
@@ -109,31 +109,31 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 
 		int lineToChange;
 		List<String> lore;
-		
+
 		switch(args[0]){
 
 		case "name":
-			
-			if (!(p.hasPermission(Permission))) {		
+
+			if (!(p.hasPermission(Permission))) {
 				Util.coloredMessage(p, "&cNo Permission to Rename item Names :(");
-				return true;			
-			} 
-			
+				return true;
+			}
+
 			String newName = Util.argsToSingleString(1, args);
 
 			im.setDisplayName(Util.color(newName));
-			item.setItemMeta(im);	
+			item.setItemMeta(im);
 
 			Util.coloredMessage(p, configUtils.lang("RENAME_SUCCESS"));
 			break;
-		
-		case "lore":	
 
-			if (!(p.hasPermission(lorePermisssion))) {		
+		case "lore":
+
+			if (!(p.hasPermission(lorePermisssion))) {
 				Util.coloredMessage(p, "&cNo Permission to Rename item Lores :(");
-				return true;			
-			} 
-			
+				return true;
+			}
+
 			if(args.length <= 2) {
 				helpMenu(p);
 				return true;
@@ -142,7 +142,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 			switch (args[1]) {
 			case "remove":
 			case "delete":
-				
+
 				if(args.length < 3) {
 					Util.coloredMessage(p, "&c/rename lore remove <LINE (0->48)>");
 					return true;
@@ -158,11 +158,11 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 								.replace("%line%", args[2]).replace("%size%", loreSize+""));
 						return true;
 					}
-					lore = im.getLore();							
+					lore = im.getLore();
 					lore.remove(lineToChange);
 
 					im.setLore(lore);
-					item.setItemMeta(im);	
+					item.setItemMeta(im);
 				}
 
 
@@ -170,7 +170,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 
 			case "add":
 			case "append":
-			
+
 				if(args.length < 4) {
 					Util.coloredMessage(p, "&c/rename lore add <line#> TextToAdd");
 					return true;
@@ -180,7 +180,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 				if(lineToChange < 0) {
 					Util.coloredMessage(p, "&cLore line must be >= 0");
 					return true;
-				}	
+				}
 
 				String newLineInLore = Util.argsToSingleString(3, args);
 
@@ -189,29 +189,29 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 					lore = im.getLore();
 				} else {
 					lore = new ArrayList<String>();
-				}							 			
+				}
 
 				// adds blank lines if you wanted to change a later line
 				if(lineToChange >= lore.size()) {
 					int difference = lineToChange-lore.size();
 					for(int i=0;i<=difference;i++) {
 						lore.add(" ");
-					}					
+					}
 				}
 
-				lore.set(lineToChange, Util.color(newLineInLore));								
+				lore.set(lineToChange, Util.color(newLineInLore));
 				im.setLore(lore);
-				item.setItemMeta(im);	
+				item.setItemMeta(im);
 				break;
-			}			
-			return true;	
-		
+			}
+			return true;
+
 
 		default:
 			helpMenu(p);
-			break;		
+			break;
 		}
-		
+
 		return true;
 
 	}
@@ -225,7 +225,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 	}
 
 
-	
+
 
 	public ItemStack getItem(Player p) {
 		return p.getInventory().getItemInMainHand();

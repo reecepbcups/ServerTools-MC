@@ -25,7 +25,7 @@ public class DisableVillagerTrading implements Listener {
 			}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void villagerTrade(InventoryOpenEvent event) {
 		if (event.getInventory().getType() != InventoryType.MERCHANT) {
 			return; 

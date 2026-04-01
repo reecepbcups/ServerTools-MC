@@ -57,7 +57,7 @@ public class CommandProtection implements Listener, CommandExecutor {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerCommand(PlayerCommandPreprocessEvent e) {
 		String command = e.getMessage();
 		Player p = e.getPlayer();

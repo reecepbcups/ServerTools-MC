@@ -20,7 +20,7 @@ public class DisableJLMsg implements Listener {
 	}
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onJoin(PlayerJoinEvent e) {
 		e.setJoinMessage("");
 
@@ -30,7 +30,7 @@ public class DisableJLMsg implements Listener {
 	}
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onQuit(PlayerQuitEvent e) {
 		e.setQuitMessage("");
 	}

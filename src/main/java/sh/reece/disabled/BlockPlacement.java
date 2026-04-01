@@ -29,7 +29,7 @@ public class BlockPlacement implements Listener {
 	}
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onBlockBlock(BlockPlaceEvent e) {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();

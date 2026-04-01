@@ -19,42 +19,42 @@ public class JoinMOTD implements Listener {
 	private String Section;
 	private List<String> MOTDMsg;
 	private Boolean papiSupport;
-	
+
 	public JoinMOTD(Main instance) {
         plugin = instance;
-        
-        Section = "Events.ChatJoinMOTD";                
+
+        Section = "Events.ChatJoinMOTD";
         if(plugin.enabledInConfig(Section+".Enabled")) {
-        	
+
         	MOTDMsg = plugin.getConfig().getStringList(Section+".MOTD");
-        	
+
 			if(MOTDMsg != null && MOTDMsg.size() > 0) {
-				Bukkit.getServer().getPluginManager().registerEvents(this, plugin);   
+				Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 				papiSupport = plugin.isPAPIEnabled();
 			}
     	}
 	}
-	
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void playerJoinEvent(PlayerJoinEvent e) {	
+
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void playerJoinEvent(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
-		
+
 		for(String msgLine : MOTDMsg) {
-			
+
 			msgLine = Main.replaceVariable(msgLine);
-			
+
 			if(papiSupport) {
 				msgLine = PlaceholderAPI.setPlaceholders(p, msgLine);
 			}
-			
+
 			if(msgLine.contains("<center>")) {
 				msgLine = Util.centerMessage(msgLine.replace("<center>", "")
 						.replace("%player%", p.getName()));
 			}
-			
+
 			Util.coloredMessage(p, msgLine);
 		}
-		
+
 	}
-	
+
 }

@@ -70,7 +70,7 @@ public class Withdraw implements Listener, CommandExecutor {
 	}
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	private void noteRedeem(PlayerInteractEvent e) {
 		Player p = e.getPlayer();
 		if (e.getMaterial() == null) {
@@ -125,7 +125,7 @@ public class Withdraw implements Listener, CommandExecutor {
 	
 
 	// bal command
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 
 		if (!e.getMessage().toLowerCase().startsWith("/bal")){

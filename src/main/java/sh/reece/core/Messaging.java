@@ -212,7 +212,7 @@ public class Messaging implements CommandExecutor, Listener, TabCompleter { //,,
 	
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onQuit(PlayerQuitEvent e) {
 		String username = e.getPlayer().getName();
 		lastMessage.remove(username);

@@ -19,7 +19,7 @@ public class DisableJockeys implements Listener {
 		}
 	}
 	  
-	  @EventHandler
+	  @EventHandler(ignoreCancelled = true)
 	    public void onSpawn(CreatureSpawnEvent event) {
 	        if (event.getEntityType().equals(EntityType.CHICKEN) || event.getEntityType().equals(EntityType.SPIDER)) {
 	            if (event.getEntity().getPassenger() != null) {

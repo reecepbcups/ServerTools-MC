@@ -25,7 +25,7 @@ public class BungeeServerConnector implements Listener {
 	public BungeeServerConnector(Main instance) {
 		plugin = instance;
 
-		Section = "Bungee.BungeeServerCMD";                
+		Section = "Bungee.BungeeServerCMD";
 		if(plugin.enabledInConfig(Section+".Enabled")) {
 
 			if (!Bukkit.getMessenger().isOutgoingChannelRegistered(plugin, "BungeeCord")) {
@@ -36,23 +36,23 @@ public class BungeeServerConnector implements Listener {
 			avaliableServers = plugin.getConfig().getConfigurationSection(Section+".Aliases").getKeys(false);
 
 
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);    		
+			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 		}
 	}
 
-	@EventHandler
-	public void playerCommandAliasToServerCommand(PlayerCommandPreprocessEvent e) {	
-		// goto ogskyblock	
-		
+	@EventHandler(ignoreCancelled = true)
+	public void playerCommandAliasToServerCommand(PlayerCommandPreprocessEvent e) {
+		// goto ogskyblock
+
 		String[] msg = e.getMessage().split(" ");
 		String myCMD = msg[0].substring(1);
 		Player p = e.getPlayer();
-		
+
 		if(!myCMD.equalsIgnoreCase(CMD)) {
 			// if not /goto, return
 			return;
-		}		
-		
+		}
+
 		// Util.consoleMSG(myCMD); // debug
 
 		if(!(msg.length >= 2)) { // if there is not an argument (args[0] and [1] = len 2)
@@ -83,7 +83,7 @@ public class BungeeServerConnector implements Listener {
 		if (server.length() == 0) {
 			Util.coloredMessage(player, "&cTarget server was an empty string, cannot connect to it.");
 			return;
-		} 
+		}
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 		try {
@@ -91,7 +91,7 @@ public class BungeeServerConnector implements Listener {
 			dataOutputStream.writeUTF(server);
 		} catch (IOException ex) {
 			throw new AssertionError();
-		} 
+		}
 		player.sendPluginMessage(plugin, "BungeeCord", byteArrayOutputStream.toByteArray());
 	}
 

@@ -32,7 +32,7 @@ public class DisableGolemPoppies implements Listener {
 		return Material.getMaterial("RED_ROSE");
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void removeRoses(EntityDeathEvent e) {		
 		if (e.getEntity().getType() == EntityType.IRON_GOLEM) {
 			e.getDrops().removeIf(itemstack -> (itemstack.getType() == getRedRose()));

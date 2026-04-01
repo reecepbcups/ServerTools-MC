@@ -20,7 +20,7 @@ public class DisableBookWriting implements Listener {
 			}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onBookWrite(PlayerEditBookEvent e) {
 		e.getPlayer().sendMessage(configUtils.lang("DISABLED_BOOKWRITING"));
 		e.setCancelled(true);			

@@ -61,7 +61,7 @@ public class StaffAFK implements CommandExecutor, Listener {
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void StaffQuit(PlayerQuitEvent e) {
 		removeStaffAFK(e.getPlayer());
 	}

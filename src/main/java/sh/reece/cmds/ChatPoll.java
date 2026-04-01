@@ -32,14 +32,14 @@ public class ChatPoll implements Listener, CommandExecutor {
 	public ChatPoll(Main instance) {
 		plugin = instance;
 
-		Section = "Commands.ChatPoll";                
+		Section = "Commands.ChatPoll";
 		if(plugin.enabledInConfig(Section+".Enabled")) {
 
 			plugin.getCommand("poll").setExecutor(this);
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);    	
+			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 			pollRunning = false;
 		} else {
-			AlternateCommandHandler.addDisableCommand("poll");		
+			AlternateCommandHandler.addDisableCommand("poll");
 		}
 	}
 
@@ -58,28 +58,28 @@ public class ChatPoll implements Listener, CommandExecutor {
 	    return max.getKey();
 	}
 
-	@EventHandler
-	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {	
+	@EventHandler(ignoreCancelled = true)
+	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {
 		Player p = e.getPlayer();
 		String voteVal = e.getMessage().split(" ")[0].replace("#", "");
-			
-		
+
+
 		if(pollRunning == false) {return;}
-		
+
 		// if poll running but not a number, do nothing
 		if(Util.isInt(voteVal) == false) {return;}
-		
+
 		// if they already voted
 		if(playersVoted.contains(p)) {
 			Util.coloredMessage(p, " \n&cYou already voted!\n&7&o(( You can not type more numbers in chat ))\n ");
 			e.setCancelled(true);
 			return;
 		}
-		
+
 		if(options-Integer.valueOf(voteVal)>=0) {
 			Util.coloredMessage(p, " \n&a[!] &aRegistered your poll vote &n#"+voteVal+"&a!\n ");
 			playersVoted.add(p);  votes.add(voteVal);
-			
+
 		} else {
 			Util.coloredMessage(p, " \n&c[!] Incorrect Value: &n"+voteVal+"&c not in range #1-"+options+"\n ");
 		}
@@ -87,10 +87,10 @@ public class ChatPoll implements Listener, CommandExecutor {
 	}
 
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
-		if (!(sender.hasPermission("poll.use"))) {		
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (!(sender.hasPermission("poll.use"))) {
 			sender.sendMessage(Util.color("&cNo Permission to use "+label+" :("));
-			return true;			
+			return true;
 		}
 
 		Player p = (Player) sender;
@@ -98,7 +98,7 @@ public class ChatPoll implements Listener, CommandExecutor {
 		if (args.length == 0) {
 			sendHelpMenu(p);
 			return true;
-		}	
+		}
 
 		switch(args[0]){
 		// /poll start #
@@ -106,27 +106,27 @@ public class ChatPoll implements Listener, CommandExecutor {
 		case "begin":
 			if(args.length >= 2) {
 				pollRunning = true;
-				options = Integer.valueOf(args[1]);				
+				options = Integer.valueOf(args[1]);
 				Util.coloredBroadcast(" \n&f&lPOLL &fEnter your choice &n#1 -> #" + options + "&f in chat\n ");
 			} else {
 				sendHelpMenu(p);
 			}
 			return true;
-			
-		case "stop":	
+
+		case "stop":
 		case "end":
 			if(pollRunning == false) {
-				Util.coloredMessage(p, "&cNo poll is running!");				
+				Util.coloredMessage(p, "&cNo poll is running!");
 			} else {
 				pollRunning = false;
-				Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));				
+				Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));
 			}
-			
+
 			return true;
 		default:
 			sendHelpMenu(p);
-			return true;		
-		}		
+			return true;
+		}
 	}
 
 	public void sendHelpMenu(Player p) {

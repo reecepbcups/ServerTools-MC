@@ -27,7 +27,7 @@ public class DisableThowingItems implements Listener {
 	}
 
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void stopEnder(PlayerInteractEvent e) {
 		if (e.getPlayer() instanceof Player) {
 			//Player p = e.getPlayer();

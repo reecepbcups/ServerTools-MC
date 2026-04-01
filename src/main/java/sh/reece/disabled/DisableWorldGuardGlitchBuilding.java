@@ -50,7 +50,7 @@ public class DisableWorldGuardGlitchBuilding implements Listener {
     	}
 	}
 	
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onBlockPlace(BlockPlaceEvent event) {
 		
 		if ((!event.canBuild() || event.isCancelled())) {
@@ -82,13 +82,13 @@ public class DisableWorldGuardGlitchBuilding implements Listener {
 	
 	
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onClick(InventoryClickEvent e) {
 		if (e.getView().getTitle().equals(title))
 			e.setCancelled(true);
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryDragEvent e) {
 		if (e.getView().getTitle().equals(title))
 			e.setCancelled(true); 

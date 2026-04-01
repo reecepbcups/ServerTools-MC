@@ -31,7 +31,7 @@ public class DisableMobAI implements Listener {//, CommandExecutor {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void MobAI(EntityTargetLivingEntityEvent e) {
 		if (worlds.contains(e.getEntity().getLocation().getWorld().getName())) {
 			e.setCancelled(true); 

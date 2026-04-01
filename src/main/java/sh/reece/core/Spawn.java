@@ -128,7 +128,7 @@ public class Spawn implements Listener, CommandExecutor {
 		return true;
 	}
 
-	@EventHandler //(priority = EventPriority.NORMAL)
+	@EventHandler(ignoreCancelled = true) //(priority = EventPriority.NORMAL)
 	public void onDamageFromVoid(EntityDamageEvent e) {
 		// when player takes damage in void, teleport them to spawn
 		// if they were hurt because of void & are a player
@@ -165,21 +165,21 @@ public class Spawn implements Listener, CommandExecutor {
 		}
 	}
 
-	@EventHandler //(priority = EventPriority.HIGHEST)
+	@EventHandler(ignoreCancelled = true) //(priority = EventPriority.HIGHEST)
 	public void playerKillEvent(PlayerRespawnEvent e) {
 		e.setRespawnLocation(getSpawnLocation());
 	}
 	
 	// if player has not played before, force their spawn to be
 	// in the right place
-	@EventHandler //(priority = EventPriority.HIGHEST)
+	@EventHandler(ignoreCancelled = true) //(priority = EventPriority.HIGHEST)
 	public void playerFirstTime(PlayerSpawnLocationEvent e) {
 		if(!e.getPlayer().hasPlayedBefore()) {
 			e.setSpawnLocation(getSpawnLocation());
 		}		
 	}
 
-	@EventHandler //(priority = EventPriority.HIGHEST)
+	@EventHandler(ignoreCancelled = true) //(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
 		

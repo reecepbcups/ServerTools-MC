@@ -27,7 +27,7 @@ public class ColonInCommands implements Listener{
 	}
 	
 	
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 		
 		if(e.isCancelled()) {

@@ -35,7 +35,7 @@ public class DisableItemBurn implements Listener {
 
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onItemBurn(EntityDamageEvent e) {
 		if (!e.isCancelled() && e.getEntity() instanceof Item && causes.contains(e.getCause())) {
 			e.setCancelled(true); 

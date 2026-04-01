@@ -77,22 +77,22 @@ public class WorldEffects implements Listener {// CommandExecutor
     	
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerChangeWorldEvent(PlayerChangedWorldEvent e) {	
 		addEffect(e.getPlayer());
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onJoin(PlayerJoinEvent e) {	
 		addEffect(e.getPlayer());				
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onLeave(PlayerQuitEvent e) {	
 		removeEffect(e.getPlayer());				
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onKick(PlayerKickEvent e) {	
 		removeEffect(e.getPlayer());				
 	}

@@ -48,7 +48,7 @@ public class CommandSpy implements Listener, CommandExecutor {
 		return watching.contains(uuid);
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerCommandSpyEvent(PlayerCommandPreprocessEvent e) {	
 		if (e.getPlayer().hasPermission("commandspy.exempt")) {
 			return;

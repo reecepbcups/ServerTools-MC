@@ -21,7 +21,7 @@ public class BlazeDrowning implements Listener {
 	}
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onDmg(EntityDamageEvent e) {
 		Entity ent = e.getEntity();
 		if (ent instanceof Blaze && e.getCause() == EntityDamageEvent.DamageCause.DROWNING) {

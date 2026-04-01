@@ -21,7 +21,7 @@ public class DisableGrassDecay implements Listener {
 	
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onDecay(BlockPhysicsEvent e) {
 		
 		if(e.getBlock().getType() == Material.GRASS || e.getBlock().getType() == Material.TALL_GRASS){

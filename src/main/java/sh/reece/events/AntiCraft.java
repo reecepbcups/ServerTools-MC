@@ -58,7 +58,7 @@ public class AntiCraft implements CommandExecutor, Listener {
 
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onPrepare(PrepareItemCraftEvent e) {
 		if (e.getRecipe() == null || e.getRecipe().getResult() == null) {
 			return; 
@@ -76,7 +76,7 @@ public class AntiCraft implements CommandExecutor, Listener {
 		} 
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onClick(InventoryClickEvent e) {
 
 		if (e.getClickedInventory() == null || e.getClickedInventory().getType() != InventoryType.CRAFTING) {

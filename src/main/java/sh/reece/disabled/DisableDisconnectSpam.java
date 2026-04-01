@@ -18,7 +18,7 @@ public class DisableDisconnectSpam implements Listener {
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onKick(PlayerKickEvent e) {
 		if (e.getReason() == "disconnect.spam") {
 			e.setCancelled(true);

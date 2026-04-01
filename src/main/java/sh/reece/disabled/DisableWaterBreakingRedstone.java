@@ -30,7 +30,7 @@ public class DisableWaterBreakingRedstone implements Listener {
 			
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onWaterFlow(BlockFromToEvent e) {
 		if (items.contains(e.getToBlock().getType().toString()))
 			e.setCancelled(true); 

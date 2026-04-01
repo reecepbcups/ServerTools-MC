@@ -24,7 +24,7 @@ public class DisableWitherBreak implements Listener {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onWitherskullExplode(EntityExplodeEvent e) {
 		if (e.getEntityType() == EntityType.WITHER_SKULL && e.getEntityType() == EntityType.WITHER) {
 			e.blockList().clear();
@@ -32,7 +32,7 @@ public class DisableWitherBreak implements Listener {
 		}		
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onWitherDestroy(EntityChangeBlockEvent event) {
 		if (event.getEntityType() == EntityType.WITHER) {
 			event.setCancelled(true);

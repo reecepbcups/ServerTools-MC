@@ -38,7 +38,7 @@ public class MuteChat implements Listener, CommandExecutor {
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onAsyncPlayerChat(AsyncPlayerChatEvent event) {
 		if(!ChatEnabled) {			
 			if(!(event.getPlayer().hasPermission(MuteChatBypassPerm))) {

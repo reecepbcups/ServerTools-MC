@@ -36,7 +36,7 @@ public class ChangeSlots implements CommandExecutor, Listener {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public static void onJoin(PlayerJoinEvent e) {
 		if (announce.equalsIgnoreCase("true")) {
 			if (Bukkit.getServer().getOnlinePlayers().size() == Bukkit.getServer().getMaxPlayers()) {
@@ -58,11 +58,11 @@ public class ChangeSlots implements CommandExecutor, Listener {
 		if (!sender.hasPermission(permission)) {
 			sender.sendMessage("No permission: " + permission);
 			return true;
-		} 
+		}
 		if (args.length == 0) {
 			sender.sendMessage(Util.color("&cPlease put a number. " + "&7&o((Current Max: " + Bukkit.getServer().getMaxPlayers() + "))"));
 			return true;
-		} 
+		}
 		try {
 			changeSlots(Integer.parseInt(args[0]));
 			sender.sendMessage(Util.color("&aMax players is now to &e" + args[0]));
@@ -71,7 +71,7 @@ public class ChangeSlots implements CommandExecutor, Listener {
 		} catch (ReflectiveOperationException e) {
 			sender.sendMessage(Util.color("&cError! check console"));
 			e.printStackTrace();
-		} 
+		}
 		return true;
 
 
@@ -105,9 +105,9 @@ public class ChangeSlots implements CommandExecutor, Listener {
 					is.close();
 				} catch (Throwable throwable1) {
 					throwable.addSuppressed(throwable1);
-				} 
+				}
 				throw throwable;
-			} 	      
+			}
 
 			String maxPlayers = Integer.toString(plugin.getServer().getMaxPlayers());
 			if (properties.getProperty("max-players").equals(maxPlayers)) {
@@ -123,14 +123,14 @@ public class ChangeSlots implements CommandExecutor, Listener {
 					os.close();
 				} catch (Throwable throwable1) {
 					throwable.addSuppressed(throwable1);
-				} 
+				}
 				throw throwable;
-			} 
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 
-	} 
+	}
 
 
 }

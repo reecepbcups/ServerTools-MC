@@ -25,18 +25,18 @@ public class ChatNumberGuesser implements Listener{
 		plugin = instance;
 
 		String section = "Commands.ChatNumberGuess";
-		
+
 		if(plugin.enabledInConfig(section+".Enabled")) {
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 
 			command = "/"+plugin.getConfig().getString(section+".command");
 			AdminPerm = plugin.getConfig().getString(section+".AdminPerm");
 			Running = false;
-		} 
+		}
 	}
 
 
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 
 		//e.getPlayer().sendMessage(e.getMessage());
@@ -49,8 +49,8 @@ public class ChatNumberGuesser implements Listener{
 
 		if (!(p.hasPermission(AdminPerm))) {
 			p.sendMessage(Util.color("&cNo Permission " + AdminPerm));
-			return;			
-		} 
+			return;
+		}
 		e.setCancelled(true);
 
 		String[] args = e.getMessage().replace(command, "").split(" ");
@@ -59,7 +59,7 @@ public class ChatNumberGuesser implements Listener{
 
 		if(args.length <= 1) {
 			Util.coloredMessage(p, "&cUSAGE: /guess (start/stop)");
-			return;        	
+			return;
 		}
 
 		//p.sendMessage(args);
@@ -68,9 +68,9 @@ public class ChatNumberGuesser implements Listener{
 			if(Running) {
 				Util.coloredMessage(p, "&cGame already running!");
 				return;
-			} 
+			}
 
-			if(args.length > 0) {   
+			if(args.length > 0) {
 				Number  = new Random().nextInt(100-1);
 				Util.coloredMessage(p, "&7&o(( random number " + Number + " chosen ))");
 
@@ -86,7 +86,7 @@ public class ChatNumberGuesser implements Listener{
 		if(args[1].equalsIgnoreCase("stop")) {
 			if(Running) {
 				Bukkit.broadcastMessage(Util.color("  &cThe chat guess game has been stopped by " + p.getName()));
-			} 
+			}
 
 
 
@@ -97,7 +97,7 @@ public class ChatNumberGuesser implements Listener{
 
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onChat(AsyncPlayerChatEvent e) {
 		if (!Running) {
 			return;
@@ -110,7 +110,7 @@ public class ChatNumberGuesser implements Listener{
 			msg = msg.replace("%player%", e.getPlayer().getName());
 			msg = msg.replace("%number%", Number.toString());
 			Bukkit.broadcastMessage(Util.color(msg));
-		} 
+		}
 	}
 
 

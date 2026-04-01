@@ -23,7 +23,7 @@ public class DisableHunger implements Listener {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void foodChangeEvent(FoodLevelChangeEvent event) {
 		if (event.getEntityType() == EntityType.PLAYER) {
 			Player player = (Player) event.getEntity();

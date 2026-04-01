@@ -121,7 +121,7 @@ public class CMDAlias implements Listener {
 	
 
 	String command;
-	@EventHandler(ignoreCancelled = false, priority = EventPriority.HIGHEST)
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 
 		if (!(e.getMessage().length() > 1)) {

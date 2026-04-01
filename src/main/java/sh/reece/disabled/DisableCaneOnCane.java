@@ -26,7 +26,7 @@ public class DisableCaneOnCane implements Listener {
 	
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onBookWrite(BlockPlaceEvent e) {
 		Player p = e.getPlayer();
 		Block b = e.getBlock().getLocation().add(0,-1,0).getBlock();

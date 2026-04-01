@@ -20,7 +20,7 @@ public class DisablePhantomSpawn implements Listener {
 	
 	
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onDecay(CreatureSpawnEvent e) {
 		// does not check to make sure server is >1.13
 		// if someone enables this, thats on them. idot
