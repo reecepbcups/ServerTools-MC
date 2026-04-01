@@ -1,7 +1,9 @@
 package sh.reece.runnables;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -25,7 +27,7 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor  {
 	private FileConfiguration config;
 	private String Section, ClearSoonMSG, ClearedMSG;
 	private int delay;
-	List<Integer> warningTimes = Arrays.asList(new Integer[]{5, 10, 30, 60, 120});
+	Set<Integer> warningTimes = new HashSet<>(Arrays.asList(5, 10, 30, 60, 120));
 	private Boolean firstRun;
 	private Boolean AutoClearMobs;
 	
