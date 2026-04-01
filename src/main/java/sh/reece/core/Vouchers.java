@@ -178,7 +178,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
         return item;
     }
 
-	@EventHandler(ignoreCancelled = true)
+	@EventHandler
 	public void playerClickedOnVoucher(PlayerInteractEvent e) {
 		// click of voucher	if in keys
 
@@ -335,7 +335,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	}
 
 
-	@EventHandler(ignoreCancelled = true) // gives itemstack on click
+	@EventHandler // gives itemstack on click
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
 
