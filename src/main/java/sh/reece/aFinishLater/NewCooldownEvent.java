@@ -63,7 +63,7 @@ public class NewCooldownEvent implements Listener {
          */
         
         
-        if (plugin.enabledInConfig(section+".Enabled")) {
+        if (plugin.getConfigUtils().enabledInConfig(section+".Enabled")) {
         	
         	FileConfiguration config = plugin.getConfig();
         	List<String> keyData;

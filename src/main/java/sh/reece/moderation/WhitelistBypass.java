@@ -19,7 +19,7 @@ public class WhitelistBypass implements Listener {
 	public WhitelistBypass(Main instance) {
 		plugin = instance;
 
-		if (plugin.enabledInConfig("Moderation.WhitelistBypass.Enabled")) {
+		if (plugin.getConfigUtils().enabledInConfig("Moderation.WhitelistBypass.Enabled")) {
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);	
 
 			this.Whitelistperm = plugin.getConfig().getString("Moderation.WhitelistBypass.Permission");

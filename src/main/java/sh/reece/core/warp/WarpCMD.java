@@ -37,7 +37,7 @@ public class WarpCMD implements CommandExecutor, TabCompleter {
 		Section = "Core.Warps";        
 
 		// https://essinfo.xeya.me/permissions.html
-		if(plugin.enabledInConfig(Section+".Enabled")) {
+		if(plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 			// configUtils = plugin.getConfigUtils();
 			plugin.getCommand("warp").setExecutor(this);
 			plugin.getCommand("warp").setTabCompleter(this);

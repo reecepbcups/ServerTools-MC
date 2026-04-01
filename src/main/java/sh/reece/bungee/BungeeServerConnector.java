@@ -12,31 +12,30 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-public class BungeeServerConnector implements Listener {
+public class BungeeServerConnector extends ToggleableListener {
 
-	private static Main plugin;
+	private static Main pluginRef;
 	private String Section;
 	private String CMD;
 	private Set<String> avaliableServers;
 	public static final String BUNGEE_CORD_CHANNEL = "BungeeCord";
 
 	public BungeeServerConnector(Main instance) {
-		plugin = instance;
+		super(instance, "Bungee.BungeeServerCMD");
+		pluginRef = instance;
 
-		Section = "Bungee.BungeeServerCMD";
-		if(plugin.enabledInConfig(Section+".Enabled")) {
+		if(isEnabled()) {
+			Section = "Bungee.BungeeServerCMD";
 
-			if (!Bukkit.getMessenger().isOutgoingChannelRegistered(plugin, "BungeeCord")) {
-				Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord");
+			if (!Bukkit.getMessenger().isOutgoingChannelRegistered(instance, "BungeeCord")) {
+				Bukkit.getMessenger().registerOutgoingPluginChannel(instance, "BungeeCord");
 			}
 
-			CMD = plugin.getConfig().getString(Section+".command");
-			avaliableServers = plugin.getConfig().getConfigurationSection(Section+".Aliases").getKeys(false);
-
-
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
+			CMD = instance.getConfig().getString(Section+".command");
+			avaliableServers = instance.getConfig().getConfigurationSection(Section+".Aliases").getKeys(false);
 		}
 	}
 
@@ -64,7 +63,7 @@ public class BungeeServerConnector implements Listener {
 		// if the argument is a config key from the config, connect
 		if(avaliableServers.contains(msg[1])) {
 			//Util.consoleMSG("Connecting");
-			connect(p, plugin.getConfig().getString(Section+".Aliases."+msg[1]));
+			connect(p, pluginRef.getConfig().getString("Bungee.BungeeServerCMD.Aliases."+msg[1]));
 		} else {
 			Util.coloredMessage(p, "\n&cThis server is not avaliable...");
 			sendHelpMenu(p, myCMD);
@@ -92,7 +91,7 @@ public class BungeeServerConnector implements Listener {
 		} catch (IOException ex) {
 			throw new AssertionError();
 		}
-		player.sendPluginMessage(plugin, "BungeeCord", byteArrayOutputStream.toByteArray());
+		player.sendPluginMessage(pluginRef, "BungeeCord", byteArrayOutputStream.toByteArray());
 	}
 
 }

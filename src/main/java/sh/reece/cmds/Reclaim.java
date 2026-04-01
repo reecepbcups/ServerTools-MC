@@ -1,69 +1,42 @@
 package sh.reece.cmds;
 
-import sh.reece.tools.AlternateCommandHandler;
-import sh.reece.tools.ConfigUtils;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-public class Reclaim implements Listener, CommandExecutor {
+public class Reclaim extends BaseCommand {
 
-	private static Main plugin;
-	private FileConfiguration config, reclaimcnfg;
-	private final String Section;
+	private FileConfiguration reclaimcnfg;
 	private String FILENAME;
 	private Set<String> RECLAIM_PERMISSIONS;
 	private List<String> usedMemberReclaims;
-	private int srtIDXforUsrOut; // used in showcasing msg in chat
+	private int srtIDXforUsrOut;
 
-	private ConfigUtils configUtils;
-	
 	public Reclaim(Main instance) {
-		plugin = instance;
+		super(instance, "Commands.reclaim", "reclaim");
 
-		Section = "Commands.reclaim";                
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-			configUtils = plugin.getConfigUtils();
-
-
-			config = plugin.getConfig();
-
-			//        	// plugins/ServerTools/DATA
+		if (isEnabled()) {
 			configUtils.createDirectory("DATA");
 			FILENAME = File.separator + "DATA" + File.separator + "Reclaim.yml";
 			configUtils.createFile(FILENAME);
-			reclaimcnfg = configUtils.getConfigFile(FILENAME);	
+			reclaimcnfg = configUtils.getConfigFile(FILENAME);
 
-			RECLAIM_PERMISSIONS = config.getConfigurationSection(Section+".permissions").getKeys(false); 
-			srtIDXforUsrOut = config.getInt(Section+".BeginAtIndex");
-			plugin.getCommand("reclaim").setExecutor(this);    		    	
-		} else {
-			AlternateCommandHandler.addDisableCommand("reclaim");			
+			RECLAIM_PERMISSIONS = plugin.getConfig().getConfigurationSection(section+".permissions").getKeys(false);
+			srtIDXforUsrOut = plugin.getConfig().getInt(section+".BeginAtIndex");
 		}
 	}
 
-	//	// add on join
-	//	public void onPlayerJoin(PlayerJoinEvent e) {
-	//		// bukkit runnable 10 second delay
-	//		Player p = e.getPlayer();
-	//		User user = giveMeADamnUser(p.getUniqueId());
-	//		if(groups.contains(user.getPrimaryGroup())){
-	//			Util.coloredMessage(p, "&f&l[!] &fYou have a package to redeem! &7&o(/reclaim)");
-	//		}
-	//	}
-
 	private String getPlayersGroupIfAny(Player p) {
 		for(String perm : RECLAIM_PERMISSIONS) {
-			if(p.hasPermission(perm.replace("_", ""))) { // group.king
+			if(p.hasPermission(perm.replace("_", ""))) {
 				Util.consoleMSG(p.getPlayer().getName()+" has perm "+perm);
 				return perm;
 			}
@@ -78,35 +51,24 @@ public class Reclaim implements Listener, CommandExecutor {
 
 		if(p.isOp()) { Util.coloredMessage(p, "&4&l[!] &cRemeber you are OPPED"); }
 
-		// deny use if they have already claimed in the past FOR their rank
-		if(reclaimcnfg.getStringList("USED").contains(p.getUniqueId().toString())) {	
-			
-			// change this to:
-			// reclaimcnfg.getConfigurationSection("USED").getKeys(false); // RANKS 
-			// if String key in ^ contains  p.getUniqueId().toString(), return true;
-			// this allows for someone to be lower iron rank, but then claim to be 
-			// a higher rank such as dragon. Probably a bad idea to do this
-			// provided then they would get so many items.
-			
-			
+		if(reclaimcnfg.getStringList("USED").contains(p.getUniqueId().toString())) {
 			Util.coloredMessage(p, configUtils.lang("RECLAIM_ALREADY_CLAIMED"));
 			return true;
-		} 
+		}
 
 		String permission = getPlayersGroupIfAny(p);
 		if(permission == null) {
 			Util.coloredMessage(p, configUtils.lang("RECLAIM_NOTHING"));
 			return true;
 		}
-		
+
 		runCMDS(p, permission);
 		return true;
-		
+
 	}
 
 	private void runCMDS(Player p, String permission) {
-		for(String command : config.getStringList(Section+".permissions."+permission)) {
-			//Util.consoleMSG("CMD: " + command);
+		for(String command : plugin.getConfig().getStringList(section+".permissions."+permission)) {
 			Util.console(command.replace("%player%", p.getName()));
 		}
 		Util.coloredMessage(p, configUtils.lang("RECLAIM_RECLAIMED")

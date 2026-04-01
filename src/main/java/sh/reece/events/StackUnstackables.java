@@ -3,30 +3,26 @@ package sh.reece.events;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 
-public class StackUnstackables implements Listener {
+public class StackUnstackables extends ToggleableListener {
 
-	private Main plugin;
 	private Set<Material> mats = new HashSet<>();
+
 	public StackUnstackables(Main instance) {
-		plugin = instance;
+		super(instance, "Events.StackUnstackables");
 
-		if (plugin.enabledInConfig("Events.StackUnstackables.Enabled")) {
-
-			for(String _mat : plugin.getConfig().getStringList("Events.StackUnstackables.items")) {
+		if (isEnabled()) {
+			for (String _mat : instance.getConfig().getStringList("Events.StackUnstackables.items")) {
 				mats.add(Material.getMaterial(_mat.toUpperCase()));
 			}
-
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 		}
 	}
 

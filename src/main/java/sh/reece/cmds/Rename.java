@@ -1,13 +1,10 @@
 package sh.reece.cmds;
 
-import sh.reece.tools.AlternateCommandHandler;
-import sh.reece.tools.ConfigUtils;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,35 +17,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
+public class Rename extends BaseCommand implements Listener {
 
-	private static Main plugin;
-	private final String Section;
-	private String Permission;
 	private String lorePermisssion;
 	private List<String> disabledRenameItems;
-	private ConfigUtils configUtils;
 
 	public Rename(Main instance) {
-		plugin = instance;
-		configUtils = plugin.getConfigUtils();
+		super(instance, "Misc.Rename", "rename");
 
-		Section = "Misc.Rename";
-
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-
-			Permission = "tools.rename";
-			Permission = plugin.getConfig().getString(Section+".permission");
-			lorePermisssion = plugin.getConfig().getString(Section+".lorePermission");
-
-			disabledRenameItems = plugin.getConfig().getStringList(Section+".disabledRename");
-
-			plugin.getCommand("rename").setExecutor(this);
-			plugin.getCommand("rename").setTabCompleter(this);
-			plugin.getServer().getPluginManager().registerEvents(this, plugin);
-
-		} else {
-			AlternateCommandHandler.addDisableCommand("rename");
+		if(isEnabled()) {
+			lorePermisssion = instance.getConfig().getString(section+".lorePermission");
+			disabledRenameItems = instance.getConfig().getStringList(section+".disabledRename");
 		}
 	}
 
@@ -114,7 +93,7 @@ public class Rename implements CommandExecutor, Listener, TabCompleter {//,  {
 
 		case "name":
 
-			if (!(p.hasPermission(Permission))) {
+			if (!(p.hasPermission(permission))) {
 				Util.coloredMessage(p, "&cNo Permission to Rename item Names :(");
 				return true;
 			}

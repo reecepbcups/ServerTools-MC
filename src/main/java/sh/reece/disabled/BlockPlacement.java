@@ -4,31 +4,23 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-public class BlockPlacement implements Listener {
+public class BlockPlacement extends ToggleableListener {
 
-	private static Main plugin;
 	private static final Set<UUID> allowed_to_place = new HashSet<UUID>();
-	private String permission;
 
 	public BlockPlacement(Main instance) {
-        plugin = instance;
-
-        if (plugin.enabledInConfig("Disabled.DisableBlockPlacement.Enabled")) {
-    		Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-			permission = plugin.getConfig().getString("Disabled.DisableBlockPlacement.Permission");
-    	}
+		super(instance, "Disabled.DisableBlockPlacement");
 	}
-	
-	
+
+
 	@EventHandler(ignoreCancelled = true)
 	public void onBlockBlock(BlockPlaceEvent e) {
 		Player player = e.getPlayer();
@@ -44,5 +36,5 @@ public class BlockPlacement implements Listener {
 			e.setCancelled(true);
 		}
 	}
-	
+
 }

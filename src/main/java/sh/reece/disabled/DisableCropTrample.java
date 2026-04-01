@@ -1,23 +1,17 @@
 package sh.reece.disabled;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 
-public class DisableCropTrample implements Listener {
-	
-	private static Main plugin;
+public class DisableCropTrample extends ToggleableListener {
+
 	public DisableCropTrample(Main instance) {
-        plugin = instance;        
-
-        if (plugin.enabledInConfig("Disabled.DisableCropTrample.Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);			
-		}
+		super(instance, "Disabled.DisableCropTrample");
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -25,5 +19,5 @@ public class DisableCropTrample implements Listener {
 		if (e.getAction() == Action.PHYSICAL && e.getClickedBlock().getType().equals(Material.FARMLAND))
 			e.setCancelled(true);
 	}
-	
+
 }

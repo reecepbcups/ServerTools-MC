@@ -10,7 +10,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.Inventory;
@@ -19,11 +18,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-public class FeaturesGUI implements Listener {
+public class FeaturesGUI extends ToggleableListener {
 
-	private static Main plugin;
 	private static Inventory featuresInv;
 	private static FileConfiguration config;
 	private String command, InvName, DefaultItemNameColor, DefaultItemIfNotSet;
@@ -32,83 +31,73 @@ public class FeaturesGUI implements Listener {
 	private ConfigUtils configUtils;
 
 	public FeaturesGUI(Main instance) {
-		plugin = instance;
+		super(instance, "FeaturesGUI");
 
-		if (plugin.enabledInConfig("FeaturesGUI.Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-
-			configUtils = plugin.getConfigUtils();
+		if (isEnabled()) {
+			configUtils = instance.getConfigUtils();
 
 			configUtils.createConfig("FeaturesGUI.yml");
 			config = configUtils.getConfigFile("FeaturesGUI.yml");
-			command = "/"+config.getString("Command");
+			command = "/" + config.getString("Command");
 
 			InvName = Util.color(config.getString("Name"));
-			rows = config.getInt("Rows")*9;
+			rows = config.getInt("Rows") * 9;
 
 			DefaultItemNameColor = config.getString("DefaultItemNameColor");
-	 		DefaultItemIfNotSet = config.getString("DefaultItemIfNotSet");
+			DefaultItemIfNotSet = config.getString("DefaultItemIfNotSet");
 
-	 		featuresInv = Bukkit.createInventory(null, rows, InvName);
+			featuresInv = Bukkit.createInventory(null, rows, InvName);
 		}
 	}
 
-
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
-        Player p = e.getPlayer();
+		Player p = e.getPlayer();
 
-        if (!e.getMessage().toLowerCase().startsWith(command)){
-            return;
-        }
+		if (!e.getMessage().toLowerCase().startsWith(command)) {
+			return;
+		}
 
-        // This auto updates it on every open
-      	config = configUtils.getConfigFile("FeaturesGUI.yml");
+		// This auto updates it on every open
+		config = configUtils.getConfigFile("FeaturesGUI.yml");
 
- 		Set<String> keys = config.getConfigurationSection("Items").getKeys(false);
+		Set<String> keys = config.getConfigurationSection("Items").getKeys(false);
 
- 		int i = 0;
- 		for(String key : keys) {
+		int i = 0;
+		for (String key : keys) {
 
- 			String item = config.getString("Items."+key+".Item");
- 			//String name = config.getString("Items."+key+".Name");
- 			String name = key;
- 			List<String> lores = config.getStringList("Items."+key+".Lore");
+			String item = config.getString("Items." + key + ".Item");
+			String name = key;
+			List<String> lores = config.getStringList("Items." + key + ".Lore");
 
+			if (name.startsWith("_")) name = name.substring(1);
 
- 			if(name.startsWith("_")) name = name.substring(1);
+			if (item == null) item = DefaultItemIfNotSet;
 
- 			if(item == null) item = DefaultItemIfNotSet;
+			if (!DefaultItemNameColor.equalsIgnoreCase("")) {
+				name = DefaultItemNameColor + name;
+			}
 
+			createDisplay(featuresInv, Material.getMaterial(item.toUpperCase()), i, name, lores);
+			i += 1;
+		}
+		p.openInventory(featuresInv);
 
- 			if(!DefaultItemNameColor.equalsIgnoreCase("")) {
- 				name = DefaultItemNameColor + name;
- 			}
-
- 			createDisplay(featuresInv, Material.getMaterial(item.toUpperCase()), i, name, lores);
- 			i+=1;
- 		}
- 		p.openInventory(featuresInv);
-
- 		e.setCancelled(true);
- 		return;
-
-
-    }
-
+		e.setCancelled(true);
+		return;
+	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
 
-		if(event.getView().getTitle().equalsIgnoreCase(InvName)) {
-			if(clicked == null) {
+		if (event.getView().getTitle().equalsIgnoreCase(InvName)) {
+			if (clicked == null) {
 				return;
 			}
 			event.setCancelled(true);
 		}
 	}
-
 
 	public static void createDisplay(Inventory inv, Material material, int Slot, String name, List<String> list) {
 		ArrayList<String> Lore = new ArrayList<String>();
@@ -119,9 +108,8 @@ public class FeaturesGUI implements Listener {
 
 		String DefaultLoreColor = config.getString("DefaultLoreColor");
 
-		for(String l : list) {
-
-			if(!DefaultLoreColor.equalsIgnoreCase("")) {
+		for (String l : list) {
+			if (!DefaultLoreColor.equalsIgnoreCase("")) {
 				l = DefaultLoreColor + l;
 			}
 
@@ -132,9 +120,5 @@ public class FeaturesGUI implements Listener {
 		item.setItemMeta(meta);
 
 		inv.setItem(Slot, item);
-
 	}
-
-
-
 }

@@ -2,7 +2,6 @@ package sh.reece.runnables;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -21,7 +20,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 
-public class ClearLag extends BukkitRunnable implements CommandExecutor  {
+public class ClearLag extends BukkitRunnable implements CommandExecutor {
 
 	private static Main plugin;
 	private FileConfiguration config;
@@ -30,139 +29,128 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor  {
 	Set<Integer> warningTimes = new HashSet<>(Arrays.asList(5, 10, 30, 60, 120));
 	private Boolean firstRun;
 	private Boolean AutoClearMobs;
-	
-	public ClearLag(Main instance) {
-        plugin = instance;
-        
-        Section = "Misc.ClearLag";                
-        if(plugin.enabledInConfig(Section+".Enabled")) {
-        	
-        	config = plugin.getConfig();	
 
-        	Boolean AutoClearItems = config.getString(Section+".AutoClearItems.Enabled").equalsIgnoreCase("true");
-        	
-        	AutoClearMobs = config.getString(Section+".AutoClearItems.ClearMobs").equalsIgnoreCase("true");
-        	
-        	delay = config.getInt(Section+".AutoClearItems.ClearDelay");
-        	firstRun = true;
-        	
-        	if(AutoClearItems) {        		
-        		runTaskLater(plugin, 0*20);
-        	}
-        	
-        	ClearSoonMSG = config.getString(Section+".AutoClearItems.ClearSoonMSG");
-        	ClearedMSG = config.getString(Section+".AutoClearItems.ClearedMSG");
-        	
-        	
-        	plugin.getCommand("clearlag").setExecutor(this);
-        	
-    	}
+	public ClearLag(Main instance) {
+		plugin = instance;
+
+		Section = "Misc.ClearLag";
+		if (plugin.getConfigUtils().enabledInConfig(Section + ".Enabled")) {
+
+			config = plugin.getConfig();
+
+			Boolean AutoClearItems = config.getString(Section + ".AutoClearItems.Enabled").equalsIgnoreCase("true");
+
+			AutoClearMobs = config.getString(Section + ".AutoClearItems.ClearMobs").equalsIgnoreCase("true");
+
+			delay = config.getInt(Section + ".AutoClearItems.ClearDelay");
+			firstRun = true;
+
+			if (AutoClearItems) {
+				runTaskLater(plugin, 0 * 20);
+			}
+
+			ClearSoonMSG = config.getString(Section + ".AutoClearItems.ClearSoonMSG");
+			ClearedMSG = config.getString(Section + ".AutoClearItems.ClearedMSG");
+
+			plugin.getCommand("clearlag").setExecutor(this);
+		}
 	}
-	
+
 	private int test = delay;
+
 	@Override
 	public void run() {
-		
-		new BukkitRunnable(){
-			public void run() {	
-				
-				if(test<=0) {					
+
+		new BukkitRunnable() {
+			public void run() {
+
+				if (test <= 0) {
 					clearItemsInAllWorlds();
 					test = delay;
 					return;
-				} 
-				
-				if(warningTimes.contains(test)) {
-					Util.coloredBroadcast(ClearSoonMSG.replace("%seconds%", test+""));
 				}
-								
-				test-=5;
-				
-													
+
+				if (warningTimes.contains(test)) {
+					Util.coloredBroadcast(ClearSoonMSG.replace("%seconds%", test + ""));
+				}
+
+				test -= 5;
 			}
-		}.runTaskTimer(plugin, 0, 5*20L); 
+		}.runTaskTimer(plugin, 0, 5 * 20L);
 	}
 
-	
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
-		if (!(sender.hasPermission("tools.clearlag"))) {		
-			sender.sendMessage(Util.color("&cNo Permission to use "+label+" :("));
-			return true;			
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (!(sender.hasPermission("tools.clearlag"))) {
+			sender.sendMessage(Util.color("&cNo Permission to use " + label + " :("));
+			return true;
 		}
-		
+
 		Player p = (Player) sender;
 
 		if (args.length == 0) {
 			sendHelpMenu(p);
 			return true;
-		}	
-		
-		switch(args[0]){
-			// /clearlag clear
-			case "clear":				
+		}
+
+		switch (args[0]) {
+			case "clear":
 				clearItemsInAllWorlds();
 				Util.coloredMessage(p, "&aYou cleared all items on the ground");
-				return true;	
-				
+				return true;
+
 			case "radius":
 			case "rad":
-			case "r":				
-				if(args.length < 2) {
+			case "r":
+				if (args.length < 2) {
 					sendHelpMenu(p);
 					return true;
 				}
-				
+
 				int radius = Integer.parseInt(args[1]);
-				
-				for(Entity e : p.getNearbyEntities(radius, radius, radius)) {
-					if(e instanceof Item) {
+
+				for (Entity e : p.getNearbyEntities(radius, radius, radius)) {
+					if (e instanceof Item) {
 						e.remove();
 					}
 				}
-				
+
 				return true;
-				
-				
+
 			default:
 				sendHelpMenu(p);
-				return true;		
-		}		
+				return true;
+		}
 	}
-	
+
 	public void clearItemsInAllWorlds() {
-		
-		if(firstRun) {
+
+		if (firstRun) {
 			firstRun = !firstRun;
 			return;
 		}
-		
-		for(World w : Bukkit.getWorlds()) {
 
-			for(Entity e : w.getEntities()) {
-				if(e instanceof Item) {
+		for (World w : Bukkit.getWorlds()) {
+
+			for (Entity e : w.getEntities()) {
+				if (e instanceof Item) {
 					e.remove();
 				}
 
-				if(AutoClearMobs) { // clear all mobs if enabled
-					if(e instanceof Animals || e instanceof Monster) {
-						if(e.getCustomName() == null) {
-							e.remove(); // remove non named entities
+				if (AutoClearMobs) {
+					if (e instanceof Animals || e instanceof Monster) {
+						if (e.getCustomName() == null) {
+							e.remove();
 						}
-
 					}
 				}
 			}
-		}	
+		}
 		Util.coloredBroadcast(ClearedMSG);
 	}
 
-	
 	public void sendHelpMenu(Player p) {
 		Util.coloredMessage(p, "&f/clearlag &7clear");
 		Util.coloredMessage(p, "&f/clearlag &7radius <blocks>");
 	}
-	
-	
-	
 }

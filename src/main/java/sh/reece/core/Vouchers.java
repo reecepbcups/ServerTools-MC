@@ -54,7 +54,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
         plugin = instance;
 
         Section = "Vouchers";
-        if(plugin.enabledInConfig(Section+".Enabled")) {
+        if(plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 			configUtils = plugin.getConfigUtils();
 
         	configUtils.createConfig("Vouchers.yml");

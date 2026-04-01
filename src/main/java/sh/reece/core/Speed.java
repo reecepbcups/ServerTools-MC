@@ -1,37 +1,22 @@
 package sh.reece.core;
 
-import sh.reece.tools.AlternateCommandHandler;
-import sh.reece.tools.ConfigUtils;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class Speed implements CommandExecutor {
+public class Speed extends BaseCommand {
 
-	private static Main plugin;
-	private final String Section;
 	private String FlyPerm;
 	private String WalkPerm;
 
-	private ConfigUtils configUtils;
-	
 	public Speed(Main instance) {
-		plugin = instance;
-
-		Section = "Commands.Speed";                
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-
-			configUtils = plugin.getConfigUtils();
-			
-			plugin.getCommand("speed").setExecutor(this);
-			FlyPerm = plugin.getConfig().getString(Section+".FlyPermission");
-			WalkPerm = plugin.getConfig().getString(Section+".WalkPermission");
-			
-		} else {
-			AlternateCommandHandler.addDisableCommand("speed");
+		super(instance, "Commands.Speed", "speed");
+		if (isEnabled()) {
+			FlyPerm = plugin.getConfig().getString(section + ".FlyPermission");
+			WalkPerm = plugin.getConfig().getString(section + ".WalkPermission");
 		}
 	}
 
@@ -41,12 +26,11 @@ public class Speed implements CommandExecutor {
 
 		float FloatSpeed;
 		if (args.length < 2) {
-			
-			// sets speed based on flying or walking currently
-			if(args.length==1) {
+
+			if (args.length == 1) {
 				char character = args[0].charAt(0);
-				if (Character.isDigit(character)) { 					
-					if(p.isFlying()) {
+				if (Character.isDigit(character)) {
+					if (p.isFlying()) {
 						setFlySpeed(p, getMoveSpeed(p, args[0]));
 					} else {
 						setWalkSpeed(p, getMoveSpeed(p, args[0]));
@@ -54,13 +38,13 @@ public class Speed implements CommandExecutor {
 				}
 			} else {
 				sendHelpMenu(p);
-			}		
-			
+			}
+
 			return true;
-			
+
 		} else {
-			
-			if(args[1].toLowerCase().equalsIgnoreCase("reset")) {
+
+			if (args[1].toLowerCase().equalsIgnoreCase("reset")) {
 				switch (args[0]) {
 				case "walk":
 					resetSpeed(p, "walk");
@@ -73,28 +57,27 @@ public class Speed implements CommandExecutor {
 				}
 				return true;
 			}
-			
-			FloatSpeed = getMoveSpeed(p, args[1]);			
-			if (FloatSpeed == 0f) { return true; }			
+
+			FloatSpeed = getMoveSpeed(p, args[1]);
+			if (FloatSpeed == 0f) { return true; }
 		}
 
-		switch(args[0]){
-		
-		case "walk":	
+		switch (args[0]) {
+		case "walk":
 			setWalkSpeed(p, FloatSpeed);
-			return true;	
+			return true;
 		case "fly":
 			setFlySpeed(p, FloatSpeed);
-			return true;		
+			return true;
 		default:
 			sendHelpMenu(p);
-			return true;		
-		}		
+			return true;
+		}
 	}
-	
+
 	public void resetSpeed(Player p, String SPEED_TYPES) {
 		String FinalMSG = configUtils.lang("SPEED_RESET");
-		
+
 		switch (SPEED_TYPES.toLowerCase()) {
 		case "walk":
 			p.setWalkSpeed(0.2f);
@@ -107,49 +90,47 @@ public class Speed implements CommandExecutor {
 		default:
 			break;
 		}
-		Util.coloredMessage(p, FinalMSG);		
+		Util.coloredMessage(p, FinalMSG);
 	}
-	
+
 	public void setFlySpeed(Player p, Float speed) {
-		if (!(p.hasPermission(FlyPerm))) {		
+		if (!(p.hasPermission(FlyPerm))) {
 			Util.coloredMessage(p, "&cNo Permission to use /speed fly :(");
-			return;			
-		}		
+			return;
+		}
 		p.setFlySpeed(speed);
-		Util.coloredMessage(p, configUtils.lang("SPEED_FLY").replace("%speed%", (speed*10)+""));
+		Util.coloredMessage(p, configUtils.lang("SPEED_FLY").replace("%speed%", (speed * 10) + ""));
 	}
 	public void setWalkSpeed(Player p, Float speed) {
-		if (!(p.hasPermission(WalkPerm))) {		
+		if (!(p.hasPermission(WalkPerm))) {
 			Util.coloredMessage(p, "&cNo Permission to use /speed walk :(");
-			return;			
-		}	
+			return;
+		}
 		p.setWalkSpeed(speed);
-		Util.coloredMessage(p, configUtils.lang("SPEED_WALK").replace("%speed%", (speed*10)+""));
+		Util.coloredMessage(p, configUtils.lang("SPEED_WALK").replace("%speed%", (speed * 10) + ""));
 	}
-	
+
 	public float getMoveSpeed(Player player, String MoveSpeed) {
 		float FloatSpeed;
 		try {
-			FloatSpeed = Float.parseFloat(MoveSpeed); 
+			FloatSpeed = Float.parseFloat(MoveSpeed);
 			if (FloatSpeed > 10f) {
 				FloatSpeed = 10f;
-            } else if (FloatSpeed < 0.0001f) {
-            	FloatSpeed = 0.0001f;
-            }
+			} else if (FloatSpeed < 0.0001f) {
+				FloatSpeed = 0.0001f;
+			}
 		} catch (Exception e) {
-			Util.coloredMessage(player, "&c&n"+MoveSpeed+"&c is not a number!");
+			Util.coloredMessage(player, "&c&n" + MoveSpeed + "&c is not a number!");
 			return 0f;
 		}
 
-		return FloatSpeed/10;
+		return FloatSpeed / 10;
 	}
 
 	public void sendHelpMenu(Player p) {
 		Util.coloredMessage(p, "&f/speed [0-10]");
 		Util.coloredMessage(p, "&f/speed walk &7<speed/reset>");
-		Util.coloredMessage(p, "&f/speed fly &7<speed/reset>");		
+		Util.coloredMessage(p, "&f/speed fly &7<speed/reset>");
 	}
-
-
 
 }

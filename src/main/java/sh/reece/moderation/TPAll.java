@@ -23,7 +23,7 @@ public class TPAll implements CommandExecutor {//,  {
 	public TPAll(Main instance) {
 		plugin = instance;
 		
-		if (plugin.enabledInConfig("Moderation.TPAll.Enabled")) {
+		if (plugin.getConfigUtils().enabledInConfig("Moderation.TPAll.Enabled")) {
 			ConfigUtils = plugin.getConfigUtils();
 
 			plugin.getCommand("tpall").setExecutor(this);

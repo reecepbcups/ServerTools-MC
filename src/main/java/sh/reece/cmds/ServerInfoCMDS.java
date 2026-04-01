@@ -27,7 +27,7 @@ public class ServerInfoCMDS implements Listener {//, CommandExecutor {
 
         Section = "ServerInfoCMDS";
 
-        if(plugin.enabledInConfig(Section+".Enabled")) {
+        if(plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 
         	config = ConfigUtils.getInstance().createConfig("ServerInfoCommands.yml");
 
@@ -55,7 +55,7 @@ public class ServerInfoCMDS implements Listener {//, CommandExecutor {
 						s = PlaceholderAPI.setPlaceholders(p, s);
 					}
 
-            		Util.coloredMessage(p, Main.replaceVariable(s));
+            		Util.coloredMessage(p, ConfigUtils.replaceVariable(s));
             	}
         	}
         	e.setCancelled(true);

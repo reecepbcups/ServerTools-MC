@@ -1,11 +1,9 @@
 package sh.reece.moderation;
 
-import sh.reece.tools.ConfigUtils;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -16,11 +14,9 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import java.util.HashMap;
 import java.util.List;
 
-public class CommandProtection implements Listener, CommandExecutor {
+public class CommandProtection extends BaseCommand implements Listener {
 
-	private static Main plugin;
 	private FileConfiguration config;
-	private final String Section;
 	private String FILENAME;
 	private String password;
 
@@ -30,30 +26,22 @@ public class CommandProtection implements Listener, CommandExecutor {
 
 	private HashMap<String, Long> FailedPassAttempts;
 
-	private ConfigUtils configUtils;
-	
 
 	public CommandProtection(Main instance) {
-		plugin = instance;
+		super(instance, "Moderation.CommandProtect", "commandprotect");
 
-		Section = "Moderation.CommandProtect";                
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-			configUtils = plugin.getConfigUtils();
-
+		if(isEnabled()) {
 			FILENAME = "CommandProtect.yml";
-			configUtils.createConfig(FILENAME);	
-			config = configUtils.getConfigFile(FILENAME);	
+			configUtils.createConfig(FILENAME);
+			config = configUtils.getConfigFile(FILENAME);
 
 			AllowedPlayers = config.getStringList("AllowedPlayers");
 			PasswordView = config.getStringList("AllowedPlayers");
 
 			ProtectedCommands = config.getStringList("ProtectedCommands");
 			password = config.getString("password");
-			
-			FailedPassAttempts = new HashMap<String, Long>();
 
-			plugin.getCommand("commandprotect").setExecutor(this);
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);    		
+			FailedPassAttempts = new HashMap<String, Long>();
 		}
 	}
 
@@ -64,7 +52,7 @@ public class CommandProtection implements Listener, CommandExecutor {
 
 		if(e.getMessage().length() > 1) {
 			command = command.split(" ")[0];
-		} 
+		}
 
 		// Util.consoleMSG(command);
 
@@ -73,12 +61,12 @@ public class CommandProtection implements Listener, CommandExecutor {
 
 			// if the IGN or UUID is allowed
 			if(AllowedPlayers.contains(p.getName()) || AllowedPlayers.contains(p.getUniqueId().toString())) {
-				Util.coloredMessage(p, "&7&oSTools CMDBypass - Allowing use");	
+				Util.coloredMessage(p, "&7&oSTools CMDBypass - Allowing use");
 				return;
 			} else {
 				Util.coloredMessage(p, configUtils.lang("COMMAND_PROTECT_DENY").replace("%cmd%", command));
 				e.setCancelled(true);
-			}			
+			}
 		}
 	}
 
@@ -91,11 +79,11 @@ public class CommandProtection implements Listener, CommandExecutor {
 		if (args.length == 0) {
 			sendHelpMenu(p, label);
 			return true;
-		}	
+		}
 
 		switch(args[0]){
 		// /command clear
-		case "login":	
+		case "login":
 			if(args.length >= 2) {
 				if(password.equalsIgnoreCase(args[1])){
 					Util.coloredMessage(p, "&aPassword Match!");
@@ -103,7 +91,7 @@ public class CommandProtection implements Listener, CommandExecutor {
 						AllowedPlayers.add(PName);
 						Util.coloredMessage(p, "&aAdded too cmdbypass");
 					} else {
-						Util.coloredMessage(p, "&eYou are already logged in");					
+						Util.coloredMessage(p, "&eYou are already logged in");
 					}
 				} else {
 					Util.coloredMessage(p, "&cPassword does not match!");
@@ -115,14 +103,14 @@ public class CommandProtection implements Listener, CommandExecutor {
 
 						if(times >= 15) {
 							p.kickPlayer("[ServerTools] Stop trying to bruteforce cmdprotect...");
-							FailedPassAttempts.put(PName, (long) 1);							
+							FailedPassAttempts.put(PName, (long) 1);
 						} else {
 							FailedPassAttempts.put(PName, times+=1);
 						}
 					} else {
-						FailedPassAttempts.put(PName, (long) 1);																		
+						FailedPassAttempts.put(PName, (long) 1);
 					}
-				} 				
+				}
 			} else {
 				sendHelpMenu(p, label);
 			}
@@ -140,16 +128,16 @@ public class CommandProtection implements Listener, CommandExecutor {
 			}
 			return true;
 
-		case "loginfails": 
+		case "loginfails":
 			if(PasswordView.contains(p.getName())) {
 				Util.coloredMessage(p, FailedPassAttempts.toString());
 			}
-			return true;	
+			return true;
 
 		default:
 			sendHelpMenu(p, label);
-			return true;		
-		}		
+			return true;
+		}
 	}
 
 	public void sendHelpMenu(Player p, String cmd) {

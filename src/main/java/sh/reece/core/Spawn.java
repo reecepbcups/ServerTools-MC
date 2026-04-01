@@ -40,7 +40,7 @@ public class Spawn implements Listener, CommandExecutor {
 		plugin = instance;
 
 		Section="Core.Spawn"; // change to Core.
-		if (plugin.enabledInConfig(Section+".Enabled")) {
+		if (plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 			configUtils = plugin.getConfigUtils();
 
 			configUtils.createConfig("spawn.yml");

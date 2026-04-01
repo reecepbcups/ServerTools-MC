@@ -1,53 +1,41 @@
 package sh.reece.moderation;
 
 import sh.reece.tools.AlternateCommandHandler;
-import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
-import org.bukkit.Bukkit;
+import sh.reece.tools.ToggleableListener;
+import sh.reece.utiltools.Util;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
-public class ColonInCommands implements Listener{
+public class ColonInCommands extends ToggleableListener {
 
-	private String perm;
-	
-	private final Main plugin;
-	private ConfigUtils configUtils;
 	public ColonInCommands(Main instance) {
-		plugin = instance;
-		
-		if(plugin.enabledInConfig("Moderation.NoColonInCommands.Enabled")) {
-			configUtils = plugin.getConfigUtils();
-    		Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-    		perm = plugin.getConfig().getString("Moderation.NoColonInCommands.BypassPerm");
-    	}
-		
+		super(instance, "Moderation.NoColonInCommands");
 	}
-	
-	
+
+
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
-		
+
 		if(e.isCancelled()) {
 			return;
-		}		
-		
+		}
+
 		//if (e.getMessage().split(" ")[0].contains(":")) {
 		if(e.getMessage().indexOf(":") != -1) {
-			if(!e.getPlayer().hasPermission(perm)) {
+			if(!e.getPlayer().hasPermission(permission)) {
 
 				// Essentials:fly -> [essentials, fly, args] -? [fly, args][0]
 				String CMD = e.getMessage().split(":")[1].split(" ")[0];
 				if(AlternateCommandHandler.containsDisabledCommand(CMD)){
-					Main.logging("[ColonInCommands] CMD Bypass due to being main alias: ");
+					Util.log("[ColonInCommands] CMD Bypass due to being main alias: ");
 					return;
 				}
 
-				e.getPlayer().sendMessage(configUtils.lang("NO_COLONS_IN_COMMANDS"));
-				e.setCancelled(true);			
-			} 
+				e.getPlayer().sendMessage(plugin.getConfigUtils().lang("NO_COLONS_IN_COMMANDS"));
+				e.setCancelled(true);
+			}
 		}
 	}
 }

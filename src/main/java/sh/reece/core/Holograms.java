@@ -55,7 +55,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
         Section = "Misc.Holograms";
         randomPlayer = null;
 
-        if(plugin.enabledInConfig(Section+".Enabled")) {
+        if(plugin.getConfigUtils().enabledInConfig(Section+".Enabled")) {
 
 			configUtils = plugin.getConfigUtils();
 
@@ -290,7 +290,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		for(String line : getLinesFromConfig(key)) {
 			loc = loc.clone().subtract(0, 0.25, 0);
 
-			String msg = Util.color(Main.replaceVariable(line));
+			String msg = Util.color(ConfigUtils.replaceVariable(line));
 			if(papiSupport && randomPlayer != null) {
 				// sets a random online to be the msg.
 				// so this adds support for none player specific Placeholders like %server_uptime%

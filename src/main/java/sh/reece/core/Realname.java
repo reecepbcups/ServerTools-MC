@@ -1,69 +1,39 @@
 package sh.reece.core;
 
-import sh.reece.tools.AlternateCommandHandler;
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class Realname implements CommandExecutor {// ,TabCompleter,Listener {
-
-	// realname, fake name
-	//private HashMap<UUID, String> nicks = new HashMap<UUID, String>();
-
-	private String Section, Permission;
-	private final Main plugin;
-
-
-	// TODO
-	// does not work yet as /realname <Player> - we can not get nickname yet.
-	// as we store via UUID.
+public class Realname extends BaseCommand {
 
 	public Realname(Main instance) {
-		this.plugin = instance;
-
-		Section = "Core.Realname";
-
-		if(plugin.enabledInConfig(Section+".Enabled")) {
-			plugin.getCommand("realname").setExecutor(this);
-			Permission = plugin.getConfig().getString(Section+".Permission");
-		} else {
-			AlternateCommandHandler.addDisableCommand("realname");
-		}
-
+		super(instance, "Core.Realname", "realname");
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
-		if (!sender.hasPermission(Permission)) {
-			Util.coloredMessage(sender, "&cYou do not have access to &n/" + label + "&c.");
-			return true;
-		}
+		if (noPermission(sender, cmd)) return true;
 
 		if (args.length == 0) {
 			sender.sendMessage(Util.color("&fUsage: &c/" + label + " <player>"));
 
 		} else if (args.length >= 1) {
 
-
 			Player target = Bukkit.getPlayer(args[0]);
 
-			if(target == null){
+			if (target == null) {
 				Util.coloredMessage(sender, "&c" + args[0] + " &fis not online!");
 
 			} else {
-
 				Util.coloredMessage(sender, "User " + args[0] + " real name is " + target.getName());
-
 			}
-
 		}
-		
+
 		return false;
-	}		
+	}
 }
