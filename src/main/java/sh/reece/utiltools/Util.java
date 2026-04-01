@@ -299,21 +299,21 @@ public class Util {
 	public static boolean cooldown(final Map<String, Date> cooldownHash, final Integer secondCooldown, final String playerName, final String cooldownMessage) {
 		final long currentTime = System.currentTimeMillis();
 
+		// passive eviction: remove expired entries when map gets large
+		if (cooldownHash.size() > 100) {
+			cooldownHash.entrySet().removeIf(e -> e.getValue().getTime() < currentTime);
+		}
+
 		final Date expiry = cooldownHash.get(playerName);
 		if (expiry != null && expiry.getTime() >= currentTime) {
 			final Player p = Bukkit.getServer().getPlayer(playerName);
+			if (p == null) return false;
 			final long timeLeft = (expiry.getTime() - currentTime) / 1000;
-
 			p.sendMessage(Util.color(cooldownMessage.replace("%timeleft%", String.valueOf(timeLeft))));
 			return false;
-
-		} else {
-			cooldownHash.remove(playerName);
 		}
 
-		final long mil_cooldown = secondCooldown * 1000L;
-		cooldownHash.put(playerName, new Date(currentTime + mil_cooldown));
-
+		cooldownHash.put(playerName, new Date(currentTime + secondCooldown * 1000L));
 		return true;
 	}
 

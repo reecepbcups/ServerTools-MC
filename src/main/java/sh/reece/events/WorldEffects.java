@@ -52,7 +52,6 @@ public class WorldEffects extends ToggleableListener {
 
 				eff.put(wEffSplit[1], value);
 				world_effect.put(wEffSplit[0], eff);
-				Util.log("WorldEffect: " + wEffSplit[0] + " " + wEffSplit[1] + " " + value);
 			}
 
 			if (world_effect == null) {
@@ -86,26 +85,15 @@ public class WorldEffects extends ToggleableListener {
 
 		removeEffect(p);
 
-		if (world_effect.containsKey(w)) {
-			Map<String, Integer> potionEffects = world_effect.get(w);
+		Map<String, Integer> potionEffects = world_effect.get(w);
+		if (potionEffects == null) return;
 
-			for (String potionkey : potionEffects.keySet()) {
-				int value = potionEffects.get(potionkey);
-
-				PotionEffectType potion = PotionEffectType.getByName(potionkey.toUpperCase());
-				p.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, value));
-
-				Util.log("Added: " + potionkey + " to " + p.getName());
-			}
-
-			List<String> worldsEffects = affectedPlayers.get(p.getUniqueId());
-			if (worldsEffects == null) {
-				worldsEffects = new ArrayList<>();
-			}
-			worldsEffects.add(w);
-
-			affectedPlayers.put(p.getUniqueId(), worldsEffects);
+		for (Entry<String, Integer> entry : potionEffects.entrySet()) {
+			PotionEffectType potion = PotionEffectType.getByName(entry.getKey().toUpperCase());
+			p.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, entry.getValue()));
 		}
+
+		affectedPlayers.computeIfAbsent(p.getUniqueId(), k -> new ArrayList<>()).add(w);
 	}
 
 	public void removeEffect(Player p) {
@@ -113,15 +101,12 @@ public class WorldEffects extends ToggleableListener {
 
 		if (worlds != null) {
 			for (String worldName : worlds) {
-				if (!world_effect.containsKey(worldName)) {
-					Util.log("No effects found for world: " + worldName);
-					return;
-				}
+				Map<String, Integer> effects = world_effect.get(worldName);
+				if (effects == null) continue;
 
-				for (Entry<String, Integer> effects : world_effect.get(worldName).entrySet()) {
-					PotionEffectType potion = PotionEffectType.getByName(effects.getKey().toUpperCase());
+				for (Entry<String, Integer> entry : effects.entrySet()) {
+					PotionEffectType potion = PotionEffectType.getByName(entry.getKey().toUpperCase());
 					p.removePotionEffect(potion);
-					Util.log("Removed: " + effects.getKey() + " from " + p.getName());
 				}
 			}
 

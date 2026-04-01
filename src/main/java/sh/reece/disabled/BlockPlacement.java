@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import sh.reece.tools.Main;
 import sh.reece.tools.ToggleableListener;
@@ -37,4 +38,8 @@ public class BlockPlacement extends ToggleableListener {
 		}
 	}
 
+	@EventHandler
+	public void onQuit(PlayerQuitEvent e) {
+		allowed_to_place.remove(e.getPlayer().getUniqueId());
+	}
 }

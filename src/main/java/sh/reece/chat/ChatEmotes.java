@@ -34,7 +34,7 @@ public class ChatEmotes extends ToggleableListener {
 	public void onChat(AsyncPlayerChatEvent event) {
 		String msg = event.getMessage();
 
-		if (permission.length() != 0 || !event.getPlayer().hasPermission(permission)) {
+		if (permission.length() != 0 && !event.getPlayer().hasPermission(permission)) {
 			return;
 		}
 

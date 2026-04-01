@@ -28,7 +28,7 @@ public class CMDAlias extends ToggleableListener {
 	private static final HashMap<String, HashMap<String, Integer>> preWorldCooldown = new HashMap<String, HashMap<String, Integer>>();
 	private boolean stopIfMoved = false;
 
-	private String aliasResult, userArguments, permission;
+	private String permission;
 
 	private ConfigUtils configUtils;
 
@@ -98,8 +98,6 @@ public class CMDAlias extends ToggleableListener {
 		}
 	}
 
-	String command;
-
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 
@@ -107,7 +105,7 @@ public class CMDAlias extends ToggleableListener {
 			return;
 		}
 
-		command = e.getMessage().substring(1).split(" ")[0].toLowerCase();
+		String command = e.getMessage().substring(1).split(" ")[0].toLowerCase();
 		Player p = e.getPlayer();
 		String world = p.getLocation().getWorld().getName();
 
@@ -171,11 +169,9 @@ public class CMDAlias extends ToggleableListener {
 		}
 
 		if (Alises.contains(command)) {
-			aliasResult = plugin.getConfig().getString("Misc.CMDAliases.cmds." + command);
-
-			userArguments = e.getMessage().substring(command.length() + 1)
+			String aliasResult = plugin.getConfig().getString("Misc.CMDAliases.cmds." + command);
+			String userArguments = e.getMessage().substring(command.length() + 1)
 					.replaceAll("%player%", e.getPlayer().getName());
-
 			e.setMessage(e.getMessage().substring(0, 1) + aliasResult + userArguments);
 		}
 	}

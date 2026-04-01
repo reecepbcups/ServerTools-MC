@@ -1,7 +1,8 @@
 package sh.reece.moderation;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -22,7 +23,7 @@ public class CommandSpy extends BaseCommand implements Listener {
 	private FileConfiguration config;
 	private List<String> ignored;
 
-	private static ArrayList<UUID> watching;
+	private static Set<UUID> watching;
 
 
 	public CommandSpy(Main instance) {
@@ -31,7 +32,7 @@ public class CommandSpy extends BaseCommand implements Listener {
 		if(isEnabled()) {
 			config = instance.getConfig();
 			ignored = config.getStringList(section+".Ignored-ignored_commands");
-			watching = new ArrayList<>();
+			watching = new HashSet<>();
 		}
 	}
 
