@@ -23,6 +23,8 @@ just loadtest 20 move 2
 
 # 30 bots for 60 seconds then auto-stop
 just loadtest-timed 30 all 60
+
+node loadtest/loadtest.mjs --bots 300 --scenario all --ramp 0
 ```
 
 ## Scenarios
