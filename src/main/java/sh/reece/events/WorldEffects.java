@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,11 +21,12 @@ import sh.reece.utiltools.Util;
 
 public class WorldEffects extends ToggleableListener {
 
-	// WorldName, <PotionEffectName, LevelEffect>
-	private Map<String, Map<String, Integer>> world_effect = new HashMap<>();
+	// pre-resolved at init: WorldName -> [(PotionEffectType, level)]
+	private final Map<String, List<ResolvedEffect>> worldEffects = new HashMap<>();
 
-	// USER, World
-	private HashMap<UUID, List<String>> affectedPlayers = new HashMap<>();
+	private final HashMap<UUID, List<String>> affectedPlayers = new HashMap<>();
+
+	private record ResolvedEffect(PotionEffectType type, int level) {}
 
 	public WorldEffects(Main instance) {
 		super(instance, "Events.WorldEffects");
@@ -39,23 +39,20 @@ public class WorldEffects extends ToggleableListener {
 				int value = 1;
 				if (wEffSplit.length > 2) {
 					try {
-						value = Integer.valueOf(wEffSplit[2]);
-					} catch (Exception e) {
+						value = Integer.parseInt(wEffSplit[2]);
+					} catch (NumberFormatException e) {
 						Util.log(wEffSplit[2] + " is not a valid number");
 					}
 				}
 
-				Map<String, Integer> eff = world_effect.get(wEffSplit[0]);
-				if (eff == null) {
-					eff = new HashMap<>();
+				PotionEffectType type = PotionEffectType.getByName(wEffSplit[1].toUpperCase());
+				if (type == null) {
+					Util.log("Unknown potion effect: " + wEffSplit[1]);
+					continue;
 				}
 
-				eff.put(wEffSplit[1], value);
-				world_effect.put(wEffSplit[0], eff);
-			}
-
-			if (world_effect == null) {
-				Util.log("No world effects found!!");
+				worldEffects.computeIfAbsent(wEffSplit[0], k -> new ArrayList<>())
+					.add(new ResolvedEffect(type, value));
 			}
 		}
 	}
@@ -85,12 +82,11 @@ public class WorldEffects extends ToggleableListener {
 
 		removeEffect(p);
 
-		Map<String, Integer> potionEffects = world_effect.get(w);
-		if (potionEffects == null) return;
+		List<ResolvedEffect> effects = worldEffects.get(w);
+		if (effects == null) return;
 
-		for (Entry<String, Integer> entry : potionEffects.entrySet()) {
-			PotionEffectType potion = PotionEffectType.getByName(entry.getKey().toUpperCase());
-			p.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, entry.getValue()));
+		for (ResolvedEffect eff : effects) {
+			p.addPotionEffect(new PotionEffect(eff.type, Integer.MAX_VALUE, eff.level));
 		}
 
 		affectedPlayers.computeIfAbsent(p.getUniqueId(), k -> new ArrayList<>()).add(w);
@@ -101,12 +97,11 @@ public class WorldEffects extends ToggleableListener {
 
 		if (worlds != null) {
 			for (String worldName : worlds) {
-				Map<String, Integer> effects = world_effect.get(worldName);
+				List<ResolvedEffect> effects = worldEffects.get(worldName);
 				if (effects == null) continue;
 
-				for (Entry<String, Integer> entry : effects.entrySet()) {
-					PotionEffectType potion = PotionEffectType.getByName(entry.getKey().toUpperCase());
-					p.removePotionEffect(potion);
+				for (ResolvedEffect eff : effects) {
+					p.removePotionEffect(eff.type);
 				}
 			}
 

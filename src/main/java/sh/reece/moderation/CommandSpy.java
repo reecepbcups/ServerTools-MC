@@ -1,14 +1,14 @@
 package sh.reece.moderation;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
+
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,8 +20,7 @@ import sh.reece.utiltools.Util;
 
 public class CommandSpy extends BaseCommand implements Listener {
 
-	private FileConfiguration config;
-	private List<String> ignored;
+	private Set<String> ignored;
 
 	private static Set<UUID> watching;
 
@@ -30,8 +29,7 @@ public class CommandSpy extends BaseCommand implements Listener {
 		super(instance, "Moderation.CommandSpy", "commandspy");
 
 		if(isEnabled()) {
-			config = instance.getConfig();
-			ignored = config.getStringList(section+".Ignored-ignored_commands");
+			ignored = new HashSet<>(instance.getConfig().getStringList(section+".Ignored-ignored_commands"));
 			watching = new HashSet<>();
 		}
 	}

@@ -24,7 +24,7 @@ public class ColonInCommands extends ToggleableListener {
 
 		//if (e.getMessage().split(" ")[0].contains(":")) {
 		if(e.getMessage().indexOf(":") != -1) {
-			if(!e.getPlayer().hasPermission(permission)) {
+			if(!hasPermission(e.getPlayer())) {
 
 				// Essentials:fly -> [essentials, fly, args] -? [fly, args][0]
 				String CMD = e.getMessage().split(":")[1].split(" ")[0];

@@ -8,12 +8,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Date;
 import java.util.HashMap;
 
 public class Report extends BaseCommand {
 
-	private final HashMap<String, Date> CooldownHash = new HashMap<String, Date>();
+	private final HashMap<String, Long> CooldownHash = new HashMap<>();
 	private Integer CooldownSeconds;
 	private String perm, CooldownMSG, ReportSuccess;
 

@@ -2,7 +2,6 @@ package sh.reece.aFinishLater;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.entity.Player;
@@ -19,7 +18,7 @@ public class DiscordBugReport implements Listener {
 	//private static Main plugin;
 	private String command, WebhookURL,BotName,BotDesc,BotTitle, BotPicture, CooldownMSG, ReportSuccess;
 	private Integer cooldownSeconds;
-	private HashMap<String, Date> CooldownHash;
+	private HashMap<String, Long> CooldownHash;
 	 
 	public DiscordBugReport(Main instance) {
 	        //plugin = instance;

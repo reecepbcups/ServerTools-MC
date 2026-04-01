@@ -180,16 +180,16 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 	}
 
 	public String rainbowFormat(String msg) {
-		String _final = "";
-
-		for (String l : msg.split("")) {
-			if (l != " ") {
-				_final += RainbowColors.get(rand.nextInt(RainbowColors.size())) + l;
+		StringBuilder sb = new StringBuilder(msg.length() * 4);
+		for (int i = 0; i < msg.length(); i++) {
+			char c = msg.charAt(i);
+			if (c != ' ') {
+				sb.append(RainbowColors.get(rand.nextInt(RainbowColors.size()))).append(c);
 			} else {
-				_final += " ";
+				sb.append(' ');
 			}
 		}
-		return _final;
+		return sb.toString();
 	}
 
 	public void loadToMemory() {

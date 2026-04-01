@@ -113,7 +113,7 @@ public class CMDAlias extends ToggleableListener {
 			Set<String> blocked = worlddisabled.get(world);
 			if (blocked != null) {
 				if (blocked.contains(command)) {
-					if (!e.getPlayer().hasPermission(permission)) {
+					if (!hasPermission(e.getPlayer())) {
 						e.setCancelled(true);
 						Util.coloredMessage(e.getPlayer(), configUtils.lang("CMDALIAS_DENYWORLD").replace("%cmd%", command));
 						return;
@@ -126,7 +126,7 @@ public class CMDAlias extends ToggleableListener {
 
 		// DISABLED COMMANDS
 		if (Disabled.contains(command)) {
-			if (!e.getPlayer().hasPermission(permission)) {
+			if (!hasPermission(e.getPlayer())) {
 				e.setCancelled(true);
 				Util.coloredMessage(e.getPlayer(), configUtils.lang("CMDALIAS_DISABLED").replace("%cmd%", command));
 				return;
@@ -139,7 +139,7 @@ public class CMDAlias extends ToggleableListener {
 
 			if (worldCooldowns.containsKey(command)) {
 
-				if (p.hasPermission(permission)) {
+				if (hasPermission(p)) {
 					Util.coloredMessage(p, "&7&oBypassing PreCommand Cooldown due to being staff");
 					return;
 				} else {

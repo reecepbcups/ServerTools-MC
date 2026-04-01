@@ -7,17 +7,18 @@ services:
       EULA: "TRUE"
       TYPE: PAPER
       VERSION: "1.20.4"
-      MEMORY: ${MC_MEMORY:-2G}
+      MEMORY: ${MC_MEMORY:-4G}
       ONLINE_MODE: "FALSE"
       ENABLE_COMMAND_BLOCK: "TRUE"
       SPAWN_PROTECTION: 0
       DIFFICULTY: easy
       MAX_PLAYERS: 200
       MOTD: "ServerTools E2E"
-      MODRINTH_PROJECTS: "luckperms,plugmanx,placeholderapi,vaultunlocked"
+      MODRINTH_PROJECTS: "luckperms,placeholderapi,vaultunlocked"
       SPIGET_RESOURCES: "57242" # spark (https://modrinth.com/mod/spark)
       PATCH_DEFINITIONS: "/patches"
       OPS: "reecepbcups"
+      RCON_CMDS_STARTUP: "lp user reecepbcups permission set * true"
     volumes:
       - ./server:/data
       - ./patches:/patches:ro

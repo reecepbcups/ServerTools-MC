@@ -2,6 +2,7 @@ package sh.reece.tools;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
+import org.bukkit.permissions.Permissible;
 
 public abstract class ToggleableListener implements Listener {
 
@@ -15,7 +16,7 @@ public abstract class ToggleableListener implements Listener {
         if (enabled) {
             String permPath = section + ".Permission";
             this.permission = plugin.getConfig().contains(permPath)
-                ? plugin.getConfig().getString(permPath, "") : "";
+                ? plugin.getConfig().getString(permPath, null) : null;
             Bukkit.getPluginManager().registerEvents(this, plugin);
         } else {
             this.permission = null;
@@ -24,5 +25,9 @@ public abstract class ToggleableListener implements Listener {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    protected boolean hasPermission(Permissible who) {
+        return permission != null && who.hasPermission(permission);
     }
 }
