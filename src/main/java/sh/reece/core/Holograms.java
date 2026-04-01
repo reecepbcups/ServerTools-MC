@@ -73,7 +73,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		}
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void playerJoinEvent(PlayerJoinEvent e) {
 		if(randomPlayer == null) {
 			randomPlayer = e.getPlayer();

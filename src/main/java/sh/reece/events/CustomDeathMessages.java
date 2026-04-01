@@ -35,7 +35,7 @@ public class CustomDeathMessages implements Listener, CommandExecutor {
 	}
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onKill(PlayerDeathEvent e) {
 		String msg = "";
 		if(ShowDeathMessages && hasDeathFormat) {

@@ -38,7 +38,7 @@ public class OnJoinCommands implements Listener {
 
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void PlayerCommand(PlayerJoinEvent event) {
 		Player p = (Player) event.getPlayer();
 

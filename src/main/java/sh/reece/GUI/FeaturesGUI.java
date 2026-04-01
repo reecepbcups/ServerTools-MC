@@ -54,7 +54,7 @@ public class FeaturesGUI implements Listener {
 	}
 
 
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
 
@@ -97,7 +97,7 @@ public class FeaturesGUI implements Listener {
     }
 
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
 
