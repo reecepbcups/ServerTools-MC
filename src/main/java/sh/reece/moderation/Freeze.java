@@ -14,8 +14,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.*;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class Freeze implements Listener, CommandExecutor {
@@ -23,7 +24,7 @@ public class Freeze implements Listener, CommandExecutor {
 	private static Main plugin;
 	public Boolean ChatEnabled;
 	public String FreezePerm;
-	public List<UUID> frozenPlayerList;
+	public Set<UUID> frozenPlayerList;
 	private final List<String> Messages;
 	private ConfigUtils configUtils;
 
@@ -33,7 +34,7 @@ public class Freeze implements Listener, CommandExecutor {
 		
 		FreezePerm = plugin.getConfig().getString("Moderation.Freeze.Permission");
 
-		frozenPlayerList = new ArrayList<UUID>();
+		frozenPlayerList = new HashSet<>();
 
 		Messages = plugin.getConfig().getStringList("Moderation.Freeze.Message");
     	
@@ -98,51 +99,59 @@ public class Freeze implements Listener, CommandExecutor {
 	
 	
 	
-	// change this to be a runnable in the future
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void onMove(PlayerMoveEvent e) {
+  		if(frozenPlayerList.isEmpty()) return;
+  		if(e.getTo() == null) return;
+  		if(e.getFrom().getBlockX() == e.getTo().getBlockX()
+  			&& e.getFrom().getBlockY() == e.getTo().getBlockY()
+  			&& e.getFrom().getBlockZ() == e.getTo().getBlockZ()) return;
   		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
-  			e.setCancelled(true);
+  			e.setTo(e.getFrom());
   		}
   	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void onDrop(PlayerDropItemEvent e) {
+  		if(frozenPlayerList.isEmpty()) return;
   		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
   			e.setCancelled(true);
   		}
   	}
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void onDrop(PlayerPickupItemEvent e) {
+  		if(frozenPlayerList.isEmpty()) return;
   		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
   			e.setCancelled(true);
   		}
   	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void Damage(EntityDamageEvent e) {
+		if(frozenPlayerList.isEmpty()) return;
 		if (e.getEntity() instanceof Player){
 			if(frozenPlayerList.contains(e.getEntity().getUniqueId())) {
 	  			e.setCancelled(true);
 	  		}
-		}  	
+		}
   	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void announceLogout(PlayerQuitEvent e) {
 		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
 	  		Bukkit.broadcast(e.getPlayer().getName() + " logged out while frozen!", FreezePerm);
 	  	}
 	}
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void announceReLogin(PlayerJoinEvent e) {
 		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
 	  		Bukkit.broadcast(e.getPlayer().getName() + " has logged back in while frozen!", FreezePerm);
 	  	}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
   	public void playerChat(AsyncPlayerChatEvent e) {
+		if(frozenPlayerList.isEmpty()) return;
 		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
 	  		e.getPlayer().sendMessage(configUtils.lang("FREEZE_DENYCHAT"));
 	  		e.setCancelled(true);
@@ -150,8 +159,9 @@ public class Freeze implements Listener, CommandExecutor {
 	}
 
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onTeleport(PlayerTeleportEvent e) {
+		if(frozenPlayerList.isEmpty()) return;
 		if(frozenPlayerList.contains(e.getPlayer().getUniqueId())) {
 			e.getPlayer().sendMessage(configUtils.lang("FREEZE_DENYTP"));
 			e.setCancelled(true);
