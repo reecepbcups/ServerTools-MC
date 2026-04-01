@@ -13,6 +13,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.Plugin;
 
+import sh.reece.utiltools.Util;
+
 /*
     Initated after the plugin is loaded.
 */
@@ -80,7 +82,7 @@ public class AlternateCommandHandler implements Listener {
 			for(Command cmd : PluginCommandYamlParser.parse(plugin)){
 				if(DISABLED_COMMANDS.contains(cmd.getName())){
 					COMMAND_ALIASES.put(cmd.getName(), pName); // command, plugin_name
-                    Main.logging("<CMDHandler> Using Alias: " + cmd.getName() + " from " + pName);
+                    Util.log("<CMDHandler> Using Alias: " + cmd.getName() + " from " + pName);
 				}
 			}
 		}

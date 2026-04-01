@@ -1,78 +1,49 @@
 package sh.reece.utiltools;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
+import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 
-public class TEMPLATE implements Listener, CommandExecutor {
+public class TEMPLATE extends BaseCommand implements Listener {
 
-	private static Main plugin;
-	//private FileConfiguration config;
-	private String Section;
-	
 	public TEMPLATE(Main instance) {
-        plugin = instance;
-        
-        Section = "Chat.TEMPLATE_OPTION";                
-        if(plugin.enabledInConfig(Section+".Enabled")) {
-        	
-        	//config = plugin.getConfig();
-        	//Permission = MAINCONFIG.getString(Section+".permission");
-        	
-//        	// plugins/ServerTools/DATA
-//        	configUtils.createDirectory("DATA");
-//        	FILENAME = File.separator + "DATA" + File.separator + "ChatColor.yml";
-//        	configUtils.createFile(FILENAME);
-//        	config = configUtils.getConfigFile(FILENAME);	
+		super(instance, "Chat.TEMPLATE_OPTION", "COMMAND_NAME");
+	}
 
-        	plugin.getCommand("COMMAND_NAME").setExecutor(this);
-    		Bukkit.getServer().getPluginManager().registerEvents(this, plugin);    		
-    	}
-	}
-	
 	@EventHandler
-	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {	
-		//Player p = e.getPlayer();
-		//String uuid = p.getUniqueId().toString();			
+	public void playerColoredChatEvent(AsyncPlayerChatEvent e) {
 	}
-	
+
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
-		if (!(sender.hasPermission("some.permission"))) {		
-			sender.sendMessage(Util.color("&cNo Permission to use "+label+" :("));
-			return true;			
-		}
-		
-		Player p = (Player) sender;
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (noPermission(sender, cmd)) return true;
+
+		Player p = playerOrNull(sender);
+		if (p == null) return true;
 
 		if (args.length == 0) {
 			sendHelpMenu(p);
 			return true;
-		}	
-		
-		switch(args[0]){
-			// /command clear
-			case "clear":				
-				return true;	
+		}
+
+		switch (args[0]) {
+			case "clear":
+				return true;
 			case "set":
 				return true;
 			default:
 				sendHelpMenu(p);
-				return true;		
-		}		
+				return true;
+		}
 	}
-	
+
 	public void sendHelpMenu(Player p) {
 		Util.coloredMessage(p, "&f/command &7<args>");
 	}
-	
-	
-	
 }
