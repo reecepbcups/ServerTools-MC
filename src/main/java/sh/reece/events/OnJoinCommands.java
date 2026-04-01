@@ -14,11 +14,11 @@ import sh.reece.utiltools.Util;
 
 public class OnJoinCommands implements Listener {
 
-	
+
 	private static Main plugin;
 	private List<String> FirstJoinCMDS, PlayerRunOnJoin;
 	private Boolean isFirstJoinEnabled, isPlayerRunEnabled;
-	
+
 	public OnJoinCommands(Main instance) {
 		plugin = instance;
 
@@ -35,34 +35,34 @@ public class OnJoinCommands implements Listener {
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 		}
 	}
-	
-	
-	
+
+
+
 	@EventHandler
 	public void PlayerCommand(PlayerJoinEvent event) {
 		Player p = (Player) event.getPlayer();
-		
+
 		// First Join commands enabled & Player has not played before
-		if(isFirstJoinEnabled) {			
-			if(!(p.hasPlayedBefore())){																
+		if(isFirstJoinEnabled) {
+			if(!(p.hasPlayedBefore())){
 				new BukkitRunnable() {
 					@Override
-					public void run() {								
-						FirstJoinCMDS.stream().forEach(cmd -> Util.console(cmd.replace("%player%", p.getName())));				
-					}				
+					public void run() {
+						for (String cmd : FirstJoinCMDS) { Util.console(cmd.replace("%player%", p.getName())); }
+					}
 				}.runTaskLater(plugin, 10L);
-				
-			}			
+
+			}
 		}
-		
+
 		if(isPlayerRunEnabled) {
 			new BukkitRunnable() {
 				@Override
-				public void run() {								
-					PlayerRunOnJoin.stream().forEach(command -> p.performCommand(command.replace("%player%", p.getName())));				
-				}				
+				public void run() {
+					for (String command : PlayerRunOnJoin) { p.performCommand(command.replace("%player%", p.getName())); }
+				}
 			}.runTaskLater(plugin, 10L);
 		}
 	}
-	
+
 }
