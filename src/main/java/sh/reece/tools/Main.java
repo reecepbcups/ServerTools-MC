@@ -154,9 +154,12 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	public static String replaceVariable(String line) {
-		if (!line.contains("%")) return line;
-		for (var entry : SERVER_VARIABLES.entrySet()) {
-			line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+		if (SERVER_VARIABLE_KEYS.stream().anyMatch(line::contains)) {
+			for (String key : SERVER_VARIABLE_KEYS) {
+				if(line.contains("%"+key+"%")) {
+					line = line.replace("%"+key+"%", SERVER_VARIABLES.get(key));
+				}
+			}
 		}
 		return line;
 	}
