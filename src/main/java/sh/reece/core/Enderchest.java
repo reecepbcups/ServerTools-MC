@@ -1,7 +1,7 @@
 package sh.reece.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -22,7 +22,7 @@ import sh.reece.utiltools.Util;
 public class Enderchest implements CommandExecutor, Listener {//,TabCompleter,Listener {
 
 	private String Section, Permission, ViewOthers, ModifyOthers;
-	private List<UUID> openEnderChest = new ArrayList<UUID>();
+	private Set<UUID> openEnderChest = new HashSet<>();
 
 	private Main plugin;
 	public Enderchest(Main instance) {
@@ -88,7 +88,7 @@ public class Enderchest implements CommandExecutor, Listener {//,TabCompleter,Li
 		return true;
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClickEvent(final InventoryClickEvent event){		
 
 		//Player refreshPlayer = null;
@@ -105,7 +105,7 @@ public class Enderchest implements CommandExecutor, Listener {//,TabCompleter,Li
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onInvClose(final InventoryCloseEvent e){	
 		Player refreshPlayer = null;
 		final Inventory top = e.getView().getTopInventory();

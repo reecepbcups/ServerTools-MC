@@ -1,6 +1,7 @@
 package sh.reece.disabled;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,27 +17,26 @@ public class DisableMobSpawning implements Listener {
     private static Main plugin;
 	private FileConfiguration MAINCONFIG;
 	private String Section;
-	private List<String> worlds;
+	private Set<String> worlds;
 
 	public DisableMobSpawning(Main instance) {
-		plugin = instance;        
-		Section = "Disabled.DisableMobSpawning";        
+		plugin = instance;
+		Section = "Disabled.DisableMobSpawning";
 
 		if(plugin.enabledInConfig(Section+".Enabled")) {
 
-			MAINCONFIG = plugin.getConfig();               	
-			worlds = MAINCONFIG.getStringList(Section+".worldsToDisable");
+			MAINCONFIG = plugin.getConfig();
+			worlds = new HashSet<>(MAINCONFIG.getStringList(Section+".worldsToDisable"));
 
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 
 		}
 	}
 
-    // CreatureSpawnEvent
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void NoMobSpawning(EntitySpawnEvent e) {
         if (e.getEntity() instanceof Creature || e.getEntity() instanceof Monster) {
-            if (worlds.isEmpty() || worlds.contains(e.getEntity().getLocation().getWorld().getName())) {
+            if (worlds.isEmpty() || worlds.contains(e.getEntity().getWorld().getName())) {
                 e.setCancelled(true);
             }
         }

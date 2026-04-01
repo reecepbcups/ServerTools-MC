@@ -42,19 +42,13 @@ public class DisableFallDamage implements Listener {
     	}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void damageEvent(EntityDamageEvent e) {
-		if (e.getEntityType() == EntityType.PLAYER) {
-			Player p = (Player) e.getEntity();
-
-			if(e.getCause() == DamageCause.FALL) {
-				if(permission.length() == 0 || p.hasPermission(permission)) {
-					//if(worlds.contains(p.getWorld().getName())) {
-					e.setCancelled(true);
-					//}
-				}
-			}
-
+		if (e.getCause() != DamageCause.FALL) return;
+		if (e.getEntityType() != EntityType.PLAYER) return;
+		Player p = (Player) e.getEntity();
+		if (permission.length() == 0 || p.hasPermission(permission)) {
+			e.setCancelled(true);
 		}
 	}
 	

@@ -52,21 +52,19 @@ public class LaunchPads implements Listener, CommandExecutor {
     	}
 	}
 	
-	static Location loc;
 	static int launchpadRunnable;
 	public void runLaunchPadChecker() {
-		
+
 		launchpadRunnable = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
 			public void run() {
 				for(Player p : Bukkit.getOnlinePlayers()) {
-					loc = p.getLocation();
+					Location loc = p.getLocation();
 					if(loc.getBlock().getType() == PlateType) {
-						if(loc.subtract(0, 1, 0).getBlock().getType() == BlockType) {
+						if(loc.clone().subtract(0, 1, 0).getBlock().getType() == BlockType) {
 							p.setVelocity(loc.getDirection().multiply(LaunchPower));
 							p.setVelocity(new Vector(p.getVelocity().getX(), 1.0D, p.getVelocity().getZ()));
-							//p.getWorld().playSound(loc, Sound.valueOf(SoundEffect), 10.0F, 1.0F);
 						}
-					}					
+					}
 				}
 			}
 		}, 0, RunnableTicksperCheck);

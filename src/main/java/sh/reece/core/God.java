@@ -1,7 +1,7 @@
 package sh.reece.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -39,7 +39,7 @@ public class God implements CommandExecutor, Listener {//,TabCompleter,Listener 
 		
 	}
 	
-	private static List<Player> GODS = new ArrayList<>();
+	private static Set<Player> GODS = new HashSet<>();
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
@@ -50,21 +50,22 @@ public class God implements CommandExecutor, Listener {//,TabCompleter,Listener 
 		
 		Player p = (Player) sender;
 		
-		//boolean b = (GODS.contains(p) ? GODS.remove(p) : GODS.add(p));
+		boolean toggled = GODS.contains(p) ? GODS.remove(p) : GODS.add(p);
 		Util.coloredMessage(p, "&f[!] &fGod mode " + (GODS.contains(p) ? "&aenabled" : "&cdisabled") + "&f.");		
 		return true;
 	}
 	
 	
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled=false)
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onDamage(EntityDamageEvent e) {
+		if (GODS.isEmpty()) return;
 		if (e.getEntity() instanceof Player && GODS.contains(e.getEntity())) {
 			e.setCancelled(true);
 			((Player) e.getEntity()).setHealth(((Player) e.getEntity()).getMaxHealth());
 		}
 	}
 	
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onJoin(PlayerJoinEvent e) {
 		GODS.remove(e.getPlayer());
 	}

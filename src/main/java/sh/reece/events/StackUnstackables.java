@@ -1,7 +1,7 @@
 package sh.reece.events;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -16,62 +16,40 @@ import sh.reece.tools.Main;
 public class StackUnstackables implements Listener {
 
 	private Main plugin;
-	private List<Material> mats = new ArrayList<Material>();
+	private Set<Material> mats = new HashSet<>();
 	public StackUnstackables(Main instance) {
 		plugin = instance;
-		
+
 		if (plugin.enabledInConfig("Events.StackUnstackables.Enabled")) {
-			
+
 			for(String _mat : plugin.getConfig().getStringList("Events.StackUnstackables.items")) {
 				mats.add(Material.getMaterial(_mat.toUpperCase()));
 			}
-			
+
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
-			
 		}
-		
-		
-		
 	}
-	
-	@EventHandler
+
+	@EventHandler(ignoreCancelled = true)
 	public void onItemPickUp(PlayerPickupItemEvent e) {
-		Player p = e.getPlayer();
-
-		//p.sendMessage(e.getItem().getItemStack().getAmount() + " < amount of items picked up");
-
 		Material pickedUpItem = e.getItem().getItemStack().getType();
+		if (!mats.contains(pickedUpItem)) return;
+
+		Player p = e.getPlayer();
 		int pickedUpItemAmount = e.getItem().getItemStack().getAmount();
-		
-		for (int slot = 0; slot<p.getInventory().getSize(); slot++){
 
+		for (int slot = 0; slot < p.getInventory().getSize(); slot++) {
 			ItemStack invItem = p.getInventory().getItem(slot);
+			if (invItem == null) continue;
+			if (invItem.getType() != pickedUpItem) continue;
 
-			if (invItem != null) {
-				Material invType = invItem.getType();
-				if (mats.contains(invType) && pickedUpItem == invType) {
-					
-					int inv_amount = invItem.getAmount();
+			int inv_amount = invItem.getAmount();
+			if (inv_amount >= 64) continue;
 
-					if(inv_amount < 64) {						
-						p.getInventory().setItem(slot, new ItemStack(pickedUpItem, inv_amount+pickedUpItemAmount));
-						//p.sendMessage("you got item" + pickedUpItem);
-						//return;
-					} else {
-
-						if(inv_amount >= 64) {	
-							//p.sendMessage("64 in this slot");
-							// next slot, this one is full
-							continue;
-						}
-						
-					}
-					e.setCancelled(true);
-					e.getItem().remove();
-				}
-					
-			}
-
+			p.getInventory().setItem(slot, new ItemStack(pickedUpItem, inv_amount + pickedUpItemAmount));
+			e.setCancelled(true);
+			e.getItem().remove();
+			return;
 		}
 	}
 }

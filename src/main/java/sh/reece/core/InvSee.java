@@ -1,7 +1,7 @@
 package sh.reece.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -27,7 +27,7 @@ import sh.reece.utiltools.Util;
 public class InvSee implements CommandExecutor, Listener {// ,TabCompleter,Listener {
 
 	private String Section, Permission, ModifyOthers, preventModify;
-	private List<UUID> openInvsee = new ArrayList<UUID>();
+	private Set<UUID> openInvsee = new HashSet<>();
 	private Main plugin;
 
 	public InvSee(Main instance) {

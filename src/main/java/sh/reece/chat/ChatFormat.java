@@ -73,16 +73,16 @@ public class ChatFormat implements Listener {
 			  refreshVault(); 
 	  }
 	  
-	  @EventHandler(priority = EventPriority.LOWEST)
-	  public void onChatLow(AsyncPlayerChatEvent e) {	 		 		  
-		  // if chatcolor.use, format chatcolor
+	  @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+	  public void onChatLow(AsyncPlayerChatEvent e) {
+		  String f = this.format;
 		  if(e.getPlayer().hasPermission(ColorCodePerm) || e.getPlayer().isOp()) {
-			  this.format = colorize(format);	    	
-		  }			  
-		  e.setFormat(this.format);		  
+			  f = colorize(f);
+		  }
+		  e.setFormat(f);		  
 	  }
 	  
-	  @EventHandler(priority = EventPriority.HIGHEST)
+	  @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	  public void onChatHigh(AsyncPlayerChatEvent e) {
 	    String format = e.getFormat();
 	    Player p = e.getPlayer();	    

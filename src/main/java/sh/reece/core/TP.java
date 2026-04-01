@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class TP implements CommandExecutor{//,TabCompleter,Listener {
 
@@ -19,7 +20,7 @@ public class TP implements CommandExecutor{//,TabCompleter,Listener {
 	private final Main plugin;
 	
 	// to, from
-	private final Map<Player, Player> currentRequest = new HashMap<>();
+	private final Map<UUID, UUID> currentRequest = new HashMap<>();
 	private ConfigUtils configUtils;
 	
 	public TP(Main instance) {
@@ -54,30 +55,34 @@ public class TP implements CommandExecutor{//,TabCompleter,Listener {
 		
 		switch (label.toLowerCase()) {
 		// done here as its just a single command, and has no args
-		case "tpaccept":	
+		case "tpaccept":
 		case "tpyes":
-			if(currentRequest.containsKey(p)) {
-				// accepted teleport request	
-				Player from = currentRequest.get(p);
-				Util.coloredMessage(from, configUtils.lang("TELEPORT_HASACCEPTED").replace("%player%", p.getName()));
-				Util.coloredMessage(p, configUtils.lang("TELEPORT_ACCEPTED").replace("%player%", from.getName()));
-				from.teleport(p);
-				currentRequest.remove(p);
-				
+			if(currentRequest.containsKey(p.getUniqueId())) {
+				// accepted teleport request
+				Player from = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
+				if(from != null) {
+					Util.coloredMessage(from, configUtils.lang("TELEPORT_HASACCEPTED").replace("%player%", p.getName()));
+					from.teleport(p);
+				}
+				Util.coloredMessage(p, configUtils.lang("TELEPORT_ACCEPTED").replace("%player%", from != null ? from.getName() : "?"));
+				currentRequest.remove(p.getUniqueId());
+
 			} else {
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_NOREQUEST"));
 			}
-			return true;	
-			
-			
+			return true;
+
+
 		case "tpcancel":
 		case "tpdeny":
 		case "tpno":
-			if(currentRequest.containsKey(p)) {
-				Player from = currentRequest.get(p);
-				Util.coloredMessage(from, configUtils.lang("TELEPORT_HASDENIED").replace("%player%", p.getName()));
-				Util.coloredMessage(p, configUtils.lang("TELEPORT_DENIED").replace("%player%", from.getName()));
-				currentRequest.remove(p);
+			if(currentRequest.containsKey(p.getUniqueId())) {
+				Player from = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
+				if(from != null) {
+					Util.coloredMessage(from, configUtils.lang("TELEPORT_HASDENIED").replace("%player%", p.getName()));
+				}
+				Util.coloredMessage(p, configUtils.lang("TELEPORT_DENIED").replace("%player%", from != null ? from.getName() : "?"));
+				currentRequest.remove(p.getUniqueId());
 			} else {
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_NOREQUEST"));
 			}
@@ -146,19 +151,19 @@ public class TP implements CommandExecutor{//,TabCompleter,Listener {
 		
 		Util.coloredMessage(to, configUtils.lang("TELEPORT_GOT_REQUEST1").replace("%player%", from.getName()));
 		Util.coloredMessage(to, configUtils.lang("TELEPORT_GOT_REQUEST2").replace("%player%", from.getName()));
-		currentRequest.put(to, from);
+		currentRequest.put(to.getUniqueId(), from.getUniqueId());
 		
 	}
 	
 	public boolean killRequest(Player p) {
-	    if (currentRequest.containsKey(p)) {
-	      Player loser = currentRequest.get(p);
+	    if (currentRequest.containsKey(p.getUniqueId())) {
+	      Player loser = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
 	      if (loser != null) {
 			  loser.sendMessage(configUtils.lang("TELEPORT_TIMEOUT"));
 		  }
-	      currentRequest.remove(p);
+	      currentRequest.remove(p.getUniqueId());
 	      return true;
-	    } 
+	    }
 	    return false;
 	  }
 	
