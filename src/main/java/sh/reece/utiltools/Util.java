@@ -1,6 +1,5 @@
 package sh.reece.utiltools;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -99,7 +98,9 @@ public class Util {
 		float percent = (float) current / max;
 		if(percent > 1.0) { percent = (float) 1.0; }
 		final int progressBars = (int) (totalBars * percent);
-		return Strings.repeat("" + string + symbol, progressBars) + Strings.repeat("" + string2 + symbol, totalBars - progressBars);
+		final String filled = string + symbol;
+		final String empty = string2 + symbol;
+		return Strings.repeat(filled, progressBars) + Strings.repeat(empty, totalBars - progressBars);
 	}
 
 	// Not tested yet (2/7)
@@ -209,22 +210,10 @@ public class Util {
 				Files.createDirectories(Paths.get(uncompressedFilePath.getParent().toString()));
 				
                     InputStream is = file.getInputStream(entry);
-                    BufferedInputStream bis = new BufferedInputStream(is);
-					
-					// Files.copy(is, uncompressedFilePath, StandardCopyOption.REPLACE_EXISTING);
-                    // Files.write(uncompressedFilePath, bis.readAllBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-					// Files.createFile(uncompressedFilePath);
 
                     FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName);
-					// Util.log("uncomFName " + uncompressedFileName);
-					// Util.log("create uncomFPath " + uncompressedFilePath);
-                    // while (bis.available() > 0) { // always returened 0
-                        
-						// fileOutput.write(bis.readAllBytes());
-
-						byte[] bytes = ByteStreams.toByteArray(bis);						
+						byte[] bytes = ByteStreams.toByteArray(is);
 						fileOutput.write(bytes);
-                    // }
                     fileOutput.close();
                     // Util.log("Written: " + entry.getName());
                 // }
@@ -289,19 +278,7 @@ public class Util {
 	}
 
 	public static String locationToString(final Location loc) {
-		final int x;
-		final int y;
-		final int z;
-		final Location location = loc;
-
-		final World w = location.getWorld();
-		x = (int) location.getX();
-		y = (int) location.getY();
-		z = (int) location.getZ();
-		final float yaw = location.getYaw();
-		final float pitch = location.getPitch();
-
-		return w.getName()+";"+x+";"+y+";"+z+";"+yaw+";"+pitch;
+		return loc.getWorld().getName()+";"+((int) loc.getX())+";"+((int) loc.getY())+";"+((int) loc.getZ())+";"+loc.getYaw()+";"+loc.getPitch();
 	}
 	public static Location stringToLocation(final String Location) {		
 		if (Location == null) {
@@ -320,35 +297,33 @@ public class Util {
 	
 
 	public static boolean cooldown(final Map<String, Date> cooldownHash, final Integer secondCooldown, final String playerName, final String cooldownMessage) {
-		final long currentTime = new Date().getTime();
+		final long currentTime = System.currentTimeMillis();
 
-		if (cooldownHash.containsKey(playerName) && cooldownHash.get(playerName).getTime() >= currentTime) {
+		final Date expiry = cooldownHash.get(playerName);
+		if (expiry != null && expiry.getTime() >= currentTime) {
 			final Player p = Bukkit.getServer().getPlayer(playerName);
-			final long timeLeft = (cooldownHash.get(playerName).getTime() - currentTime) / 1000;
+			final long timeLeft = (expiry.getTime() - currentTime) / 1000;
 
 			p.sendMessage(Util.color(cooldownMessage.replace("%timeleft%", String.valueOf(timeLeft))));
 			return false;
 
 		} else {
-			cooldownHash.remove(playerName); //Cooldown is over
+			cooldownHash.remove(playerName);
 		}
 
-		if (!(cooldownHash.containsKey(playerName))) {
-			final long mil_cooldown = secondCooldown * 1000L;
-			cooldownHash.put(playerName , new Date(currentTime + mil_cooldown));
-		}
+		final long mil_cooldown = secondCooldown * 1000L;
+		cooldownHash.put(playerName, new Date(currentTime + mil_cooldown));
 
-		return true;				
+		return true;
 	}
 
 	public static Long cooldownSecondsLeft(final HashMap<String, Date> CooldownHash, final Integer SecondCooldown, final String PlayerName) {
-		final long CURRENT_TIME = new Date().getTime();
+		final long currentTime = System.currentTimeMillis();
 
-		if (CooldownHash.containsKey(PlayerName) && CooldownHash.get(PlayerName).getTime() >= CURRENT_TIME) {			
-			//Player p = Bukkit.getServer().getPlayer(PlayerName);
-			final Long timeLeft = ((CooldownHash.get(PlayerName).getTime() - CURRENT_TIME) / 1000);
-			return timeLeft;
-		} 
+		final Date expiry = CooldownHash.get(PlayerName);
+		if (expiry != null && expiry.getTime() >= currentTime) {
+			return (expiry.getTime() - currentTime) / 1000;
+		}
 
 		return 0L;
 	}
