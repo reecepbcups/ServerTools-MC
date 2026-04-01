@@ -32,9 +32,7 @@ public class Freeze extends BaseCommand implements Listener {
 		Messages = instance.getConfig().getStringList("Moderation.Freeze.Message");
 	}
 
-	@SuppressWarnings("deprecation")
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		// not needed, registering cmd does it dummy
 		if(!(cmd.getName().equalsIgnoreCase("freeze") || cmd.getName().equalsIgnoreCase("ss"))) {
 			return true;
 		}
@@ -48,37 +46,38 @@ public class Freeze extends BaseCommand implements Listener {
   			return true;
 		}
 
+		// try online first (free), only fall back to offline lookup
+		Player onlineTarget = Bukkit.getPlayer(args[0]);
 
-		OfflinePlayer p = Bukkit.getOfflinePlayer(args[0]);
-
-		if(p == null || !p.hasPlayedBefore()) {
-			Util.coloredMessage((Player)sender, "&cError! Player not found");
-	  		return true;
-		}
-
-		if(frozenPlayerList.contains(p.getUniqueId())) {
-			frozenPlayerList.remove(p.getUniqueId());
-	  		Util.coloredMessage((Player)sender, "&a&n"+args[0]+"&a unfrozen!");
-
-	  		if(Bukkit.getServer().getPlayer(p.getName()) != null) {
-	  			Player player = (Player) p;
-	  			Util.coloredMessage(player, configUtils.lang("FREEZE_UNFROZEN"));
-	  		}
-
+		if(onlineTarget != null) {
+			UUID uid = onlineTarget.getUniqueId();
+			if(frozenPlayerList.contains(uid)) {
+				frozenPlayerList.remove(uid);
+				Util.coloredMessage((Player)sender, "&a&n"+args[0]+"&a unfrozen!");
+				Util.coloredMessage(onlineTarget, configUtils.lang("FREEZE_UNFROZEN"));
+			} else {
+				frozenPlayerList.add(uid);
+				Util.coloredMessage((Player)sender, "&c&n"+args[0]+"&c has been frozen!");
+				if(Messages != null && !Messages.isEmpty()) {
+					Messages.forEach(msg -> Util.coloredMessage(onlineTarget, ConfigUtils.replaceVariable(msg)));
+				}
+			}
 		} else {
-	  		frozenPlayerList.add(p.getUniqueId());
-	  		Util.coloredMessage((Player)sender, "&c&n"+args[0]+"&c has been frozen!");
-
-	  		if(Bukkit.getServer().getPlayer(p.getName()) != null) {
-	  			Player player = (Player) p;
-
-	  			if(Messages != null && Messages.size() > 0) {
-	  				Messages.forEach(msg -> Util.coloredMessage(player, ConfigUtils.replaceVariable(msg)));
-	  			}
-
-	  		}
-
-
+			// offline: only check cache, never block main thread
+			@SuppressWarnings("deprecation")
+			OfflinePlayer offP = Bukkit.getOfflinePlayer(args[0]);
+			if(offP == null || !offP.hasPlayedBefore()) {
+				Util.coloredMessage((Player)sender, "&cError! Player not found");
+				return true;
+			}
+			UUID uid = offP.getUniqueId();
+			if(frozenPlayerList.contains(uid)) {
+				frozenPlayerList.remove(uid);
+				Util.coloredMessage((Player)sender, "&a&n"+args[0]+"&a unfrozen!");
+			} else {
+				frozenPlayerList.add(uid);
+				Util.coloredMessage((Player)sender, "&c&n"+args[0]+"&c has been frozen!");
+			}
 		}
 		return true;
 	}

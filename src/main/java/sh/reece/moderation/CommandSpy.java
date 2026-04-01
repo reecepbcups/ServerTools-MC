@@ -3,16 +3,15 @@ package sh.reece.moderation;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
@@ -22,7 +21,11 @@ public class CommandSpy extends BaseCommand implements Listener {
 
 	private Set<String> ignored;
 
-	private static Set<UUID> watching;
+	// UUID set for PAPI lookups
+	private static Set<UUID> watchingUUIDs;
+	// Player set to iterate only watchers, not all online players.
+	// CopyOnWriteArraySet is fine here: writes are rare (staff toggle), reads are frequent (every command).
+	private static Set<Player> watchingPlayers;
 
 
 	public CommandSpy(Main instance) {
@@ -30,35 +33,41 @@ public class CommandSpy extends BaseCommand implements Listener {
 
 		if(isEnabled()) {
 			ignored = new HashSet<>(instance.getConfig().getStringList(section+".Ignored-ignored_commands"));
-			watching = new HashSet<>();
+			watchingUUIDs = new HashSet<>();
+			watchingPlayers = new CopyOnWriteArraySet<>();
 		}
 	}
 
 	public static boolean isWatching(UUID uuid) {
-		// used in PAPI
-		return watching.contains(uuid);
+		return watchingUUIDs.contains(uuid);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void playerCommandSpyEvent(PlayerCommandPreprocessEvent e) {
-		if (e.getPlayer().hasPermission("commandspy.exempt")) {
-			return;
-		}
+		if (watchingPlayers.isEmpty()) return;
+		if (e.getPlayer().hasPermission("commandspy.exempt")) return;
 
 		String m = e.getMessage().toLowerCase();
+		if (ignored.contains(m.split(" ")[0]) || ignored.contains(m)) return;
 
-		if (ignored.contains(m.split(" ")[0]) || ignored.contains(m)) {
-			return;
-		}
-
+		UUID senderUUID = e.getPlayer().getUniqueId();
 		String n = e.getPlayer().getName();
 		String msg = e.getMessage();
-		Bukkit.getServer().getOnlinePlayers().forEach(x -> {
-			if (watching.contains(x.getUniqueId()) && !x.getUniqueId().equals(e.getPlayer().getUniqueId())) {
-				x.sendMessage(Util.color("&7CMDSPY &f&n"+n+ "&8> &f " + msg));
-			}
+		String formatted = Util.color("&7CMDSPY &f&n" + n + "&8> &f " + msg);
 
-		});
+		for (Player watcher : watchingPlayers) {
+			if (!watcher.getUniqueId().equals(senderUUID)) {
+				watcher.sendMessage(formatted);
+			}
+		}
+	}
+
+	@EventHandler
+	public void onQuit(PlayerQuitEvent e) {
+		Player p = e.getPlayer();
+		if (watchingUUIDs.remove(p.getUniqueId())) {
+			watchingPlayers.remove(p);
+		}
 	}
 
 	@Override
@@ -75,15 +84,15 @@ public class CommandSpy extends BaseCommand implements Listener {
 		}
 
 		switch(args[0].toLowerCase()){
-		// /command clear
 		case "enable":
 		case "e":
 		case "start":
-			if(watching.contains(p.getUniqueId())) {
+			if(watchingUUIDs.contains(p.getUniqueId())) {
 				p.sendMessage("You already have this on");
 			} else {
 				Util.coloredMessage(p, "&7Commandspy has been &aenabled&7.");
-				watching.add(p.getUniqueId());
+				watchingUUIDs.add(p.getUniqueId());
+				watchingPlayers.add(p);
 			}
 			return true;
 
@@ -91,9 +100,8 @@ public class CommandSpy extends BaseCommand implements Listener {
 		case "d":
 		case "stop":
 			Util.coloredMessage(p, "&7Commandspy has been &cdisabled&7.");
-
-			if(watching.contains(p.getUniqueId())) {
-				watching.remove(p.getUniqueId());
+			if(watchingUUIDs.remove(p.getUniqueId())) {
+				watchingPlayers.remove(p);
 			}
 			return true;
 		default:

@@ -2,6 +2,7 @@ package sh.reece.runnables;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -130,14 +131,21 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 			return;
 		}
 
-		for (World w : Bukkit.getWorlds()) {
-			for (Entity e : w.getEntities()) {
-				if (e instanceof Item) {
-					e.remove();
-				} else if (AutoClearMobs && (e instanceof Animals || e instanceof Monster) && e.getCustomName() == null) {
-					e.remove();
+		// spread entity removal across ticks to avoid stalling the main thread.
+		// each world gets its own deferred task so we don't process thousands of entities in one tick.
+		List<World> worlds = Bukkit.getWorlds();
+		for (int i = 0; i < worlds.size(); i++) {
+			final World w = worlds.get(i);
+			final boolean clearMobs = AutoClearMobs;
+			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+				for (Entity e : w.getEntities()) {
+					if (e instanceof Item) {
+						e.remove();
+					} else if (clearMobs && (e instanceof Animals || e instanceof Monster) && e.getCustomName() == null) {
+						e.remove();
+					}
 				}
-			}
+			}, i); // stagger by 1 tick per world
 		}
 		Util.coloredBroadcast(ClearedMSG);
 	}

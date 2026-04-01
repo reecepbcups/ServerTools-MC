@@ -15,12 +15,8 @@ public class ColonInCommands extends ToggleableListener {
 	}
 
 
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
-
-		if(e.isCancelled()) {
-			return;
-		}
 
 		if (e.getMessage().split(" ")[0].contains(":")) {
 			if(!hasPermission(e.getPlayer())) {

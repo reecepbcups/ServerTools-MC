@@ -94,9 +94,9 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
     	// on disable delete all armour stands at locations given in config
     	holoKeys = HoloConfig.getKeys(false); // [skyblock]
 
-    	if(papiSupport) { // && randomPlayer == null < not needed i dont think
-    		randomPlayer = Bukkit.getOnlinePlayers().stream().skip(0).findFirst().orElse(null);
-    		//Util.consoleMSG(randomPlayer+"");
+    	if(papiSupport) {
+    		var online = Bukkit.getOnlinePlayers();
+    		randomPlayer = online.isEmpty() ? null : online.iterator().next();
     	}
 
 		// spawn holograms only if holokeys has more than 1
