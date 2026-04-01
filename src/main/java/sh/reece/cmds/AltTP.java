@@ -70,7 +70,8 @@ public class AltTP extends BaseCommand {
 			List<String> altNames = new ArrayList<String>();
 
 			for(String alt : alts) {
-				altNames.add(Bukkit.getPlayer(UUID.fromString(alt)).getName());
+				Player altPlayer = Bukkit.getPlayer(UUID.fromString(alt));
+				altNames.add(altPlayer != null ? altPlayer.getName() : alt);
 			}
 			Util.coloredMessage(p, "&f&lYour Alts:");
 			Util.coloredMessage(p, altNames.toString());
@@ -116,7 +117,7 @@ public class AltTP extends BaseCommand {
 
 			if(!alttpconfig.contains(masteruuid)) {
 				alttpconfig.set(masteruuid+".name", other.getName());
-				alttpconfig.set(masteruuid+".accounts", new ArrayList<String>().add(" "));
+				alttpconfig.set(masteruuid+".accounts", new ArrayList<String>());
 			}
 
 			List<String> slaves = alttpconfig.getStringList(masteruuid+".accounts");

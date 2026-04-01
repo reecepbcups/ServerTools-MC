@@ -9,6 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import sh.reece.tools.Announcements;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Util;
 
 public class AutoBroadcast extends BukkitRunnable {
 
@@ -39,7 +40,12 @@ public class AutoBroadcast extends BukkitRunnable {
 			footer = config.getStringList("Footer");
 
 			groups = new ArrayList<String>();
-			for (String announcement : config.getConfigurationSection("Messages").getKeys(false)) {
+			var messagesSection = config.getConfigurationSection("Messages");
+			if (messagesSection == null) {
+				Util.consoleMSG("&c[AutoBroadcast] Missing 'Messages' section in Announcements.yml");
+				return;
+			}
+			for (String announcement : messagesSection.getKeys(false)) {
 				groups.add(announcement);
 			}
 

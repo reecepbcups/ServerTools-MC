@@ -113,7 +113,7 @@ public class Visibility extends BaseCommand {
 				if(hidePlayer) {
 					if(!online.hasPermission(permission)) {
 						p.hidePlayer(online);
-						hiddenPlayers.add(p);
+						hiddenPlayers.add(online);
 					}
 				} else {
 					p.showPlayer(online);

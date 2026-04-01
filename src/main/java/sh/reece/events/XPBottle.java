@@ -66,9 +66,16 @@ public class XPBottle extends BaseCommand implements Listener {
 			}
 
 			if (item.getItemMeta().getDisplayName().equalsIgnoreCase(bottlename)) {
+				if (!item.getItemMeta().hasLore() || item.getItemMeta().getLore().isEmpty()) {
+					return;
+				}
+				String[] loreParts = ChatColor.stripColor(item.getItemMeta().getLore().get(0)).split(" ");
+				if (loreParts.length < 2) {
+					return;
+				}
 
 				int currentEXP = Util.getTotalExperience(p);
-				int value = Integer.parseInt(ChatColor.stripColor(item.getItemMeta().getLore().get(0).split(" ")[1]));
+				int value = Integer.parseInt(loreParts[1]);
 				int xpbottleAMT = item.getAmount();
 				String finalOutput = configUtils.lang("XPBOTTLE_REDEEEMED").replace("%exp%", Util.formatNumber(value));
 

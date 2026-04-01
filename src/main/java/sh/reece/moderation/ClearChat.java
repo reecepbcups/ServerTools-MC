@@ -32,7 +32,8 @@ public class ClearChat extends BaseCommand {
         		Bukkit.broadcastMessage(" ");
         	}
 
-        	Bukkit.broadcastMessage(Util.color(plugin.getConfig().getString("Moderation.ClearChat.Messages.msg").replace("%player%", sender.getName())));
+        	String clearMsg = plugin.getConfig().getString("Moderation.ClearChat.Messages.msg", "&aChat cleared by %player%");
+        	Bukkit.broadcastMessage(Util.color(clearMsg.replace("%player%", sender.getName())));
 
 
         }

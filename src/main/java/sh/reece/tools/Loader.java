@@ -183,7 +183,9 @@ public class Loader {
 	}
 
 	public void setMarking(String mark) {
-		executionTimer.info(mark);
+		if (executionTimer != null) {
+			executionTimer.info(mark);
+		}
 	}
 
 	public void unloadAll() {

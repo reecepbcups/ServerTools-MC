@@ -60,6 +60,10 @@ public class InvSee extends BaseCommand implements Listener, Unloadable {
 		}
 
 		Player target = Bukkit.getPlayer(args[0]);
+		if (target == null) {
+			sender.sendMessage(Util.color("&cPlayer " + args[0] + " is not online."));
+			return true;
+		}
 
 		final Inventory inv;
 

@@ -52,7 +52,9 @@ public class CMDAlias extends ToggleableListener {
 			if (instance.getConfig().contains("Misc.CMDAliases.preCooldownCommands")) {
 				stopIfMoved = instance.getConfig().getBoolean("Misc.CMDAliases.preCooldownCommands.stopIfMoved");
 
-				for (String world : instance.getConfig().getConfigurationSection("Misc.CMDAliases.preCooldownCommands").getKeys(false)) {
+				var preCooldownSection = instance.getConfig().getConfigurationSection("Misc.CMDAliases.preCooldownCommands");
+				if (preCooldownSection == null) return;
+				for (String world : preCooldownSection.getKeys(false)) {
 					HashMap<String, Integer> tempHoldCommands = new HashMap<String, Integer>();
 
 					if (!world.equalsIgnoreCase("stopIfMoved")) {
@@ -82,7 +84,9 @@ public class CMDAlias extends ToggleableListener {
 	public void saveDisabledCommands() {
 		worlddisabled = new HashMap<>();
 		if (plugin.getConfig().contains("Misc.CMDAliases.disabledWorlds")) {
-			for (String world : plugin.getConfig().getConfigurationSection("Misc.CMDAliases.disabledWorlds").getKeys(false)) {
+			var disabledWorldsSection = plugin.getConfig().getConfigurationSection("Misc.CMDAliases.disabledWorlds");
+			if (disabledWorldsSection == null) return;
+			for (String world : disabledWorldsSection.getKeys(false)) {
 
 				if (Bukkit.getWorld(world) != null) {
 					Set<String> s = new HashSet<>();

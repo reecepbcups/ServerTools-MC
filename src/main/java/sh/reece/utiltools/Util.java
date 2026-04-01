@@ -210,12 +210,11 @@ public class Util {
 
 				Files.createDirectories(Paths.get(uncompressedFilePath.getParent().toString()));
 				
-                    InputStream is = file.getInputStream(entry);
-
-                    FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName);
+                    try (InputStream is = file.getInputStream(entry);
+                         FileOutputStream fileOutput = new FileOutputStream(uncompressedFileName)) {
 						byte[] bytes = ByteStreams.toByteArray(is);
 						fileOutput.write(bytes);
-                    fileOutput.close();
+                    }
                     // Util.log("Written: " + entry.getName());
                 // }
             }

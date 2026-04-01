@@ -22,7 +22,7 @@ public class WhitelistBypass implements Listener {
 		if (plugin.getConfigUtils().enabledInConfig("Moderation.WhitelistBypass.Enabled")) {
 			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);	
 
-			this.Whitelistperm = plugin.getConfig().getString("Moderation.WhitelistBypass.Permission");
+			this.Whitelistperm = plugin.getConfig().getString("Moderation.WhitelistBypass.Permission", "whitelist.bypass");
 			this.Message = Util.color(plugin.getConfig().getString("Moderation.WhitelistBypass.Message"));
 			
 			DisableWhitelistCMDInGame = plugin.getConfig().getBoolean("Moderation.WhitelistBypass.DisableWhitelistCMDInGame");

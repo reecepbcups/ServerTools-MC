@@ -22,10 +22,7 @@ public class Report extends BaseCommand {
         if(isEnabled()) {
         	perm = "report.notify";
 
-        	CooldownSeconds = instance.getConfig().getInt(section+".Cooldown");
-        	if(CooldownSeconds == null) {
-        		CooldownSeconds = 15;
-        	}
+        	CooldownSeconds = instance.getConfig().getInt(section+".Cooldown", 15);
         	CooldownMSG = instance.getConfig().getString(section+".CooldownMSG");
         	ReportSuccess = instance.getConfig().getString(section+".ReportSuccess");
     	}
@@ -33,6 +30,10 @@ public class Report extends BaseCommand {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (!(sender instanceof Player)) {
+			sender.sendMessage("This command can only be used by players.");
+			return true;
+		}
 
 		Player p = (Player) sender;
 

@@ -85,12 +85,16 @@ public class Withdraw extends BaseCommand implements Listener {
 
 		if (note.getItemMeta().getDisplayName().equals(noteName)) {
 			var im = note.getItemMeta();
-			if (!im.hasLore()) {
+			if (!im.hasLore() || im.getLore().isEmpty()) {
 				return;
 			}
 
-			String value = ChatColor.stripColor(note.getItemMeta().getLore().get(0).replace("$", "__d__"));
-			Long amount = Long.parseLong(value.split("__d__")[1]);
+			String value = ChatColor.stripColor(im.getLore().get(0).replace("$", "__d__"));
+			String[] valueParts = value.split("__d__");
+			if (valueParts.length < 2) {
+				return;
+			}
+			Long amount = Long.parseLong(valueParts[1]);
 
 			String finalOutput = configUtils.lang("WITHDRAW_MONEY") + Util.formatNumber(amount);
 			int noteAMT = note.getAmount();

@@ -67,7 +67,7 @@ public class ChatNumberGuesser extends ToggleableListener {
 			}
 
 			if(args.length > 0) {
-				Number  = new Random().nextInt(100-1);
+				Number  = new Random().nextInt(100) + 1;
 				Util.coloredMessage(p, "&7&o(( random number " + Number + " chosen ))");
 
 				Running = true;

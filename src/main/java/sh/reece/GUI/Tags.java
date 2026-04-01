@@ -104,7 +104,9 @@ public class Tags extends BaseCommand implements Listener {
 		tagsGUI = Bukkit.createInventory(null, rows, InvName);
 
 		int i = 0;
-		Set<String> TAGS = getTagsConfig().getConfigurationSection("Tags").getKeys(false);
+		var tagsSection = getTagsConfig().getConfigurationSection("Tags");
+		if (tagsSection == null) return;
+		Set<String> TAGS = tagsSection.getKeys(false);
 
 		for (String tag : TAGS) {
 			String perm = "Tags." + tag;

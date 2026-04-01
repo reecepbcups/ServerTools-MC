@@ -3,6 +3,7 @@ package sh.reece.cmds;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -37,6 +38,9 @@ public class Rename extends BaseCommand implements Listener {
 			return;
 		}
 		if (event.getSlotType() != SlotType.RESULT) {
+			return;
+		}
+		if (event.getCurrentItem() == null) {
 			return;
 		}
 		if (disabledRenameItems.contains(event.getCurrentItem().getType().toString())) {
@@ -78,7 +82,15 @@ public class Rename extends BaseCommand implements Listener {
 		}
 
 		ItemStack item = getItem(p);
+		if (item == null || item.getType() == Material.AIR) {
+			Util.coloredMessage(p, "&cYou must be holding an item!");
+			return true;
+		}
 		ItemMeta im = item.getItemMeta();
+		if (im == null) {
+			Util.coloredMessage(p, "&cThis item cannot be renamed.");
+			return true;
+		}
 
 		String itemType = item.getType().toString().replace("LEGACY_", "");
 		if(disabledRenameItems.contains(itemType)) {

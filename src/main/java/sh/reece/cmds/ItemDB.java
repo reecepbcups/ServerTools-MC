@@ -38,15 +38,17 @@ public class ItemDB implements CommandExecutor {
         Material blockMat = null;
         org.bukkit.block.Block block = null;
         if (ray != null) {
-            block = ray.getHitBlock();        
-            blockMat = block.getType();  
+            block = ray.getHitBlock();
+            if (block != null) {
+                blockMat = block.getType();
+            }
         }
               
 
         // print the itemName & amount held
         Util.coloredMessage(sender, "\n&fYou are holding &c" + item.getAmount() + "&fx &c" + mat);
         // print out what they are looking at
-        if(ray != null) {
+        if(blockMat != null) {
             Util.coloredMessage(sender, "&fYou are looking at &c" + blockMat);
         }
         

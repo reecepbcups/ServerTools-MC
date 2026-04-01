@@ -38,10 +38,10 @@ public class CommandProtection extends BaseCommand implements Listener {
 			config = configUtils.getConfigFile(FILENAME);
 
 			AllowedPlayers = new HashSet<>(config.getStringList("AllowedPlayers"));
-			PasswordView = new HashSet<>(config.getStringList("AllowedPlayers"));
+			PasswordView = new HashSet<>(config.getStringList("PasswordView"));
 
 			ProtectedCommands = new HashSet<>(config.getStringList("ProtectedCommands"));
-			password = config.getString("password");
+			password = config.getString("password", "");
 
 			FailedPassAttempts = new HashMap<String, Long>();
 		}

@@ -57,6 +57,7 @@ public class StaffList extends BaseCommand {
 
 		for(Player online : Bukkit.getOnlinePlayers()) {
 			User u = LuckPermsProvider.get().getUserManager().getUser(online.getUniqueId());
+			if(u == null) continue;
 			String mainGroup = u.getPrimaryGroup().toString();
 
 			if(!groups.contains(mainGroup)) {

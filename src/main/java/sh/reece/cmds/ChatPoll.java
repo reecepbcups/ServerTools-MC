@@ -46,7 +46,7 @@ public class ChatPoll extends BaseCommand implements Listener {
 	        if (max == null || e.getValue() > max.getValue())
 	            max = e;
 	    }
-	    return max.getKey();
+	    return max != null ? max.getKey() : null;
 	}
 
 	@EventHandler(ignoreCancelled = true)
@@ -110,7 +110,11 @@ public class ChatPoll extends BaseCommand implements Listener {
 				Util.coloredMessage(p, "&cNo poll is running!");
 			} else {
 				pollRunning = false;
-				Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));
+				if(votes.isEmpty()) {
+					Util.coloredBroadcast("&c&lPOLL ended with no votes!");
+				} else {
+					Util.coloredBroadcast("&a&lPOLL WINNER &a&n#" + mostCommon(votes));
+				}
 			}
 
 			return true;

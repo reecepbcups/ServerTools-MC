@@ -35,7 +35,13 @@ public class BungeeServerConnector extends ToggleableListener {
 			}
 
 			CMD = instance.getConfig().getString(Section+".command");
-			avaliableServers = instance.getConfig().getConfigurationSection(Section+".Aliases").getKeys(false);
+			var aliasSection = instance.getConfig().getConfigurationSection(Section+".Aliases");
+			if (aliasSection == null) {
+				Util.consoleMSG("&c[BungeeServerConnector] Missing Aliases section in config");
+				avaliableServers = java.util.Collections.emptySet();
+			} else {
+				avaliableServers = aliasSection.getKeys(false);
+			}
 		}
 	}
 

@@ -182,8 +182,11 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		if(args.length == 2) {
 			if(Arrays.asList("import", "restore").contains(args[0].toLowerCase())){
 				String path = plugin.getDataFolder() + File.separator + ConfigUtils.getInstance().getBackupDir();
-				if(new File(path).exists()){
-					for(File f : new File(path).listFiles()) {
+				File pathDir = new File(path);
+				if(pathDir.exists()){
+					File[] files = pathDir.listFiles();
+					if(files == null) return result;
+					for(File f : files) {
 						if(f.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
 							result.add(f.getName());
 						}

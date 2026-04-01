@@ -34,10 +34,14 @@ public class TPAll implements CommandExecutor {//,  {
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-		if (!(sender.hasPermission("tools.tpall"))) {		
+		if (!(sender instanceof Player)) {
+			sender.sendMessage("This command can only be used by players.");
+			return true;
+		}
+		if (!(sender.hasPermission("tools.tpall"))) {
 			sender.sendMessage(Util.color("&cNo Permission to use tpall :("));
-			return true;			
-		} 
+			return true;
+		}
 
 		Player player = (Player) sender;
 		Location loc = player.getLocation();

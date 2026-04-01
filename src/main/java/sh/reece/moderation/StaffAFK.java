@@ -87,6 +87,10 @@ public class StaffAFK extends BaseCommand implements Listener {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (!(sender instanceof Player)) {
+			sender.sendMessage("This command can only be used by players.");
+			return true;
+		}
 
 		Player p = (Player) sender;
 		UUID uuid = p.getUniqueId();

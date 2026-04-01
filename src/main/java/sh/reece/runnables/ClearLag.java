@@ -57,10 +57,11 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 		}
 	}
 
-	private int test = delay;
+	private int test;
 
 	@Override
 	public void run() {
+		test = delay;
 
 		new BukkitRunnable() {
 			public void run() {
@@ -78,6 +79,7 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 				test -= 5;
 			}
 		}.runTaskTimer(plugin, 0, 5 * 20L);
+		cancel(); // cancel the outer runnable so run() only executes once
 	}
 
 	@Override

@@ -24,6 +24,9 @@ public class WeightedRandom<T extends Object> {
     }
 
     public T getRandom() {
+        if (entries.isEmpty()) {
+            throw new IllegalStateException("No entries in WeightedRandom");
+        }
         double r = rand.nextDouble() * accumulatedWeight;
 
         for (Entry entry: entries) {
@@ -31,7 +34,7 @@ public class WeightedRandom<T extends Object> {
                 return entry.object;
             }
         }
-        return null; //should only happen when there are no entries
+        return entries.get(entries.size() - 1).object;
     }
 	
 }

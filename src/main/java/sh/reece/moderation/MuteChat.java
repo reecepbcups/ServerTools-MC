@@ -22,7 +22,7 @@ public class MuteChat extends BaseCommand implements Listener {
 		ChatEnabled = true;
 
         if (isEnabled()) {
-			MuteChatBypassPerm = instance.getConfig().getString("Moderation.MuteChat.Permission.Bypass");
+			MuteChatBypassPerm = instance.getConfig().getString("Moderation.MuteChat.Permission.Bypass", "mutechat.bypass");
 
 			ENABLED = instance.getConfig().getString("Moderation.MuteChat.Messages.Enabled");
 			DISABLED = instance.getConfig().getString("Moderation.MuteChat.Messages.Disable");

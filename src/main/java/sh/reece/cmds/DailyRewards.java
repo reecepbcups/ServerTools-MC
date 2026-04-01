@@ -132,7 +132,7 @@ public class DailyRewards extends BaseCommand implements Unloadable {
     }
 
    private String ipAddressFormat(Player p) {
-	   return p.getAddress().getAddress().toString().replace("", "_").substring(1);
+	   return p.getAddress().getAddress().toString().replace(".", "_").substring(1);
    }
 
     public boolean canPlayerClaim(String ip, Long EpochTime) {
