@@ -4,7 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -14,7 +15,7 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -296,33 +297,33 @@ public class Util {
 	
 	
 
-	public static boolean cooldown(final Map<String, Date> cooldownHash, final Integer secondCooldown, final String playerName, final String cooldownMessage) {
+	public static boolean cooldown(final Map<String, Long> cooldownHash, final int secondCooldown, final String playerName, final String cooldownMessage) {
 		final long currentTime = System.currentTimeMillis();
 
 		// passive eviction: remove expired entries when map gets large
 		if (cooldownHash.size() > 100) {
-			cooldownHash.entrySet().removeIf(e -> e.getValue().getTime() < currentTime);
+			cooldownHash.entrySet().removeIf(e -> e.getValue() < currentTime);
 		}
 
-		final Date expiry = cooldownHash.get(playerName);
-		if (expiry != null && expiry.getTime() >= currentTime) {
+		final Long expiry = cooldownHash.get(playerName);
+		if (expiry != null && expiry >= currentTime) {
 			final Player p = Bukkit.getServer().getPlayer(playerName);
 			if (p == null) return false;
-			final long timeLeft = (expiry.getTime() - currentTime) / 1000;
+			final long timeLeft = (expiry - currentTime) / 1000;
 			p.sendMessage(Util.color(cooldownMessage.replace("%timeleft%", String.valueOf(timeLeft))));
 			return false;
 		}
 
-		cooldownHash.put(playerName, new Date(currentTime + secondCooldown * 1000L));
+		cooldownHash.put(playerName, currentTime + secondCooldown * 1000L);
 		return true;
 	}
 
-	public static Long cooldownSecondsLeft(final HashMap<String, Date> CooldownHash, final Integer SecondCooldown, final String PlayerName) {
+	public static long cooldownSecondsLeft(final Map<String, Long> cooldownHash, final int secondCooldown, final String playerName) {
 		final long currentTime = System.currentTimeMillis();
 
-		final Date expiry = CooldownHash.get(PlayerName);
-		if (expiry != null && expiry.getTime() >= currentTime) {
-			return (expiry.getTime() - currentTime) / 1000;
+		final Long expiry = cooldownHash.get(playerName);
+		if (expiry != null && expiry >= currentTime) {
+			return (expiry - currentTime) / 1000;
 		}
 
 		return 0L;
@@ -337,29 +338,35 @@ public class Util {
 	}
 
 	private static final Pattern HEX_PATTERN = Pattern.compile("([&]?)?(#[a-fA-f0-9]{6})");
-	private static final Method CHAT_COLOR_OF;
+	private static final MethodHandle CHAT_COLOR_OF;
 	static {
-		Method m = null;
+		MethodHandle mh = null;
 		try {
-			m = net.md_5.bungee.api.ChatColor.class.getMethod("of", String.class);
-		} catch (NoSuchMethodException ignored) {}
-		CHAT_COLOR_OF = m;
+			Method m = net.md_5.bungee.api.ChatColor.class.getMethod("of", String.class);
+			mh = MethodHandles.lookup().unreflect(m);
+		} catch (NoSuchMethodException | IllegalAccessException ignored) {}
+		CHAT_COLOR_OF = mh;
 	}
 
 	public static String color(String message) {
 		if (CHAT_COLOR_OF != null) {
 			Matcher matcher = HEX_PATTERN.matcher(message);
-			try {
-				while (matcher.find()) {
-					String color = message.substring(matcher.start(), matcher.end());
-					message = message.replace(color, CHAT_COLOR_OF.invoke(null, matcher.group(0).replace("&#", "#")) + "");
-					matcher = HEX_PATTERN.matcher(message);
+			if (matcher.find()) {
+				StringBuilder sb = new StringBuilder(message.length() + 32);
+				try {
+					do {
+						String hex = matcher.group(0).replace("&#", "#");
+						String replacement = CHAT_COLOR_OF.invoke(hex).toString();
+						matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+					} while (matcher.find());
+					matcher.appendTail(sb);
+					message = sb.toString();
+				} catch (Throwable e) {
+					// hex colors unsupported on this server version
 				}
-			} catch (IllegalAccessException | InvocationTargetException e) {
-				// hex colors unsupported on this server version
 			}
 		}
-		
+
 		if(message == null){
 			message = "SERVERTOOLS_MESSAGE_NULL_ISSUE";
 			consoleMSG("NULL ERROR: ");
@@ -591,15 +598,37 @@ public class Util {
 
 
 
-	public static boolean isArmour(final Material m) {
-		return Enchantment.PROTECTION_ENVIRONMENTAL.canEnchantItem(new ItemStack(m));
-	}
-	public static boolean isWeapon(final Material m) {
-		return Enchantment.DAMAGE_ALL.canEnchantItem(new ItemStack(m));
+	private static volatile EnumSet<Material> ARMOUR_MATS, WEAPON_MATS, TOOL_MATS;
+	private static void initMaterialSets() {
+		if (ARMOUR_MATS != null) return;
+		EnumSet<Material> armour = EnumSet.noneOf(Material.class);
+		EnumSet<Material> weapon = EnumSet.noneOf(Material.class);
+		EnumSet<Material> tool = EnumSet.noneOf(Material.class);
+		for (Material m : Material.values()) {
+			if (m.isLegacy() || !m.isItem()) continue;
+			try {
+				ItemStack test = new ItemStack(m);
+				if (Enchantment.PROTECTION_ENVIRONMENTAL.canEnchantItem(test)) armour.add(m);
+				if (Enchantment.DAMAGE_ALL.canEnchantItem(test)) weapon.add(m);
+				if (Enchantment.DIG_SPEED.canEnchantItem(test)) tool.add(m);
+			} catch (Exception ignored) {}
+		}
+		ARMOUR_MATS = armour;
+		WEAPON_MATS = weapon;
+		TOOL_MATS = tool;
 	}
 
+	public static boolean isArmour(final Material m) {
+		initMaterialSets();
+		return ARMOUR_MATS.contains(m);
+	}
+	public static boolean isWeapon(final Material m) {
+		initMaterialSets();
+		return WEAPON_MATS.contains(m);
+	}
 	public static boolean isTool(final Material m) {
-		return Enchantment.DIG_SPEED.canEnchantItem(new ItemStack(m));
+		initMaterialSets();
+		return TOOL_MATS.contains(m);
 	}
 
 	public static boolean isType(final Material m, final String name) {

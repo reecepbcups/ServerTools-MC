@@ -131,18 +131,11 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 		}
 
 		for (World w : Bukkit.getWorlds()) {
-
 			for (Entity e : w.getEntities()) {
 				if (e instanceof Item) {
 					e.remove();
-				}
-
-				if (AutoClearMobs) {
-					if (e instanceof Animals || e instanceof Monster) {
-						if (e.getCustomName() == null) {
-							e.remove();
-						}
-					}
+				} else if (AutoClearMobs && (e instanceof Animals || e instanceof Monster) && e.getCustomName() == null) {
+					e.remove();
 				}
 			}
 		}

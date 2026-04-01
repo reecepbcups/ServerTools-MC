@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.bukkit.entity.Creature;
-import org.bukkit.entity.Monster;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntitySpawnEvent;
 
@@ -25,7 +24,7 @@ public class DisableMobSpawning extends ToggleableListener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void NoMobSpawning(EntitySpawnEvent e) {
-        if (e.getEntity() instanceof Creature || e.getEntity() instanceof Monster) {
+        if (e.getEntity() instanceof Creature) {
             if (worlds.isEmpty() || worlds.contains(e.getEntity().getWorld().getName())) {
                 e.setCancelled(true);
             }

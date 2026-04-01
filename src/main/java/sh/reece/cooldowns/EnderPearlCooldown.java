@@ -10,14 +10,13 @@ import sh.reece.tools.Main;
 import sh.reece.tools.ToggleableListener;
 import sh.reece.utiltools.Util;
 
-import java.util.Date;
 import java.util.HashMap;
 
 public class EnderPearlCooldown extends ToggleableListener {
 
 	private final Integer cooldownSeconds;
 	private final String cooldownMessage;
-	private final HashMap<String, Date> cooldownHash;
+	private final HashMap<String, Long> cooldownHash;
 
 	public EnderPearlCooldown(final Main instance) {
 		super(instance, "Cooldowns.EnderPearlCooldown");

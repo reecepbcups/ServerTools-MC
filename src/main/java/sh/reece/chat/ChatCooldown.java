@@ -1,6 +1,5 @@
 package sh.reece.chat;
 
-import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.command.Command;
@@ -18,7 +17,7 @@ public class ChatCooldown extends BaseCommand implements Listener {
 	public String NoCooldownPerm, CooldownMSG;
 	public Integer CooldownSeconds;
 	public Boolean Enabled;
-	private HashMap<String, Date> ChatCooldownMap;
+	private HashMap<String, Long> ChatCooldownMap;
 
 	public ChatCooldown(Main instance) {
 		super(instance, "Chat.ChatCooldown", "chatcooldown");
@@ -30,7 +29,7 @@ public class ChatCooldown extends BaseCommand implements Listener {
 			this.CooldownMSG = instance.getConfig().getString("Chat.ChatCooldown.Message");
 
 			this.Enabled = true;
-			this.ChatCooldownMap = new HashMap<String, Date>();
+			this.ChatCooldownMap = new HashMap<>();
 		}
 	}
 

@@ -1,6 +1,5 @@
 package sh.reece.cooldowns;
 
-import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.Material;
@@ -18,7 +17,7 @@ public abstract class ConsumeCooldown extends ToggleableListener {
     private final int cooldownSeconds;
     private final String cooldownMessage;
     private final String eatenMessage;
-    private final HashMap<String, Date> cooldownMap = new HashMap<>();
+    private final HashMap<String, Long> cooldownMap = new HashMap<>();
     private final Material material;
     private final short durability;
 

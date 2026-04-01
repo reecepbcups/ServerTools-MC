@@ -13,16 +13,16 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CMDAlias extends ToggleableListener {
 
 	public ConfigurationSection Alises;
 
-	private static List<String> Disabled;
-	private static HashMap<String, List<String>> worlddisabled;
+	private static Set<String> Disabled;
+	private static HashMap<String, Set<String>> worlddisabled;
 
 	// world: [cmd, 5]
 	private static final HashMap<String, HashMap<String, Integer>> preWorldCooldown = new HashMap<String, HashMap<String, Integer>>();
@@ -37,7 +37,7 @@ public class CMDAlias extends ToggleableListener {
 
 		if (isEnabled()) {
 			configUtils = instance.getConfigUtils();
-			Disabled = instance.getConfig().getStringList("Misc.CMDAliases.disabled");
+			Disabled = new HashSet<>(instance.getConfig().getStringList("Misc.CMDAliases.disabled"));
 
 			permission = instance.getConfig().getString("Misc.CMDAliases.Permission");
 			Alises = instance.getConfig().getConfigurationSection("Misc.CMDAliases.cmds");
@@ -79,17 +79,17 @@ public class CMDAlias extends ToggleableListener {
 	// saves all commands which should be disabled to the list.
 	// Every 15 mins this is refreshed to make sure it doesnt unload
 	public void saveDisabledCommands() {
-		worlddisabled = new HashMap<String, List<String>>();
+		worlddisabled = new HashMap<>();
 		if (plugin.getConfig().contains("Misc.CMDAliases.disabledWorlds")) {
 			for (String world : plugin.getConfig().getConfigurationSection("Misc.CMDAliases.disabledWorlds").getKeys(false)) {
 
 				if (Bukkit.getWorld(world) != null) {
-					List<String> l = new ArrayList<String>();
+					Set<String> s = new HashSet<>();
 
 					for (String blockCMD : plugin.getConfig().getStringList("Misc.CMDAliases.disabledWorlds." + world)) {
-						l.add(blockCMD.toLowerCase());
+						s.add(blockCMD.toLowerCase());
 					}
-					worlddisabled.put(world, l);
+					worlddisabled.put(world, s);
 				}
 			}
 		} else {
@@ -109,10 +109,10 @@ public class CMDAlias extends ToggleableListener {
 		Player p = e.getPlayer();
 		String world = p.getLocation().getWorld().getName();
 
-		// if there are any keys
-		if (worlddisabled.keySet().size() > 0) {
-			if (worlddisabled.keySet().contains(world)) {
-				if (worlddisabled.get(world).contains(command)) {
+		if (!worlddisabled.isEmpty()) {
+			Set<String> blocked = worlddisabled.get(world);
+			if (blocked != null) {
+				if (blocked.contains(command)) {
 					if (!e.getPlayer().hasPermission(permission)) {
 						e.setCancelled(true);
 						Util.coloredMessage(e.getPlayer(), configUtils.lang("CMDALIAS_DENYWORLD").replace("%cmd%", command));
@@ -133,10 +133,11 @@ public class CMDAlias extends ToggleableListener {
 			}
 		}
 
-		if (preWorldCooldown.containsKey(world)) {
+		HashMap<String, Integer> worldCooldowns = preWorldCooldown.get(world);
+		if (worldCooldowns != null) {
 			command = e.getMessage().substring(1);
 
-			if (preWorldCooldown.get(world).keySet().contains(command)) {
+			if (worldCooldowns.containsKey(command)) {
 
 				if (p.hasPermission(permission)) {
 					Util.coloredMessage(p, "&7&oBypassing PreCommand Cooldown due to being staff");
@@ -146,7 +147,7 @@ public class CMDAlias extends ToggleableListener {
 				}
 
 				Location loc = p.getLocation();
-				int sec = preWorldCooldown.get(world).get(command);
+				int sec = worldCooldowns.get(command);
 
 				if (!p.hasPermission(permission)) {
 					Util.coloredMessage(p, configUtils.lang("CMDALIAS_DELAYED").replace("%cmd%", command).replace("%time%", sec + ""));

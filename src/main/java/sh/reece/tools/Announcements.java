@@ -15,9 +15,9 @@ public class Announcements {
         line = ConfigUtils.replaceVariable(line).trim();
 
         if (Main.isPAPIEnabled() && line.contains("%")) {
-            Player any = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
-            if (any != null) {
-                line = PlaceholderAPI.setPlaceholders(any, line);
+            var online = Bukkit.getOnlinePlayers();
+            if (!online.isEmpty()) {
+                line = PlaceholderAPI.setPlaceholders(online.iterator().next(), line);
             }
         }
 

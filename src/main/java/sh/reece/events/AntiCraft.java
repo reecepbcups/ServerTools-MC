@@ -2,11 +2,12 @@ package sh.reece.events;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -33,8 +34,8 @@ public class AntiCraft extends BaseCommand implements Listener {
 	private String Message, bypass, AdminPerm;
 	private ConfigUtils configUtils;
 
-	// cached: material -> durability for O(1) lookups
-	private static Map<Material, List<Short>> blockedCache = new HashMap<>();
+	// cached: material -> durabilities for O(1) lookups
+	private static Map<Material, Set<Short>> blockedCache = new HashMap<>();
 
 	public AntiCraft(Main instance) {
 		super(instance, "Events.AntiCraft", "AntiCraft");
@@ -63,7 +64,7 @@ public class AntiCraft extends BaseCommand implements Listener {
 		if (raw == null) return;
 		for (String s : raw) {
 			ItemStack item = toItemStack(s);
-			blockedCache.computeIfAbsent(item.getType(), k -> new ArrayList<>()).add(item.getDurability());
+			blockedCache.computeIfAbsent(item.getType(), k -> new HashSet<>()).add(item.getDurability());
 		}
 	}
 
@@ -152,14 +153,13 @@ public class AntiCraft extends BaseCommand implements Listener {
 	}
 
 	private static boolean isBlocked(ItemStack item) {
-		List<Short> durabilities = blockedCache.get(item.getType());
-		if (durabilities == null) return false;
-		return durabilities.contains(item.getDurability());
+		Set<Short> durabilities = blockedCache.get(item.getType());
+		return durabilities != null && durabilities.contains(item.getDurability());
 	}
 
 	private static void add(ItemStack item) {
 		List<String> blocked = storage.getStringList("BlockedCrafting");
-		if (blocked == null) blocked = new ArrayList<>();
+		if (blocked == null) blocked = new java.util.ArrayList<>();
 		blocked.add(toConfigString(item));
 		storage.set("BlockedCrafting", blocked);
 		save();
@@ -168,7 +168,7 @@ public class AntiCraft extends BaseCommand implements Listener {
 
 	private static void remove(ItemStack item) {
 		List<String> blocked = storage.getStringList("BlockedCrafting");
-		if (blocked == null) blocked = new ArrayList<>();
+		if (blocked == null) blocked = new java.util.ArrayList<>();
 		blocked.remove(toConfigString(item));
 		storage.set("BlockedCrafting", blocked);
 		save();

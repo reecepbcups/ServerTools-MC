@@ -53,7 +53,7 @@ public class LaunchPads implements Listener, CommandExecutor {
 
 		Location loc = e.getTo();
 		if (loc.getBlock().getType() != PlateType) return;
-		if (loc.clone().subtract(0, 1, 0).getBlock().getType() != BlockType) return;
+		if (loc.getWorld().getBlockAt(loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ()).getType() != BlockType) return;
 
 		Player p = e.getPlayer();
 		p.setVelocity(loc.getDirection().multiply(LaunchPower));

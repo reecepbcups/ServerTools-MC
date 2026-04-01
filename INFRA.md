@@ -16,10 +16,7 @@ Auto-downloaded on first `server-up`:
 ## Quick start
 
 ```bash
-just server-up       # blocks with logs, ctrl-c to stop (~2 min first time)
-# in another terminal:
-just deploy          # mvn package + copy jar to server/plugins/
-just e2e             # or: build + deploy + hot-reload via PlugManX
+just build && just server-up # blocks with logs, ctrl-c to stop (~2 min first time)
 ```
 
 ## Commands

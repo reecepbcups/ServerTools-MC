@@ -1,6 +1,7 @@
 package sh.reece.chat;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
@@ -12,21 +13,24 @@ import sh.reece.utiltools.Util;
 
 public class ChatEmotes extends ToggleableListener {
 
-	private ConfigurationSection msgCfg;
 	private String permission;
-	private HashMap<String, String> emojiDict;
+	// parallel arrays avoid entrySet iterator allocation on every chat message
+	private String[] emojiKeys;
+	private String[] emojiValues;
 
 	public ChatEmotes(Main instance) {
 		super(instance, "Chat.ChatEmoji");
 
 		if (isEnabled()) {
-			emojiDict = new HashMap<String, String>();
 			permission = instance.getConfig().getString("Chat.ChatEmoji.permission");
 
-			msgCfg = instance.getConfig().getConfigurationSection("Chat.ChatEmoji.Emojis");
+			ConfigurationSection msgCfg = instance.getConfig().getConfigurationSection("Chat.ChatEmoji.Emojis");
+			Map<String, String> dict = new LinkedHashMap<>();
 			for (String key : msgCfg.getKeys(false)) {
-				emojiDict.put(key, msgCfg.getString(key));
+				dict.put(key, msgCfg.getString(key));
 			}
+			emojiKeys = dict.keySet().toArray(new String[0]);
+			emojiValues = dict.values().toArray(new String[0]);
 		}
 	}
 
@@ -38,9 +42,9 @@ public class ChatEmotes extends ToggleableListener {
 			return;
 		}
 
-		for (String key : emojiDict.keySet()) {
-			if (msg.contains(key)) {
-				msg = msg.replace(key, emojiDict.get(key));
+		for (int i = 0; i < emojiKeys.length; i++) {
+			if (msg.contains(emojiKeys[i])) {
+				msg = msg.replace(emojiKeys[i], emojiValues[i]);
 			}
 		}
 		event.setMessage(Util.color(msg));
