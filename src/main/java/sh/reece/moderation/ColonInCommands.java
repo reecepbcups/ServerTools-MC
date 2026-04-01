@@ -22,8 +22,7 @@ public class ColonInCommands extends ToggleableListener {
 			return;
 		}
 
-		//if (e.getMessage().split(" ")[0].contains(":")) {
-		if(e.getMessage().indexOf(":") != -1) {
+		if (e.getMessage().split(" ")[0].contains(":")) {
 			if(!hasPermission(e.getPlayer())) {
 
 				// Essentials:fly -> [essentials, fly, args] -? [fly, args][0]
