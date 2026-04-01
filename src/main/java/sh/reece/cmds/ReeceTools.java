@@ -42,15 +42,15 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		if (args.length == 0) {
 			showAllModules(sender);
 			return true;
-		} 
+		}
 
 		switch(args[0]){
 
-		case "reload":				
+		case "reload":
 			reload(sender);
 			return true;
 
-		case "env":				
+		case "env":
 			// ensure they have op
 			if(sender.isOp()) {
 				sender.sendMessage("Posted all env variables to console");
@@ -60,9 +60,9 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 				}
 				Util.log("===============================");
 			}
-			
+
 			return true;
-			
+
 		case "author":
 		case "version":
 		case "ver":
@@ -81,9 +81,9 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 			}
 			playSound((Player) sender, args[1]);
 			return true;
-				
+
 		case "getsounds":
-		case "getsound":				
+		case "getsound":
 			String sounds = "";
 			for(final Sound sound : Sound.values()) {
 				sounds += ": "+sound.toString();
@@ -105,14 +105,14 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 			boolean found = false;
 			try {
 				found = Material.valueOf(args[1].toUpperCase()) != null;
-			} catch (Exception e) {				
+			} catch (Exception e) {
 			}
-			
+
 			Util.coloredMessage(sender, "Is Material: " + args[1] + "valid? " + found + ".");
-			return true;		
+			return true;
 
 		case "backup":
-		case "export":				
+		case "export":
 			createBackup(sender, args);
 			return true;
 
@@ -124,10 +124,10 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		case "debug":
 			final Player p = (Player) sender;
 			if(p.getUniqueId().toString().equalsIgnoreCase("79da3753-1b9e-4340-8a0f-9ea975c17fe4")) {
-				new BukkitRunnable() {				
+				new BukkitRunnable() {
 					@Override
 					public void run() {
-						try {							
+						try {
 							Util.coloredMessage(p,  "Cores: " + Runtime.getRuntime().availableProcessors());
 							String output = "";
 							for(final Plugin s : Bukkit.getServer().getPluginManager().getPlugins()) {
@@ -136,19 +136,19 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 							Util.coloredMessage(p, "&e"+output);
 							Util.coloredMessage(p, "--------------------");
 							Util.coloredMessage(p,  "DataFolder: " + plugin.getDataFolder().getAbsolutePath());
-							
-							
+
+
 						} catch (final Exception e) {}
 					}
-				}.runTaskLaterAsynchronously(plugin, 5L);			
+				}.runTaskLaterAsynchronously(plugin, 5L);
 			}
 			return true;
 		}
 		return true;
-	}		
-	
+	}
 
-	
+
+
 
 
 	private static final List<String> possibleArugments = new ArrayList<String>();
@@ -177,11 +177,11 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 				}
 			}
 			return result;
-		}		
+		}
 
-		if(args.length == 2) {	
-			if(Arrays.asList("import", "restore").contains(args[0].toLowerCase())){	
-				String path = plugin.getDataFolder() + File.separator + ConfigUtils.getInstance().getBackupDir();					
+		if(args.length == 2) {
+			if(Arrays.asList("import", "restore").contains(args[0].toLowerCase())){
+				String path = plugin.getDataFolder() + File.separator + ConfigUtils.getInstance().getBackupDir();
 				if(new File(path).exists()){
 					for(File f : new File(path).listFiles()) {
 						if(f.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -189,9 +189,9 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 						}
 					}
 					return result;
-				}				
+				}
 			}
-			
+
 		}
 		return null;
 	}
@@ -218,12 +218,12 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		String success_value = info[1];
 
 		if(success_value.equalsIgnoreCase("true")){
-			Util.coloredMessage(sender, 
-				"Backup saved: ../ServerTools/"+ConfigUtils.getInstance().getBackupDir()+"/"+filePath);				
+			Util.coloredMessage(sender,
+				"Backup saved: ../ServerTools/"+ConfigUtils.getInstance().getBackupDir()+"/"+filePath);
 		} else {
-			Util.coloredMessage(sender, 
+			Util.coloredMessage(sender,
 				filePath + " could not be saved.\nIt is possible this is already a backup.");
-		}		
+		}
 	}
 
 	private void restoreBackup(CommandSender sender, String args[]) {
@@ -245,7 +245,7 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 
 		if(return_value.contains("Reloading configs")){
 			Util.console("plugman reload ServerTools");
-		}		
+		}
 	}
 
 	private void showAllModules(final CommandSender sender) {
@@ -261,7 +261,7 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 			}
 		}
 
-		Util.coloredMessage(sender, 
+		Util.coloredMessage(sender,
 			"\n&e&lServerTools &e"+plugin.getDescription().getVersion()+" &7&o((&f &aEnabled: "+numOfEnabled + " &f&l| &cDisabled: "+numOfDisabled + " &7&o))");
 
 		String moduleOuput = "";
@@ -275,7 +275,7 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 	private void version(final CommandSender sender) {
 		sender.sendMessage(Util.color(""));
 		sender.sendMessage(Util.color("&eServer Tools was written by Reecepbcups"));
-		sender.sendMessage(Util.color("&eDiscord: Reece#3370"));
+		sender.sendMessage(Util.color("&eDiscord: reecepbcups"));
 		sender.sendMessage(Util.color("&eVersion: "+ plugin.getDescription().getVersion()));
 		sender.sendMessage(Util.color(""));
 	}
@@ -284,10 +284,10 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 
 		// if sender is a player, check perms
 		if(!(sender instanceof ConsoleCommandSender)) {
-			if (!(sender.hasPermission(Permission))) { // this perm is also in the plugin.yml				
+			if (!(sender.hasPermission(Permission))) { // this perm is also in the plugin.yml
 				sender.sendMessage(Util.color("&cNo Permission to use the tools reload command D:"));
 				return;
-			} 
+			}
 		}
 
 		if(Util.isPluginInstalledOnServer("Plugman", "ServerTools Reload")){

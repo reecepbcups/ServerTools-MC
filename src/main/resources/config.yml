@@ -1,4 +1,4 @@
-# ServerTools - Reece#3370
+# ServerTools - reecepbcups
 # -----------------------------------------------------------------
 # DEFAULT PERMISSIONS
 # hunger.bypass         nofalldamage.use        anticraft.bypass
@@ -10,7 +10,7 @@
 # Staff Related
 # mutechat.use              mutechat.bypass         anticraft.admin
 # clearchat.use             chatcooldown.admin      announce.use
-# colon.use                 Freeze.use              
+# colon.use                 Freeze.use
 # whitelist.bypass          staffafk.use            cmdalias.bypass
 # changeslots.use           guess.admin             donation.use
 # tools.tpall               countdown.use           tools.rename
@@ -111,7 +111,7 @@ Disabled:
     DayWorlds:
     - 'world'
     NightWorlds:
-    - 'None'
+    - 'world_the_end'
   DisableEntityThrowing:
     Enabled: true
     Items:
@@ -135,7 +135,7 @@ Disabled:
     Enabled: true
     worldsToDisable:
     - 'world'
-    
+
   DisableMobSpawning:
     Enabled: true
     worldsToDisable:
@@ -156,7 +156,7 @@ Core:
     StaffNoModify: essentials.invsee.preventmodification
   GiveItems:
     Enabled: true
-    Permission: essentials.give  
+    Permission: essentials.give
   God:
     Enabled: false
     Permission: essentials.god
@@ -297,12 +297,12 @@ Commands:
       - 'bundle give %player% WizardReclaim 1'
       group_goblin:
       - 'bundle give %player% GoblinReclaim 1'
- 
+
   Speed:
     Enabled: true
     FlyPermission: tools.speed.fly
     WalkPermission: tools.speed.walk
- 
+
   StaffList:
     Enabled: true
     groups:
@@ -315,28 +315,28 @@ Commands:
       helper: ' &8&l<&a&lHELPER&8&l> &f» &a'
       builder: ' &8&l<&3&lBUILDER&8&l> &f» &3'
       staffafk: ' &8&l<&7&lAFK&8&l> &f» &7'
-        
- 
+
+
 Chat:
   CustomDeathMessages:
     Enabled: true
     message: '&7&o[-] %message%'
     #Toggle in game with /toggledeath
-      
+
   ChatCooldown:
     Enabled: true
     BypassCooldown: chatcooldown.bypass
     CommandPermission: chatcooldown.admin
     SecondsCooldown: 5
     Message: '&6&l[!] &eYou must wait &6&n%timeleft%s&e before you may chat again.'
-    
+
   ChatFormat:
     Enabled: true
     EnabledPAPIinMessages: true
     ChatColorPerm: chatcolor.codes
     PrefixOffset: 0
     format: '{prefix}{name}{suffix} &7» &f{message}'
-   
+
   Tags:
     Enabled: false
     CustomTagPerm: ctag.use
@@ -345,7 +345,7 @@ Chat:
     selected: '&e&l[!] &eYou have selected &r%tag% &eas your new tag!'
     removed: '&c&l[!] &cYou have removed your &4current&c tag!'
     giveTagCmd: lp user %name% permission set tags.%tag% true server=skyblock_emc
-    
+
   ChatColor:
     Enabled: true
     RainbowColors:
@@ -358,7 +358,7 @@ Chat:
     - '&7'
   NameColor:
     Enabled: true
-    
+
   ChatEmoji:
     Enabled: true
     permission: ''
@@ -366,14 +366,14 @@ Chat:
       <3: ♡
       :flip:: (╯°□°)╯︵ ┻━┻
       :serious:: (ಠ_ಠ)
-   
+
 Events:
   AntiCraft:
     Enabled: false
     AdminPerm: anticraft.admin
     Bypass: anticraft.bypass
     MSG: '&c&l[!] &cYou do not have permission to craft &e%item%&c.'
-    
+
   StackUnstackables:
     Enabled: false
     items:
@@ -383,13 +383,13 @@ Events:
     - 'IRON_BARDING'
     - 'GOLD_BARDING'
     - 'DIAMOND_BARDING'
-    
+
   WorldEffects:
     Enabled: true
     # https://helpch.at/docs/1.12.2/index.html?org/bukkit/potion/PotionEffectType.html
     worlds:
     - 'world:NIGHT_VISION:1'
-    
+
   ChatJoinMOTD:
     Enabled: true
     MOTD:
@@ -404,11 +404,11 @@ Events:
     - '&7&o(( Currently &A&o%server_online% &7&oplayer(s) are playing ))'
     - ''
     - '&8&l>&7&m----------------------------------------&8&l<'
-    
+
   NoBedExplosionInNether:
     Enabled: true
-    
-  # https://helpch.at/docs/1.12.2/org/bukkit/Material.html  
+
+  # https://helpch.at/docs/1.12.2/org/bukkit/Material.html
   Launchpads:
     Enabled: true
     BlockType: EMERALD_BLOCK
@@ -425,27 +425,27 @@ Moderation:
     Messages:
       Enabled: '&a&l[!] &2&n%player%&a has unmuted the chat!'
       Disable: '&c&l[!] &4&n%player%&c has muted the chat!'
-    
+
   CommandSpy:
     Enabled: false
     permission: commandspy.use
     ignored_commands:
     - 'msg'
-    
+
   CommandProtect:
     Enabled: true
-    
+
   ClearChat:
     Enabled: true
     Permission: clearchat.use
     Messages:
       lines: 100
       msg: '&e&l[!] &6&n%player%&e has cleared the chat!'
-      
+
   NoColonInCommands:
     Enabled: true
     BypassPerm: colon.use
-    
+
   Freeze:
     Enabled: false
     Permission: Freeze.use
@@ -453,7 +453,7 @@ Moderation:
     - '&6&l[!]&e You have been frozen. &7&o(( Do not log out ))'
     - '&dYou have &f2 &dminutes to join the discord:'
     - '&f - &d%SUPPORT%'
-    
+
   WhitelistBypass:
     Enabled: true
     DisableWhitelistCMDInGame: true
@@ -462,13 +462,13 @@ Moderation:
 
   TPAll:
     Enabled: true
- 
+
   Report:
     Enabled: false
     Cooldown: 30
     CooldownMSG: '&4[!] &cYou can not make another report for %timeleft% seconds!'
     ReportSuccess: '&c%reporter%&f reported &c%offender% &ffor &c%reason%'
- 
+
   StaffAFK:
     Enabled: false
     StaffAFKGroup: staffafk
@@ -485,7 +485,7 @@ Moderation:
     RemoveAFK:
     - 'lp user %player% parent add %PlayerConfigPrimarygroup% server=global'
     - 'lp user %player% parent remove %StaffAFKGroupName% server=global'
-    
+
 
 Cooldowns:
   EnderPearlCooldown:
@@ -502,17 +502,17 @@ Cooldowns:
     Seconds: 45
     Message: '&6&l[!] &eYou must wait &6&n%timeleft%s&e before you may eat another.'
     StartCooldownMSG: '&7&o(( GOD APPLE EATEN! %seconds% second cooldown initiated ))'
-    
+
 
 
 Misc:
   Tools:
     Permission: toolscmd.admin
-    
+
   Withdraw:
     # Console: "/withdraw AMOUNT player"
     Enabled: false
-    
+
   Rename:
     Enabled: true
     permission: tools.rename
@@ -548,20 +548,20 @@ Misc:
   Visibility:
     Enabled: true
     bypassPerm: visibility.bypass
-    
+
   BucketStacker:
     Enabled: false
     worldguard: false
     superiorskyblock: false
-    
+
   Holograms:
     Enabled: true
-    
+
   ScheduledTask:
     Enabled: false
     Debug: false
     Permission: tools.scheduledtask.admin
-  
+
   CMDAliases:
     Enabled: true
     Permission: cmdalias.bypass
@@ -598,7 +598,7 @@ Misc:
     - 'bukkit:ver'
     - 'bukkit:version'
     - 'minecraft:me'
-    
+
     # command%timeToWaitTillExectute
     preCooldownCommands:
       stopIfMoved: false
@@ -608,7 +608,7 @@ Misc:
       - 'tpaccept%5'
       - 'tpa%5'
       - 'warp pvp%5'
-    
+
     disabledWorlds:
       spawn:
       - 'top'
@@ -651,7 +651,7 @@ Bungee:
 
 AutoBroadcast:
   Enabled: true
-   
+
 Donation:
   Enabled: true
   Permission: donation.use
@@ -665,7 +665,7 @@ Donation:
   - ''
   - '&7&o(( %STORE% &7&o))'
   - ''
-  
+
 FancyAnnounce:
   # You can use the %player% variable on any line
   Enabled: true
@@ -687,7 +687,7 @@ FancyAnnounce:
 
 ServerInfoCMDS:
   Enabled: true
-      
+
 ShopWorkAround:
   # This patch gets the name of the SHOP plugin you use (( ex. ShopGUIPlus ))
   # It then gets the shopmenu name, and items in the shop's names (( ex. "&4&lSpawners" ))
@@ -708,7 +708,7 @@ ShopWorkAround:
       CloseInvBeforeCommand: true
       MakePlayerSayCommand: true
       command: spawnershop
-      
+
 Vouchers:
   Enabled: false
   Options:

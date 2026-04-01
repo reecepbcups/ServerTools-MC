@@ -27,5 +27,6 @@ mc-cmd cmd:
 
 # full cycle: build, deploy, hot-reload plugin via PlugManX
 e2e: deploy
-    docker compose exec mc rcon-cli "plugman reload ServerTools" || docker compose exec mc rcon-cli "plugman load servertools"
+    docker compose exec mc rcon-cli "plugman unload ServerTools" || true
+    docker compose exec mc rcon-cli "plugman load ServerTools"
     @echo "plugin reloaded"

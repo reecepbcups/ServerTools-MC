@@ -30,7 +30,7 @@ public class Loader {
 	public Loader(Main instance) {
 		plugin = instance;
 
-		
+
 		if(MinecraftVersion.getVersion() != MinecraftVersion.SUPPORTED) {
 			Util.log("\n\n\n[ServerTools] &cYou are running an unsupported version of Minecraft for this version of the plugin.");
 			Util.log("[ServerTools] &eYou can either update to 1.18.x &fOR &euse this version:");
@@ -55,8 +55,8 @@ public class Loader {
 		plugin.setPAPIStatus(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"));
 		if (plugin.isPAPIEnabled()) {
 			(new ServerToolsPlaceholders()).register();
-			executionTimer.info("PAPI");										
-		}		
+			executionTimer.info("PAPI");
+		}
 	}
 
 	public void loadCommands() {
@@ -135,7 +135,7 @@ public class Loader {
 		new LaunchPads(plugin);
 		new ThreeHitGlitch(plugin);
 		new DisableJLMsg(plugin);
-		new DisableStackablePotions(plugin);		
+		new DisableStackablePotions(plugin);
 
 		executionTimer.info("Events");
 	}
@@ -163,7 +163,7 @@ public class Loader {
 		new BlockBreaking(plugin);
 		new BlockPlacement(plugin);
 		new BlazeDrowning(plugin);
-		
+
 		new DisableBookWriting(plugin);
 		new DisableCactusDamage(plugin);
 		new DisableCaneOnCane(plugin);
@@ -219,7 +219,7 @@ public class Loader {
 	// -= ACTIONS =-
 	public void output() {
 		String ver = plugin.getDescription().getVersion();
-		Util.consoleMSG("\n&b&l[!] ServerTools&b by Reece#3370. Version: " + ver);
+		Util.consoleMSG("\n&b&l[!] ServerTools&b by reecepbcups. Version: " + ver);
 		if (plugin.getConfig().getBoolean("LoadWithTimings")) {
 			Main.logging(executionTimer.end());
 		}
