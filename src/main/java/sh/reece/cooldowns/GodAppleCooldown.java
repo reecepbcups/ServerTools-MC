@@ -20,7 +20,8 @@ public class GodAppleCooldown implements Listener {
 	private final String cooldownMessage;
 	private String eatenMessage;
 	private final HashMap<String, Date> appleCooldown;
-	
+	private static final ItemStack GOD_APPLE = new ItemStack(Material.GOLDEN_APPLE, 1, (short)1);
+
 	public GodAppleCooldown(final Main instance) {
         plugin = instance;
 
@@ -30,29 +31,28 @@ public class GodAppleCooldown implements Listener {
 		cooldownMessage = plugin.getConfig().getString("Cooldowns.GodAppleCooldown.Message");
 		eatenMessage = plugin.getConfig().getString("Cooldowns.GodAppleCooldown.StartCooldownMSG");
         eatenMessage = eatenMessage.replace("%seconds%", cooldownSeconds.toString());
-        
+
         if (plugin.enabledInConfig("Cooldowns.GodAppleCooldown.Enabled")) {
-			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);			
+			Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
 		}
 	}
-	
+
 	@EventHandler
 	public void gappleCooldown(final PlayerItemConsumeEvent e) {
 		final Player p = e.getPlayer();
 		final ItemStack TYPE = e.getItem();
-		final ItemStack apple = new ItemStack(Material.GOLDEN_APPLE, 1, (short)1);
-		
-		if (TYPE.getType().equals(Material.GOLDEN_APPLE) && TYPE.getData().equals(apple.getData())) {
+
+		if (TYPE.getType().equals(Material.GOLDEN_APPLE) && TYPE.getData().equals(GOD_APPLE.getData())) {
 			if(!(Util.cooldown(appleCooldown, cooldownSeconds, p.getName(), cooldownMessage))) {
-        		e.setCancelled(true);        	
+        		e.setCancelled(true);
         	} else {
         		if(eatenMessage.length() > 0) {
         			Util.coloredMessage(p, eatenMessage);
         		}
-        		
+
         	}
-		} 
+		}
 	}
-	
-	
+
+
 }
