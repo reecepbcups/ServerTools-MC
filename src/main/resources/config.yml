@@ -149,6 +149,9 @@ Disabled:
 Core:
   Ping:
     Enabled: false
+  Realname:
+    Enabled: false
+    Permission: essentials.realname
   InvSee:
     Enabled: false
     Permission: essentials.invsee

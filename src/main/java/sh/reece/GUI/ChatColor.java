@@ -73,6 +73,11 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 			perm = "Chatcolor.";
 			InvName = configUtils.lang("CHATCOLOR_GUI");
 			RainbowColors = instance.getConfig().getStringList("Chat.ChatColor.RainbowColors");
+		}
+	}
+
+	private void ensureInvCreated() {
+		if (ColorINV == null) {
 			initCreateInv();
 		}
 	}
@@ -94,6 +99,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		ensureInvCreated();
 		ensureDataLoaded();
 		Player p = (Player) sender;
 		p.openInventory(ColorINV);

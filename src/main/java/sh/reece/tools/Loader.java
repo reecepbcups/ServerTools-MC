@@ -10,6 +10,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -43,22 +44,38 @@ public class Loader {
 		executionTimer.start();
 	}
 
+	private static final String[][] PHASES = {
+		{"Commands",      "sh.reece.cmds", "sh.reece.bungee"},
+		{"Core Features", "sh.reece.core", "sh.reece.core.warp"},
+		{"Chat",          "sh.reece.chat"},
+		{"Events",        "sh.reece.events"},
+		{"Cooldowns",     "sh.reece.cooldowns"},
+		{"Toggleable",    "sh.reece.disabled"},
+		{"Moderation",    "sh.reece.moderation"},
+		{"GUIs",          "sh.reece.GUI"},
+		{"Runnables",     "sh.reece.runnables"},
+	};
+
 	public void loadAll() {
 		loadPlaceholderAPI();
 
-		// scan JAR once, bucket classes by package
-		classIndex = scanJar();
+		// collect only the packages we need
+		Set<String> wanted = new java.util.HashSet<>();
+		for (String[] phase : PHASES) {
+			for (int i = 1; i < phase.length; i++) {
+				wanted.add(phase[i]);
+			}
+		}
+
+		// scan JAR once, only index wanted packages
+		classIndex = scanJar(wanted);
 		executionTimer.info("JAR Scan");
 
-		discover("Commands",      "sh.reece.cmds", "sh.reece.bungee");
-		discover("Core Features", "sh.reece.core", "sh.reece.core.warp");
-		discover("Chat",          "sh.reece.chat");
-		discover("Events",        "sh.reece.events");
-		discover("Cooldowns",     "sh.reece.cooldowns");
-		discover("Toggleable",    "sh.reece.disabled");
-		discover("Moderation",    "sh.reece.moderation");
-		discover("GUIs",          "sh.reece.GUI");
-		discover("Runnables",     "sh.reece.runnables");
+		for (String[] phase : PHASES) {
+			String label = phase[0];
+			String[] packages = Arrays.copyOfRange(phase, 1, phase.length);
+			discover(label, packages);
+		}
 
 		classIndex = null; // free memory
 	}
@@ -118,8 +135,14 @@ public class Loader {
 		}
 	}
 
-	private Map<String, List<Class<?>>> scanJar() {
+	private Map<String, List<Class<?>>> scanJar(Set<String> wantedPackages) {
 		Map<String, List<Class<?>>> index = new HashMap<>();
+		// pre-build path prefixes for fast filtering
+		Set<String> wantedPaths = new java.util.HashSet<>();
+		for (String pkg : wantedPackages) {
+			wantedPaths.add(pkg.replace('.', '/') + "/");
+		}
+
 		try {
 			URI jarUri = plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI();
 			try (JarFile jar = new JarFile(new File(jarUri))) {
@@ -131,6 +154,9 @@ public class Loader {
 
 					int lastSlash = name.lastIndexOf('/');
 					if (lastSlash < 0) continue;
+
+					String dirPath = name.substring(0, lastSlash + 1);
+					if (!wantedPaths.contains(dirPath)) continue;
 
 					String packageName = name.substring(0, lastSlash).replace('/', '.');
 					String className = name.replace('/', '.').replace(".class", "");

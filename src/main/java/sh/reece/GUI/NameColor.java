@@ -60,17 +60,20 @@ public class NameColor extends BaseCommand implements Listener {
 
 		if (isEnabled()) {
 			isEnabled = true;
-
 			perm = "Namecolor.";
-
 			InvName = configUtils.lang("NAMECOLOR_GUI");
+		}
+	}
 
+	private void ensureInvCreated() {
+		if (ColorINV == null) {
 			initCreateInv();
 		}
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		ensureInvCreated();
 		((Player) sender).openInventory(ColorINV);
 		return true;
 	}
