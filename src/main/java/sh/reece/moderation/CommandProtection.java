@@ -53,7 +53,8 @@ public class CommandProtection extends BaseCommand implements Listener {
 		Player p = e.getPlayer();
 
 		if(e.getMessage().length() > 1) {
-			command = command.split(" ")[0];
+			int si = command.indexOf(' ');
+			if (si != -1) command = command.substring(0, si);
 		}
 
 		// strip plugin prefix (e.g. "/servertools:op" -> "/op")

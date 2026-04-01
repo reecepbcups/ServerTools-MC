@@ -3,6 +3,16 @@
 import mineflayer from "mineflayer";
 import { exec } from "child_process";
 
+// suppress unhandled errors from disconnected bots (EPIPE, etc)
+process.on("uncaughtException", (err) => {
+  if (err.code === "EPIPE" || err.code === "ECONNRESET") return;
+  console.error("[!] uncaught:", err.message);
+});
+process.on("unhandledRejection", (err) => {
+  if (err?.code === "EPIPE" || err?.code === "ECONNRESET") return;
+  console.error("[!] unhandled:", err?.message ?? err);
+});
+
 // -- CLI args --
 
 const args = parseArgs(process.argv.slice(2));

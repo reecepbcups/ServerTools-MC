@@ -48,7 +48,9 @@ public class CommandSpy extends BaseCommand implements Listener {
 		if (e.getPlayer().hasPermission("commandspy.exempt")) return;
 
 		String m = e.getMessage().toLowerCase();
-		if (ignored.contains(m.split(" ")[0]) || ignored.contains(m)) return;
+		int si = m.indexOf(' ');
+		String firstWord = si == -1 ? m : m.substring(0, si);
+		if (ignored.contains(firstWord) || ignored.contains(m)) return;
 
 		UUID senderUUID = e.getPlayer().getUniqueId();
 		String n = e.getPlayer().getName();

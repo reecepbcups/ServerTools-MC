@@ -124,7 +124,7 @@ public class Withdraw extends BaseCommand implements Listener {
 		if (e.getMessage().toLowerCase().startsWith("/baltop")) {
 			return;
 		}
-		if (e.getMessage().split(" ").length != 1) {
+		if (e.getMessage().indexOf(' ') != -1) {
 			return;
 		}
 		e.setCancelled(true);

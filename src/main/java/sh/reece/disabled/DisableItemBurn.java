@@ -1,7 +1,7 @@
 package sh.reece.disabled;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
@@ -13,12 +13,13 @@ import sh.reece.tools.ToggleableListener;
 
 public class DisableItemBurn extends ToggleableListener {
 
-	private List<EntityDamageEvent.DamageCause> causes = new ArrayList<>();
+	private Set<EntityDamageEvent.DamageCause> causes;
 
 	public DisableItemBurn(Main instance) {
 		super(instance, "Disabled.DisableItemBurn");
 
 		if (isEnabled()) {
+			causes = EnumSet.noneOf(EntityDamageEvent.DamageCause.class);
 			for(String s : plugin.getConfig().getStringList("Disabled.DisableItemBurn.reasons"))
 				causes.add(EntityDamageEvent.DamageCause.valueOf(s.toUpperCase()));
 		}
@@ -27,7 +28,7 @@ public class DisableItemBurn extends ToggleableListener {
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onItemBurn(EntityDamageEvent e) {
-		if (!e.isCancelled() && e.getEntity() instanceof Item && causes.contains(e.getCause())) {
+		if (e.getEntity() instanceof Item && causes.contains(e.getCause())) {
 			e.setCancelled(true);
 		}
 

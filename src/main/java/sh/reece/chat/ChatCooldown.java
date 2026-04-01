@@ -1,6 +1,7 @@
 package sh.reece.chat;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -15,9 +16,9 @@ import sh.reece.utiltools.Util;
 public class ChatCooldown extends BaseCommand implements Listener {
 
 	public String NoCooldownPerm, CooldownMSG;
-	public Integer CooldownSeconds;
-	public Boolean Enabled;
-	private HashMap<String, Long> ChatCooldownMap;
+	public int CooldownSeconds;
+	public volatile boolean Enabled;
+	private Map<String, Long> ChatCooldownMap;
 
 	public ChatCooldown(Main instance) {
 		super(instance, "Chat.ChatCooldown", "chatcooldown");
@@ -29,7 +30,7 @@ public class ChatCooldown extends BaseCommand implements Listener {
 			this.CooldownMSG = instance.getConfig().getString("Chat.ChatCooldown.Message");
 
 			this.Enabled = true;
-			this.ChatCooldownMap = new HashMap<>();
+			this.ChatCooldownMap = new ConcurrentHashMap<>();
 		}
 	}
 

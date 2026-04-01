@@ -56,8 +56,8 @@ public class LaunchPads implements Listener, CommandExecutor {
 		if (loc.getWorld().getBlockAt(loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ()).getType() != BlockType) return;
 
 		Player p = e.getPlayer();
-		p.setVelocity(loc.getDirection().multiply(LaunchPower));
-		p.setVelocity(new Vector(p.getVelocity().getX(), 1.0D, p.getVelocity().getZ()));
+		Vector dir = loc.getDirection().multiply(LaunchPower);
+		p.setVelocity(new Vector(dir.getX(), 1.0D, dir.getZ()));
 	}
 
 	@Override

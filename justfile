@@ -19,6 +19,16 @@ server-down:
 mc-cmd cmd:
     docker compose exec mc rcon-cli {{cmd}}
 
+# --- e2e tests ---
+
+# run e2e tests against running server
+test-e2e:
+    node --test loadtest/e2e/*.test.mjs
+
+# run a single e2e test file (e.g. just test-e2e-file commands)
+test-e2e-file name:
+    node --test loadtest/e2e/{{name}}.test.mjs
+
 # --- load testing ---
 
 # install loadtest deps (one-time)

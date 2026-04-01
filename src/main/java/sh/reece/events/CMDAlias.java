@@ -57,8 +57,9 @@ public class CMDAlias extends ToggleableListener {
 
 					if (!world.equalsIgnoreCase("stopIfMoved")) {
 						for (String cmd : instance.getConfig().getStringList("Misc.CMDAliases.preCooldownCommands." + world)) {
-							String command = cmd.split("%")[0];
-							Integer timeWait = Integer.valueOf(cmd.split("%")[1]);
+							int pctIdx = cmd.indexOf('%');
+							String command = cmd.substring(0, pctIdx);
+							int timeWait = Integer.parseInt(cmd.substring(pctIdx + 1));
 
 							tempHoldCommands.put(command.toLowerCase(), timeWait);
 						}
@@ -105,7 +106,9 @@ public class CMDAlias extends ToggleableListener {
 			return;
 		}
 
-		String command = e.getMessage().substring(1).split(" ")[0].toLowerCase();
+		String rawMsg = e.getMessage();
+		int spaceIdx = rawMsg.indexOf(' ');
+		String command = (spaceIdx == -1 ? rawMsg.substring(1) : rawMsg.substring(1, spaceIdx)).toLowerCase();
 		Player p = e.getPlayer();
 		String world = p.getLocation().getWorld().getName();
 

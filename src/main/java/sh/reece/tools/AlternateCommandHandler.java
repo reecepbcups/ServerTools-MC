@@ -52,7 +52,9 @@ public class AlternateCommandHandler implements Listener {
             // Main.logging("ServerTools AltCommandListenr event: is a command with '/'");
 
             // make sure it is a command in there, such as "fly"
-            String cmd = event.getMessage().substring(1).split(" ")[0];
+            String msg = event.getMessage();
+            int si = msg.indexOf(' ');
+            String cmd = si == -1 ? msg.substring(1) : msg.substring(1, si);
 
             if(containsDisabledCommand(cmd)) {
                 // Main.logging("ServerTools AltCommandListenr event: this command is disabled");

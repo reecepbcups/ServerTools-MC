@@ -1,6 +1,7 @@
 package sh.reece.disabled;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,13 +12,13 @@ import sh.reece.tools.ToggleableListener;
 
 public class DisableWeather extends ToggleableListener {
 
-	private List<String> worlds;
+	private Set<String> worlds;
 
 	public DisableWeather(Main instance) {
 		super(instance, "Disabled.DisableWeather");
 
 		if (isEnabled()) {
-			worlds = plugin.getConfig().getStringList("Disabled.DisableWeather.worlds");
+			worlds = new HashSet<>(plugin.getConfig().getStringList("Disabled.DisableWeather.worlds"));
 		}
 	}
 

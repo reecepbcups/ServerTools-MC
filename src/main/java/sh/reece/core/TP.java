@@ -4,6 +4,7 @@ import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -29,6 +30,16 @@ public class TP extends BaseCommand {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		// Console can only use tp/tpo
+		if (!(sender instanceof Player)) {
+			String lbl = label.toLowerCase();
+			if (!lbl.equals("tp") && !lbl.equals("tpo")) {
+				sender.sendMessage("This command can only be used by players.");
+				return true;
+			}
+			return handleConsoleTp(sender, args);
+		}
+
 		Player p = (Player) sender;
 
 		switch (label.toLowerCase()) {
@@ -111,6 +122,44 @@ public class TP extends BaseCommand {
 			}
 			Util.coloredMessage(p, output);
 		}
+		return true;
+	}
+
+	// tp <player> <target> OR tp <player> <x> <y> <z>
+	private boolean handleConsoleTp(CommandSender sender, String[] args) {
+		if (args.length < 2) {
+			sender.sendMessage("Usage: tp <player> <target> OR tp <player> <x> <y> <z>");
+			return true;
+		}
+
+		Player target = Bukkit.getPlayer(args[0]);
+		if (target == null) {
+			sender.sendMessage("Player " + args[0] + " is not online.");
+			return true;
+		}
+
+		// tp <player> <x> <y> <z>
+		if (args.length >= 4) {
+			try {
+				double x = Double.parseDouble(args[1]);
+				double y = Double.parseDouble(args[2]);
+				double z = Double.parseDouble(args[3]);
+				target.teleport(new Location(target.getWorld(), x, y, z));
+				sender.sendMessage("Teleported " + target.getName() + " to " + x + ", " + y + ", " + z);
+			} catch (NumberFormatException e) {
+				sender.sendMessage("Invalid coordinates.");
+			}
+			return true;
+		}
+
+		// tp <player> <target>
+		Player dest = Bukkit.getPlayer(args[1]);
+		if (dest == null) {
+			sender.sendMessage("Player " + args[1] + " is not online.");
+			return true;
+		}
+		target.teleport(dest);
+		sender.sendMessage("Teleported " + target.getName() + " to " + dest.getName());
 		return true;
 	}
 

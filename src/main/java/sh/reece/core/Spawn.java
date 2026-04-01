@@ -20,8 +20,8 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Spawn implements Listener, CommandExecutor {
 
@@ -32,8 +32,9 @@ public class Spawn implements Listener, CommandExecutor {
 	private static FileConfiguration Config;
 	private static String spawnLoc;
 
-	private static List<String> voidDisabledWorlds = new ArrayList<String>();
-	private String voidmsg, voidTPEnabled, spawnOnInitJoin, spawnFirstUniqueJoinOnly;
+	private static Set<String> voidDisabledWorlds = new HashSet<>();
+	private String voidmsg, spawnOnInitJoin, spawnFirstUniqueJoinOnly;
+	private boolean voidTPEnabled;
 	private ConfigUtils configUtils;
 	
 	public Spawn(Main instance) {
@@ -53,13 +54,10 @@ public class Spawn implements Listener, CommandExecutor {
 			spawnOnInitJoin = plugin.getConfig().getString(Section+".onJoinInstantly");
 			spawnFirstUniqueJoinOnly = plugin.getConfig().getString(Section+".spawnFirstUniqueJoinOnly");
 			
-			voidTPEnabled = plugin.getConfig().getString(Section+".teleportWhenInVoid.Enabled");
-			if(voidTPEnabled == null) {
-				voidTPEnabled = "false";
-			}			
+			voidTPEnabled = plugin.getConfig().getBoolean(Section+".teleportWhenInVoid.Enabled", false);			
 
 			voidmsg = plugin.getConfig().getString(Section+".teleportWhenInVoid.message");
-			voidDisabledWorlds = plugin.getConfig().getStringList(Section+".teleportWhenInVoid.disabledWorlds");
+			voidDisabledWorlds = new HashSet<>(plugin.getConfig().getStringList(Section+".teleportWhenInVoid.disabledWorlds"));
 
 			plugin.getCommand("spawn").setExecutor(this);
 			plugin.getCommand("setspawn").setExecutor(this);
@@ -141,7 +139,7 @@ public class Spawn implements Listener, CommandExecutor {
 		}
 
 		if(e.getEntity() instanceof Player) {
-			if(voidTPEnabled.equalsIgnoreCase("true")) {
+			if(voidTPEnabled) {
 				Player p = (Player) e.getEntity();
 
 				// if worlds is not null and player is not in the world which we did not enable
