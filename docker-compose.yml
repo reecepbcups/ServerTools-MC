@@ -14,14 +14,8 @@ services:
       DIFFICULTY: easy
       MAX_PLAYERS: 5
       MOTD: "ServerTools E2E"
-      # soft-depends: Vault (34315), PlaceholderAPI (6245)
-      SPIGET_RESOURCES: "34315,6245"
-      MODRINTH_PROJECTS: "luckperms,plugmanx"
+      MODRINTH_PROJECTS: "luckperms,plugmanx,placeholderapi,vaultunlocked"
     volumes:
-      - mc-data:/data
-      - ./server/plugins:/plugins
+      - ./server:/data
     stdin_open: true
     tty: true
-
-volumes:
-  mc-data:
