@@ -6,7 +6,7 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: PAPER
-      VERSION: "1.20.4"
+      VERSION: "1.21.5"
       MEMORY: ${MC_MEMORY:-4G}
       ONLINE_MODE: "FALSE"
       ENABLE_COMMAND_BLOCK: "TRUE"

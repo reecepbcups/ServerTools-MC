@@ -13,7 +13,7 @@ export function createBot(username) {
       host: "localhost",
       port: 25565,
       username,
-      version: "1.20.4",
+      version: "1.21.5",
     });
 
     const timeout = setTimeout(() => {
@@ -41,7 +41,7 @@ export function createBotCollecting(username, extraMs = 3000) {
       host: "localhost",
       port: 25565,
       username,
-      version: "1.20.4",
+      version: "1.21.5",
     });
 
     const messages = [];

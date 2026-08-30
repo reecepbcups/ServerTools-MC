@@ -23,7 +23,12 @@ public enum MinecraftVersion {
 
     public static MinecraftVersion getVersion() { // pretty? no but gets the job done
         MinecraftVersion mv = null;
-        String ver = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3].toUpperCase();
+        // Paper 1.20.5+ dropped the versioned package (org.bukkit.craftbukkit, no v1_XX_RX)
+        String[] parts = Bukkit.getServer().getClass().getPackage().getName().split("\\.");
+        if (parts.length < 4) {
+            return MinecraftVersion.SUPPORTED;
+        }
+        String ver = parts[3].toUpperCase();
         try {
             mv = MinecraftVersion.valueOf(ver);
         } catch (Exception e) {
