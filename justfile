@@ -19,6 +19,12 @@ server-down:
 mc-cmd cmd:
     docker compose exec mc rcon-cli {{cmd}}
 
+# --- unit tests ---
+
+# run java unit tests (src/test/java/**) - no server needed
+test-unit:
+    mvn test
+
 # --- e2e tests ---
 
 # run e2e tests against running server

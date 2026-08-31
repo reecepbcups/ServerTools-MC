@@ -142,28 +142,30 @@ public class AntiCraft extends BaseCommand implements Listener {
 	@EventHandler(ignoreCancelled = true)
 	public void onAnvil(PrepareAnvilEvent e) {
 		if (!anvilEnabled) return;
-		ItemStack result = e.getResult();
-		if (result != null && bannedAnvil.contains(result.getType())) e.setResult(null);
+		if (isStationBlocked(bannedAnvil, e.getResult())) e.setResult(null);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSmithing(PrepareSmithingEvent e) {
 		if (!smithingEnabled) return;
-		ItemStack result = e.getInventory().getResult();
-		if (result != null && bannedSmithing.contains(result.getType())) e.setResult(null);
+		if (isStationBlocked(bannedSmithing, e.getInventory().getResult())) e.setResult(null);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onGrindstone(PrepareGrindstoneEvent e) {
 		if (!grindstoneEnabled) return;
-		ItemStack result = e.getResult();
-		if (result != null && bannedGrindstone.contains(result.getType())) e.setResult(null);
+		if (isStationBlocked(bannedGrindstone, e.getResult())) e.setResult(null);
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onEnchant(PrepareItemEnchantEvent e) {
 		if (!enchantingEnabled) return;
-		if (bannedEnchanting.contains(e.getItem().getType())) e.setCancelled(true);
+		if (isStationBlocked(bannedEnchanting, e.getItem())) e.setCancelled(true);
+	}
+
+	// package-private for tests: an output is blocked when its type is in the station's ban list
+	static boolean isStationBlocked(Set<Material> banned, ItemStack result) {
+		return result != null && banned.contains(result.getType());
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
