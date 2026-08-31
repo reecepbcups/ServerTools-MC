@@ -2,6 +2,7 @@ package sh.reece.events;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,9 +17,13 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.PrepareAnvilEvent;
+import org.bukkit.event.inventory.PrepareGrindstoneEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
+import org.bukkit.event.inventory.PrepareSmithingEvent;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -37,6 +42,13 @@ public class AntiCraft extends BaseCommand implements Listener {
 	// cached: material -> durabilities for O(1) lookups
 	private static Map<Material, Set<Short>> blockedCache = new HashMap<>();
 
+	// per-station toggles + Material-only block lists (crafting table keeps the rich durability model above)
+	private boolean craftingEnabled, anvilEnabled, smithingEnabled, grindstoneEnabled, enchantingEnabled;
+	private Set<Material> bannedAnvil = EnumSet.noneOf(Material.class);
+	private Set<Material> bannedSmithing = EnumSet.noneOf(Material.class);
+	private Set<Material> bannedGrindstone = EnumSet.noneOf(Material.class);
+	private Set<Material> bannedEnchanting = EnumSet.noneOf(Material.class);
+
 	public AntiCraft(Main instance) {
 		super(instance, "Events.AntiCraft", "AntiCraft");
 		configUtils = instance.getConfigUtils();
@@ -54,8 +66,32 @@ public class AntiCraft extends BaseCommand implements Listener {
 			bypass = instance.getConfig().getString(section + ".Bypass");
 			AdminPerm = instance.getConfig().getString(section + ".AdminPerm");
 
+			craftingEnabled   = instance.getConfig().getBoolean(section + ".Crafting", true);
+			anvilEnabled      = instance.getConfig().getBoolean(section + ".Anvil", true);
+			smithingEnabled   = instance.getConfig().getBoolean(section + ".Smithing", true);
+			grindstoneEnabled = instance.getConfig().getBoolean(section + ".Grindstone", true);
+			enchantingEnabled = instance.getConfig().getBoolean(section + ".Enchanting", true);
+
+			bannedAnvil      = loadMaterials("BlockedAnvil");
+			bannedSmithing   = loadMaterials("BlockedSmithing");
+			bannedGrindstone = loadMaterials("BlockedGrindstone");
+			bannedEnchanting = loadMaterials("BlockedEnchanting");
+
 			rebuildCache();
 		}
+	}
+
+	private Set<Material> loadMaterials(String path) {
+		Set<Material> set = EnumSet.noneOf(Material.class);
+		for (String name : storage.getStringList(path)) {
+			Material m = Material.matchMaterial(name);
+			if (m == null) {
+				plugin.getLogger().warning("[AntiCraft] Invalid material '" + name + "' in " + path + " - skipping.");
+				continue;
+			}
+			set.add(m);
+		}
+		return set;
 	}
 
 	private static void rebuildCache() {
@@ -75,6 +111,7 @@ public class AntiCraft extends BaseCommand implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onPrepare(PrepareItemCraftEvent e) {
+		if (!craftingEnabled) return;
 		if (e.getRecipe() == null || e.getRecipe().getResult() == null) return;
 
 		ItemStack item = e.getRecipe().getResult();
@@ -90,6 +127,7 @@ public class AntiCraft extends BaseCommand implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onClick(InventoryClickEvent e) {
+		if (!craftingEnabled) return;
 		if (e.getClickedInventory() == null || e.getClickedInventory().getType() != InventoryType.CRAFTING) return;
 
 		ItemStack item = ((CraftingInventory) e.getClickedInventory()).getResult();
@@ -99,6 +137,33 @@ public class AntiCraft extends BaseCommand implements Listener {
 			e.setCancelled(true);
 			e.getInventory().setItem(0, null);
 		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onAnvil(PrepareAnvilEvent e) {
+		if (!anvilEnabled) return;
+		ItemStack result = e.getResult();
+		if (result != null && bannedAnvil.contains(result.getType())) e.setResult(null);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onSmithing(PrepareSmithingEvent e) {
+		if (!smithingEnabled) return;
+		ItemStack result = e.getInventory().getResult();
+		if (result != null && bannedSmithing.contains(result.getType())) e.setResult(null);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onGrindstone(PrepareGrindstoneEvent e) {
+		if (!grindstoneEnabled) return;
+		ItemStack result = e.getResult();
+		if (result != null && bannedGrindstone.contains(result.getType())) e.setResult(null);
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onEnchant(PrepareItemEnchantEvent e) {
+		if (!enchantingEnabled) return;
+		if (bannedEnchanting.contains(e.getItem().getType())) e.setCancelled(true);
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {

@@ -373,6 +373,12 @@ Chat:
 Events:
   AntiCraft:
     Enabled: false
+    # per-station toggles (block lists live in AntiCraft.yml)
+    Crafting: true
+    Anvil: true
+    Smithing: true
+    Grindstone: true
+    Enchanting: true
     AdminPerm: anticraft.admin
     Bypass: anticraft.bypass
     MSG: '&c&l[!] &cYou do not have permission to craft &e%item%&c.'

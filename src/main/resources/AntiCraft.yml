@@ -48,3 +48,10 @@ BlockedCrafting:
 - emerald
 - lapis_lazuli
 - redstone
+
+# Material-only block lists for the other stations. Use modern names (e.g. DIAMOND_CHESTPLATE).
+# These match on the output item's type only (no durability / bypass perms).
+BlockedSmithing: []
+BlockedAnvil: []
+BlockedGrindstone: []
+BlockedEnchanting: []
