@@ -28,6 +28,15 @@ public class Main extends JavaPlugin implements Listener {
 	private EconomyStorage economyStorage;
 	private String currencySymbol = "$";
 
+	public void onLoad() {
+		// Register the Vault economy provider during LOAD, before any plugin's onEnable.
+		// Economy consumers (EconomyShopGUI, etc.) look up the provider in their own
+		// onEnable; if we waited for our onEnable - which runs after theirs by alphabetical
+		// order - they'd find nothing and disable themselves. onLoad runs for every plugin
+		// before any onEnable, so registering here guarantees we're ready in time.
+		setupEconomy();
+	}
+
 	public void onEnable() {
 		loader = new Loader(this);
 		configUtils = new ConfigUtils(this);
@@ -35,9 +44,8 @@ public class Main extends JavaPlugin implements Listener {
 		configUtils.loadConfig();
 		loader.setMarking("Configurations");
 
-		// register our Vault economy provider before modules load, so /pay, /bal,
-		// /repair costs and PlaceholderAPI all resolve to us.
-		setupEconomy();
+		// economy is already registered in onLoad; record it in the module list for /tools
+		configUtils.enabledInConfig("Economy.Enabled");
 
 		loader.loadAll();
 
@@ -57,11 +65,13 @@ public class Main extends JavaPlugin implements Listener {
 
 	/**
 	 * Stand up the economy provider: open the SQLite store, then register it with
-	 * Vault. Skips silently if the module is off or Vault isn't installed - other
-	 * modules already degrade gracefully when no economy is present.
+	 * Vault. Runs in onLoad, so it reads config directly (configUtils isn't built yet)
+	 * and skips silently if the module is off or Vault isn't installed - other modules
+	 * already degrade gracefully when no economy is present.
 	 */
 	private void setupEconomy() {
-		if (!configUtils.enabledInConfig("Economy.Enabled")) {
+		saveDefaultConfig(); // ensure config.yml exists before we read it in onLoad
+		if (!getConfig().getString("Economy.Enabled", "true").equalsIgnoreCase("true")) {
 			return;
 		}
 		if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
