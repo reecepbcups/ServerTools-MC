@@ -117,8 +117,27 @@ public class Main extends JavaPlugin implements Listener {
 		return configUtils;
 	}
 
-	// jar file name (e.g. "servertools-8.1.2.jar"), used so Plugman can load by jar
+	// jar file name (e.g. "servertools-8.2.0.jar"), used so Plugman can load by jar.
+	//
+	// We can't use getFile().getName(): Paper's runtime remapper hands back the
+	// remapped copy under .paper-remapped/ (e.g. "servertools-8.2.0-<timestamp>.jar"),
+	// which isn't in the plugins/ folder, so `plugman load` NPEs and leaves us
+	// unloaded. Resolve the actual jar sitting in plugins/ instead.
 	public String getJarFileName() {
-		return getFile().getName();
+		File pluginsDir = getDataFolder().getParentFile();
+		String version = getDescription().getVersion();
+		File[] jars = pluginsDir.listFiles((dir, name) -> {
+			String n = name.toLowerCase();
+			return n.endsWith(".jar") && n.startsWith("servertools");
+		});
+		if (jars != null && jars.length > 0) {
+			for (File f : jars) {
+				if (f.getName().contains(version)) {
+					return f.getName();
+				}
+			}
+			return jars[0].getName();
+		}
+		return getFile().getName(); // fallback
 	}
 }
