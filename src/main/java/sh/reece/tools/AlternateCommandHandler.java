@@ -58,8 +58,19 @@ public class AlternateCommandHandler implements Listener {
 
             if(containsDisabledCommand(cmd)) {
                 // Main.logging("ServerTools AltCommandListenr event: this command is disabled");
+
+                // only redirect if another plugin actually provides this command. otherwise
+                // getCommandAlias() would hand back "null:xpbottle" and Bukkit shows a confusing
+                // "unknown command" error - so instead tell the player it's disabled.
+                if(!COMMAND_ALIASES.containsKey(cmd)) {
+                    Util.coloredMessage(event.getPlayer(),
+                        "&c[!] &7The &f/" + cmd + " &7feature is disabled on this server.");
+                    event.setCancelled(true);
+                    return;
+                }
+
                 PluginCommand newCMD = Bukkit.getServer().getPluginCommand(cmd);
-            
+
                 // set the message to "/pluginname:command [args]" to start
                 String newCommandAlias = getCommandAlias(newCMD.getName());
                 String newMSG = event.getMessage().replace(cmd, newCommandAlias);
@@ -67,7 +78,7 @@ public class AlternateCommandHandler implements Listener {
                 // Main.logging(newCommandAlias + " = " + newMSG);
 
                 event.setMessage(newMSG);
-            }            
+            }
         }
         
     }
