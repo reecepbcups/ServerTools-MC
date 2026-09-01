@@ -25,6 +25,7 @@ public class EconomyStorage {
 	private final String jdbcUrl;
 	private final long startingCents;
 	private Connection conn;
+	private PreparedStatement upsertStmt;
 	private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
 
 	public EconomyStorage(String jdbcUrl, long startingCents) {
@@ -45,9 +46,20 @@ public class EconomyStorage {
 				cache.put(UUID.fromString(rs.getString("uuid")), rs.getLong("cents"));
 			}
 		}
+		// one reusable statement for all writes - every mutation is synchronized, so
+		// there's never concurrent access to it, and we skip re-preparing per write.
+		upsertStmt = conn.prepareStatement(
+			"INSERT INTO balances(uuid, cents, name) VALUES(?,?,?) "
+			+ "ON CONFLICT(uuid) DO UPDATE SET cents=excluded.cents, name=excluded.name");
 	}
 
 	public void close() {
+		if (upsertStmt != null) {
+			try {
+				upsertStmt.close();
+			} catch (SQLException ignored) {
+			}
+		}
 		if (conn != null) {
 			try {
 				conn.close();
@@ -150,13 +162,11 @@ public class EconomyStorage {
 	}
 
 	private void upsert(UUID id, String name, long cents) {
-		try (PreparedStatement st = conn.prepareStatement(
-				"INSERT INTO balances(uuid, cents, name) VALUES(?,?,?) "
-				+ "ON CONFLICT(uuid) DO UPDATE SET cents=excluded.cents, name=excluded.name")) {
-			st.setString(1, id.toString());
-			st.setLong(2, cents);
-			st.setString(3, name);
-			st.executeUpdate();
+		try {
+			upsertStmt.setString(1, id.toString());
+			upsertStmt.setLong(2, cents);
+			upsertStmt.setString(3, name);
+			upsertStmt.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException("economy write failed for " + id, e);
 		}

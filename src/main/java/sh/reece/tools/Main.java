@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import sh.reece.core.economy.EconomyStorage;
+import sh.reece.core.economy.EcoFormat;
 import sh.reece.core.economy.ServerToolsEconomy;
 import sh.reece.utiltools.Util;
 
@@ -68,6 +69,7 @@ public class Main extends JavaPlugin implements Listener {
 			return;
 		}
 
+		EcoFormat.clearCache(); // fresh config -> drop any cached message templates
 		currencySymbol = getConfig().getString("Economy.CurrencySymbol", "$");
 		String singular = getConfig().getString("Economy.CurrencyNameSingular", "Dollar");
 		String plural = getConfig().getString("Economy.CurrencyNamePlural", "Dollars");

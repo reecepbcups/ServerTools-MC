@@ -26,19 +26,19 @@ public class Pay extends BaseCommand {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!(sender instanceof Player)) {
-			Util.coloredMessage(sender, "&c[!] Only players can pay.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.PlayersOnly", "&c[!] Only players can pay."));
 			return true;
 		}
 		EconomyStorage storage = plugin.getEconomyStorage();
 		if (storage == null) {
-			Util.coloredMessage(sender, "&c[!] The economy is not enabled.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.NotEnabled", "&c[!] The economy is not enabled."));
 			return true;
 		}
 		if (noPermission(sender, cmd)) {
 			return true;
 		}
 		if (args.length != 2) {
-			Util.coloredMessage(sender, "&e/pay <player> <amount>");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.PayUsage", "&e/pay <player> <amount>"));
 			return true;
 		}
 
@@ -47,17 +47,19 @@ public class Pay extends BaseCommand {
 
 		OfflinePlayer to = resolvePayee(args[0]);
 		if (to == null) {
-			Util.coloredMessage(from, "&c[!] &f" + args[0] + " &chas never joined the server.");
+			Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.NeverJoined",
+				"&c[!] &f%player% &chas never joined the server.", "player", args[0]));
 			return true;
 		}
 		if (to.getUniqueId().equals(from.getUniqueId())) {
-			Util.coloredMessage(from, "&c[!] You can't pay yourself.");
+			Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.PaySelf", "&c[!] You can't pay yourself."));
 			return true;
 		}
 
 		OptionalLong parsed = Money.parse(args[1]);
 		if (parsed.isEmpty()) {
-			Util.coloredMessage(from, "&c[!] &f" + args[1] + " &cis not a valid amount.");
+			Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.InvalidAmount",
+				"&c[!] &f%input% &cis not a valid amount.", "input", args[1]));
 			return true;
 		}
 		long cents = parsed.getAsLong();
@@ -70,24 +72,31 @@ public class Pay extends BaseCommand {
 		switch (r) {
 			case SUCCESS:
 				String amt = Money.format(cents, sym);
-				Util.coloredMessage(from, "&aYou paid &f" + to.getName() + " " + amt
-					+ "&a. New balance: &f" + Money.format(storage.getCents(from.getUniqueId()), sym));
+				Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.PaySent",
+					"&aYou paid &f%player% %amount%&a. New balance: &f%balance%",
+					"player", to.getName(), "amount", amt,
+					"balance", Money.format(storage.getCents(from.getUniqueId()), sym)));
 				Player online = to.getPlayer();
 				if (online != null) {
-					Util.coloredMessage(online, "&aYou received " + amt + " &afrom &f" + from.getName()
-						+ "&a. New balance: &f" + Money.format(storage.getCents(to.getUniqueId()), sym));
+					Util.coloredMessage(online, EcoFormat.msg(plugin, "Messages.PayReceived",
+						"&aYou received %amount% &afrom &f%player%&a. New balance: &f%balance%",
+						"player", from.getName(), "amount", amt,
+						"balance", Money.format(storage.getCents(to.getUniqueId()), sym)));
 				}
 				return true;
 			case INSUFFICIENT_FUNDS:
-				Util.coloredMessage(from, "&c[!] You can't afford that. Balance: &f"
-					+ Money.format(storage.getCents(from.getUniqueId()), sym));
+				Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.PayInsufficient",
+					"&c[!] You can't afford that. Balance: &f%balance%",
+					"balance", Money.format(storage.getCents(from.getUniqueId()), sym)));
 				return true;
 			case OVERFLOW:
-				Util.coloredMessage(from, "&c[!] That would put them over the balance limit.");
+				Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.PayOverflow",
+					"&c[!] That would put them over the balance limit."));
 				return true;
 			case INVALID_AMOUNT:
 			default:
-				Util.coloredMessage(from, "&c[!] Enter an amount greater than 0.");
+				Util.coloredMessage(from, EcoFormat.msg(plugin, "Messages.PayInvalidAmount",
+					"&c[!] Enter an amount greater than 0."));
 				return true;
 		}
 	}

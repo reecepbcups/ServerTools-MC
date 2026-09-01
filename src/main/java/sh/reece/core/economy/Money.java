@@ -57,9 +57,13 @@ public final class Money {
 		return cents / 100.0;
 	}
 
+	// DecimalFormat isn't thread-safe and allocating one per call is wasteful on a
+	// hot path (balance lookups, baltop). One instance per thread dodges both.
+	private static final ThreadLocal<DecimalFormat> FMT =
+		ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.00"));
+
 	/** e.g. (105099, "$") -> "$1,050.99" */
 	public static String format(long cents, String symbol) {
-		DecimalFormat fmt = new DecimalFormat("#,##0.00");
-		return symbol + fmt.format(toDollars(cents));
+		return symbol + FMT.get().format(toDollars(cents));
 	}
 }

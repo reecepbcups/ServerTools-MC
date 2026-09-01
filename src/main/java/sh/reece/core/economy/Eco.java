@@ -21,21 +21,21 @@ import sh.reece.utiltools.Util;
 public class Eco extends BaseCommand {
 
 	public Eco(Main instance) {
-		super(instance, "Economy.Eco", "eco");
+		super(instance, "Economy.Admin", "eco");
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		EconomyStorage storage = plugin.getEconomyStorage();
 		if (storage == null) {
-			Util.coloredMessage(sender, "&c[!] The economy is not enabled.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.NotEnabled", "&c[!] The economy is not enabled."));
 			return true;
 		}
 		if (noPermission(sender, cmd)) {
 			return true;
 		}
 		if (args.length != 3) {
-			Util.coloredMessage(sender, "&e/eco <give|take|set> <player> <amount>");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.EcoUsage", "&e/eco <give|take|set> <player> <amount>"));
 			return true;
 		}
 
@@ -48,13 +48,15 @@ public class Eco extends BaseCommand {
 			target = (off.hasPlayedBefore() || storage.has(off.getUniqueId())) ? off : null;
 		}
 		if (target == null) {
-			Util.coloredMessage(sender, "&c[!] &f" + args[1] + " &chas never joined the server.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.NeverJoined",
+				"&c[!] &f%player% &chas never joined the server.", "player", args[1]));
 			return true;
 		}
 
 		OptionalLong parsed = Money.parse(args[2]);
 		if (parsed.isEmpty()) {
-			Util.coloredMessage(sender, "&c[!] &f" + args[2] + " &cis not a valid amount.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.InvalidAmount",
+				"&c[!] &f%input% &cis not a valid amount.", "input", args[2]));
 			return true;
 		}
 		long cents = parsed.getAsLong();
@@ -73,24 +75,30 @@ public class Eco extends BaseCommand {
 				r = storage.set(target.getUniqueId(), target.getName(), cents);
 				break;
 			default:
-				Util.coloredMessage(sender, "&e/eco <give|take|set> <player> <amount>");
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.EcoUsage", "&e/eco <give|take|set> <player> <amount>"));
 				return true;
 		}
 
 		String bal = Money.format(storage.getCents(target.getUniqueId()), sym);
 		switch (r) {
 			case SUCCESS:
-				Util.coloredMessage(sender, "&aSet &f" + target.getName() + "&a's balance. Now: &f" + bal);
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.EcoSet",
+					"&aSet &f%player%&a's balance. Now: &f%balance%",
+					"player", target.getName(), "balance", bal));
 				return true;
 			case INSUFFICIENT_FUNDS:
-				Util.coloredMessage(sender, "&c[!] &f" + target.getName() + " &conly has &f" + bal + "&c.");
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.EcoInsufficient",
+					"&c[!] &f%player% &conly has &f%balance%&c.",
+					"player", target.getName(), "balance", bal));
 				return true;
 			case OVERFLOW:
-				Util.coloredMessage(sender, "&c[!] That exceeds the balance limit.");
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.EcoOverflow",
+					"&c[!] That exceeds the balance limit."));
 				return true;
 			case INVALID_AMOUNT:
 			default:
-				Util.coloredMessage(sender, "&c[!] Invalid amount.");
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.PayInvalidAmount",
+					"&c[!] Invalid amount."));
 				return true;
 		}
 	}

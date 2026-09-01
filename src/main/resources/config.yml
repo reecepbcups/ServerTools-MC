@@ -509,7 +509,7 @@ Cooldowns:
 
 
 Economy:
-  # ServerTools acts as the Vault economy provider (a drop-in for Essentials' economy).
+  # ServerTools acts as the Vault economy provider.
   # Balances are stored in economy.db (SQLite) as whole cents, so no float rounding bugs.
   # Needs Vault installed. PlaceholderAPI %vault_eco_balance_formatted% reads from here.
   Enabled: true
@@ -521,13 +521,41 @@ Economy:
     # /pay <player> <amount>
     Enabled: true
     Permission: servertools.pay
-  Eco:
+  Admin:
     # /eco <give|take|set> <player> <amount>  (admin)
     Enabled: true
     Permission: servertools.eco.admin
   Balance:
     # /balance [player] and /baltop
     Enabled: true
+
+  # All economy messages. &-color codes and these %placeholders% are supported:
+  #   %player% %amount% %balance% %input% (%rank% only in BalTop.Line)
+  Messages:
+    PlayersOnly: '&c[!] Only players can pay.'
+    NotEnabled: '&c[!] The economy is not enabled.'
+    NeverJoined: '&c[!] &f%player% &chas never joined the server.'
+    InvalidAmount: '&c[!] &f%input% &cis not a valid amount.'
+    PayUsage: '&e/pay <player> <amount>'
+    PaySent: '&aYou paid &f%player% %amount%&a. New balance: &f%balance%'
+    PayReceived: '&aYou received %amount% &afrom &f%player%&a. New balance: &f%balance%'
+    PayInsufficient: '&c[!] You can''t afford that. Balance: &f%balance%'
+    PaySelf: '&c[!] You can''t pay yourself.'
+    PayOverflow: '&c[!] That would put them over the balance limit.'
+    PayInvalidAmount: '&c[!] Enter an amount greater than 0.'
+    BalanceSelf: '&aBalance: &f%balance%'
+    BalanceOther: '&f%player%&a''s balance: &f%balance%'
+    BalanceUsage: '&e/balance <player>'
+    EcoUsage: '&e/eco <give|take|set> <player> <amount>'
+    EcoSet: '&aSet &f%player%&a''s balance. Now: &f%balance%'
+    EcoInsufficient: '&c[!] &f%player% &conly has &f%balance%&c.'
+    EcoOverflow: '&c[!] That exceeds the balance limit.'
+
+  BalTop:
+    Limit: 10
+    Header: '&e&lTop Balances'
+    Line: '&e%rank%. &f%player% &7- &a%balance%'
+    Empty: '&7No accounts yet.'
 
 Misc:
   Tools:

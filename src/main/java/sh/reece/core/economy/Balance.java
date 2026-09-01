@@ -26,7 +26,7 @@ public class Balance extends BaseCommand {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		EconomyStorage storage = plugin.getEconomyStorage();
 		if (storage == null) {
-			Util.coloredMessage(sender, "&c[!] The economy is not enabled.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.NotEnabled", "&c[!] The economy is not enabled."));
 			return true;
 		}
 		String sym = plugin.getCurrencySymbol();
@@ -44,30 +44,34 @@ public class Balance extends BaseCommand {
 				target = (off.hasPlayedBefore() || storage.has(off.getUniqueId())) ? off : null;
 			}
 			if (target == null) {
-				Util.coloredMessage(sender, "&c[!] &f" + args[0] + " &chas never joined the server.");
+				Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.NeverJoined",
+					"&c[!] &f%player% &chas never joined the server.", "player", args[0]));
 				return true;
 			}
 		} else if (sender instanceof Player) {
 			target = (Player) sender;
 		} else {
-			Util.coloredMessage(sender, "&e/balance <player>");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.BalanceUsage", "&e/balance <player>"));
 			return true;
 		}
 
 		String bal = Money.format(storage.getCents(target.getUniqueId()), sym);
 		if (sender instanceof Player && target.getUniqueId().equals(((Player) sender).getUniqueId())) {
-			Util.coloredMessage(sender, "&aBalance: &f" + bal);
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.BalanceSelf",
+				"&aBalance: &f%balance%", "balance", bal));
 		} else {
-			Util.coloredMessage(sender, "&f" + target.getName() + "&a's balance: &f" + bal);
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "Messages.BalanceOther",
+				"&f%player%&a's balance: &f%balance%", "player", target.getName(), "balance", bal));
 		}
 		return true;
 	}
 
 	private boolean baltop(CommandSender sender, EconomyStorage storage, String sym) {
-		Map<java.util.UUID, Long> top = storage.top(10);
-		Util.coloredMessage(sender, "&e&lTop Balances");
+		int limit = plugin.getConfig().getInt("Economy.BalTop.Limit", 10);
+		Map<java.util.UUID, Long> top = storage.top(limit);
+		Util.coloredMessage(sender, EcoFormat.msg(plugin, "BalTop.Header", "&e&lTop Balances"));
 		if (top.isEmpty()) {
-			Util.coloredMessage(sender, "&7No accounts yet.");
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "BalTop.Empty", "&7No accounts yet."));
 			return true;
 		}
 		int rank = 1;
@@ -76,7 +80,10 @@ public class Balance extends BaseCommand {
 			if (name == null) {
 				name = e.getKey().toString();
 			}
-			Util.coloredMessage(sender, "&e" + rank + ". &f" + name + " &7- &a" + Money.format(e.getValue(), sym));
+			Util.coloredMessage(sender, EcoFormat.msg(plugin, "BalTop.Line",
+				"&e%rank%. &f%player% &7- &a%balance%",
+				"rank", String.valueOf(rank), "player", name,
+				"balance", Money.format(e.getValue(), sym)));
 			rank++;
 		}
 		return true;
