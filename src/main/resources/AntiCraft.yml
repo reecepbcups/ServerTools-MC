@@ -1,21 +1,38 @@
-# AntiCraft - Server Tools v1.4
+# AntiCraft - Server Tools
+# Material names must match the server version (1.13+ flattened names).
+# Unknown names are skipped on load with a console warning.
 
-BlockedCrafting: 
+BlockedCrafting:
 - note_block
 - jukebox
-- end_bricks
+- end_stone_bricks
 - hopper
 - beacon
-- eye_of_ender
-- wool
+- ender_eye
+- white_wool
+- orange_wool
+- magenta_wool
+- light_blue_wool
+- yellow_wool
+- lime_wool
+- pink_wool
+- gray_wool
+- light_gray_wool
+- cyan_wool
+- purple_wool
+- blue_wool
+- brown_wool
+- green_wool
+- red_wool
+- black_wool
 - slime_block
-- leash
+- lead
 - bone_block
-- web
+- cobweb
 - tnt
-- brewing_stand_item
+- brewing_stand
 - nether_wart_block
-- magma
+- magma_block
 - shield
 - iron_block
 - gold_block
@@ -29,5 +46,5 @@ BlockedCrafting:
 - coal
 - diamond
 - emerald
-- ink_sack-4
+- lapis_lazuli
 - redstone

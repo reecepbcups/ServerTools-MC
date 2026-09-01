@@ -206,7 +206,13 @@ public class AntiCraft extends BaseCommand implements Listener {
 		int dashIdx = s.indexOf('-');
 		if (dashIdx >= 0) {
 			String durStr = s.substring(dashIdx + 1);
-			if (!durStr.isEmpty()) data = Short.parseShort(durStr);
+			if (!durStr.isEmpty()) {
+				try {
+					data = Short.parseShort(durStr);
+				} catch (NumberFormatException e) {
+					return null; // malformed durability, e.g. "stone-abc"
+				}
+			}
 			s = s.substring(0, dashIdx);
 		}
 		Material mat = Material.getMaterial(s);
