@@ -1,11 +1,18 @@
 package sh.reece.tools;
 
+import java.io.File;
 import java.util.Collections;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.milkbowl.vault.chat.Chat;
+import net.milkbowl.vault.economy.Economy;
+import sh.reece.core.economy.EconomyStorage;
+import sh.reece.core.economy.ServerToolsEconomy;
+import sh.reece.utiltools.Util;
 
 public class Main extends JavaPlugin implements Listener {
 
@@ -17,12 +24,19 @@ public class Main extends JavaPlugin implements Listener {
 	private Loader loader;
 	private ConfigUtils configUtils;
 
+	private EconomyStorage economyStorage;
+	private String currencySymbol = "$";
+
 	public void onEnable() {
 		loader = new Loader(this);
 		configUtils = new ConfigUtils(this);
 
 		configUtils.loadConfig();
 		loader.setMarking("Configurations");
+
+		// register our Vault economy provider before modules load, so /pay, /bal,
+		// /repair costs and PlaceholderAPI all resolve to us.
+		setupEconomy();
 
 		loader.loadAll();
 
@@ -35,6 +49,60 @@ public class Main extends JavaPlugin implements Listener {
 
 	public void onDisable() {
 		loader.unloadAll();
+		if (economyStorage != null) {
+			economyStorage.close();
+		}
+	}
+
+	/**
+	 * Stand up the economy provider: open the SQLite store, then register it with
+	 * Vault. Skips silently if the module is off or Vault isn't installed - other
+	 * modules already degrade gracefully when no economy is present.
+	 */
+	private void setupEconomy() {
+		if (!configUtils.enabledInConfig("Economy.Enabled")) {
+			return;
+		}
+		if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
+			Util.consoleMSG("&cEconomy enabled but Vault is not installed - skipping.");
+			return;
+		}
+
+		currencySymbol = getConfig().getString("Economy.CurrencySymbol", "$");
+		String singular = getConfig().getString("Economy.CurrencyNameSingular", "Dollar");
+		String plural = getConfig().getString("Economy.CurrencyNamePlural", "Dollars");
+		double startingDollars = getConfig().getDouble("Economy.StartingBalance", 0.0);
+		long startingCents = Math.round(startingDollars * 100.0);
+
+		try {
+			Class.forName("org.sqlite.JDBC"); // ensure the driver is registered
+		} catch (ClassNotFoundException ignored) {
+			// modern JDBC auto-registers via ServiceLoader; ignore if missing here
+		}
+
+		File dataDir = new File(getDataFolder(), "data");
+		dataDir.mkdirs();
+		File db = new File(dataDir, "economy.db");
+		economyStorage = new EconomyStorage("jdbc:sqlite:" + db.getAbsolutePath(), startingCents);
+		try {
+			economyStorage.open();
+		} catch (Exception e) {
+			Util.consoleMSG("&cFailed to open economy database: " + e.getMessage());
+			economyStorage = null;
+			return;
+		}
+
+		ServerToolsEconomy economy = new ServerToolsEconomy(economyStorage, currencySymbol, singular, plural);
+		Bukkit.getServicesManager().register(Economy.class, economy, this, ServicePriority.Highest);
+		Util.log("&aEconomy provider registered with Vault.");
+	}
+
+	public EconomyStorage getEconomyStorage() {
+		return economyStorage;
+	}
+
+	public String getCurrencySymbol() {
+		return currencySymbol;
 	}
 
 	public static boolean isPAPIEnabled() {

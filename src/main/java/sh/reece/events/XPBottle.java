@@ -3,7 +3,6 @@ package sh.reece.events;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
-import sh.reece.tools.RequiresPlugin;
 import sh.reece.utiltools.Util;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -25,7 +24,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 
-@RequiresPlugin({"Vault"})
 public class XPBottle extends BaseCommand implements Listener {
 
 	public String bottlename = Util.color("&e&lEXP-Bottle &7(Right-Click)");
@@ -34,7 +32,7 @@ public class XPBottle extends BaseCommand implements Listener {
 	private ConfigUtils configUtils;
 
 	public XPBottle(Main instance) {
-		super(instance, "Misc.Withdraw", "xpbottle");
+		super(instance, "Misc.XPBottle", "xpbottle");
 		configUtils = instance.getConfigUtils();
 
 		if (isEnabled()) {

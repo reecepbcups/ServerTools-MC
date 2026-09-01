@@ -508,12 +508,37 @@ Cooldowns:
 
 
 
+Economy:
+  # ServerTools acts as the Vault economy provider (a drop-in for Essentials' economy).
+  # Balances are stored in economy.db (SQLite) as whole cents, so no float rounding bugs.
+  # Needs Vault installed. PlaceholderAPI %vault_eco_balance_formatted% reads from here.
+  Enabled: true
+  StartingBalance: 0.0
+  CurrencySymbol: '$'
+  CurrencyNameSingular: 'Dollar'
+  CurrencyNamePlural: 'Dollars'
+  Pay:
+    # /pay <player> <amount>
+    Enabled: true
+    Permission: servertools.pay
+  Eco:
+    # /eco <give|take|set> <player> <amount>  (admin)
+    Enabled: true
+    Permission: servertools.eco.admin
+  Balance:
+    # /balance [player] and /baltop
+    Enabled: true
+
 Misc:
   Tools:
     Permission: toolscmd.admin
 
   Withdraw:
     # Console: "/withdraw AMOUNT player"
+    Enabled: false
+
+  XPBottle:
+    # /xpbottle <amount / all> - convert XP into a bottle item. Nothing to do with money.
     Enabled: false
 
   Rename:

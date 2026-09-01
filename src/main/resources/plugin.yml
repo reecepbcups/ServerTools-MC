@@ -8,6 +8,10 @@ website: https://reece.sh/
 api: "1.18"
 api-version: 1.18
 
+# runtime-loaded by Paper; backs the SQLite economy store (no shading needed)
+libraries:
+  - org.xerial:sqlite-jdbc:3.46.1.3
+
 commands:
   tools:
     description: Server tools plugin 
@@ -100,9 +104,23 @@ commands:
     description: teleport all players in a runnable
     aliases: [teleportall]  
   withdraw:
-    description: Withdraws money into a money note.  
+    description: Withdraws money into a money note.
   xpbottle:
-    description: Withdraws exp into a EXP bottle.    
+    description: Withdraws exp into a EXP bottle.
+  pay:
+    description: Pay another player money
+    usage: /pay <player> <amount>
+  eco:
+    description: Admin economy management
+    usage: /eco <give|take|set> <player> <amount>
+    aliases: [economy]
+  balance:
+    description: Check a money balance
+    usage: /balance [player]
+    aliases: [bal, money]
+  baltop:
+    description: Top money balances
+    aliases: [balancetop, moneytop]
   combattag:
     description: combat tag delay without losing inv. 
     aliases: [ct]

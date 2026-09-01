@@ -1,0 +1,164 @@
+package sh.reece.core.economy;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * SQLite-backed balance store. Everything here is whole cents (long) - no floats.
+ * Reads come from an in-memory cache; mutations write through to the DB under a lock
+ * so transfers stay atomic. No Bukkit imports, so it unit tests against an in-memory
+ * database (jdbc:sqlite::memory:).
+ */
+public class EconomyStorage {
+
+	public enum Result {
+		SUCCESS, INSUFFICIENT_FUNDS, INVALID_AMOUNT, OVERFLOW, SAME_ACCOUNT
+	}
+
+	private final String jdbcUrl;
+	private final long startingCents;
+	private Connection conn;
+	private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
+
+	public EconomyStorage(String jdbcUrl, long startingCents) {
+		this.jdbcUrl = jdbcUrl;
+		this.startingCents = startingCents;
+	}
+
+	public void open() throws SQLException {
+		conn = DriverManager.getConnection(jdbcUrl);
+		try (PreparedStatement st = conn.prepareStatement(
+				"CREATE TABLE IF NOT EXISTS balances (uuid TEXT PRIMARY KEY, cents INTEGER NOT NULL DEFAULT 0, name TEXT)")) {
+			st.execute();
+		}
+		// warm the cache from disk so reads never block on IO
+		try (PreparedStatement st = conn.prepareStatement("SELECT uuid, cents FROM balances");
+				ResultSet rs = st.executeQuery()) {
+			while (rs.next()) {
+				cache.put(UUID.fromString(rs.getString("uuid")), rs.getLong("cents"));
+			}
+		}
+	}
+
+	public void close() {
+		if (conn != null) {
+			try {
+				conn.close();
+			} catch (SQLException ignored) {
+			}
+		}
+	}
+
+	public boolean has(UUID id) {
+		return cache.containsKey(id);
+	}
+
+	public long getCents(UUID id) {
+		return cache.getOrDefault(id, 0L);
+	}
+
+	/** Create the account at the starting balance if it doesn't exist. Returns true if created. */
+	public synchronized boolean createAccount(UUID id, String name) {
+		if (cache.containsKey(id)) {
+			return false;
+		}
+		cache.put(id, startingCents);
+		upsert(id, name, startingCents);
+		return true;
+	}
+
+	public synchronized Result deposit(UUID id, String name, long cents) {
+		if (cents < 0) {
+			return Result.INVALID_AMOUNT;
+		}
+		long cur = cache.getOrDefault(id, startingCents);
+		if (cur > MAX_MINUS(cents)) {
+			return Result.OVERFLOW;
+		}
+		put(id, name, cur + cents);
+		return Result.SUCCESS;
+	}
+
+	public synchronized Result withdraw(UUID id, String name, long cents) {
+		if (cents < 0) {
+			return Result.INVALID_AMOUNT;
+		}
+		long cur = cache.getOrDefault(id, startingCents);
+		if (cur < cents) {
+			return Result.INSUFFICIENT_FUNDS;
+		}
+		put(id, name, cur - cents);
+		return Result.SUCCESS;
+	}
+
+	public synchronized Result set(UUID id, String name, long cents) {
+		if (cents < 0) {
+			return Result.INVALID_AMOUNT;
+		}
+		if (cents > Money.MAX_CENTS) {
+			return Result.OVERFLOW;
+		}
+		put(id, name, cents);
+		return Result.SUCCESS;
+	}
+
+	/** Atomic move of cents from one account to another. */
+	public synchronized Result transfer(UUID from, String fromName, UUID to, String toName, long cents) {
+		if (cents <= 0) {
+			return Result.INVALID_AMOUNT;
+		}
+		if (from.equals(to)) {
+			return Result.SAME_ACCOUNT;
+		}
+		long fromBal = cache.getOrDefault(from, startingCents);
+		if (fromBal < cents) {
+			return Result.INSUFFICIENT_FUNDS;
+		}
+		long toBal = cache.getOrDefault(to, startingCents);
+		if (toBal > MAX_MINUS(cents)) {
+			return Result.OVERFLOW;
+		}
+		put(from, fromName, fromBal - cents);
+		put(to, toName, toBal + cents);
+		return Result.SUCCESS;
+	}
+
+	/** Highest balances first, capped at limit. */
+	public Map<UUID, Long> top(int limit) {
+		Map<UUID, Long> out = new LinkedHashMap<>();
+		cache.entrySet().stream()
+			.sorted(Map.Entry.<UUID, Long>comparingByValue().reversed())
+			.limit(limit)
+			.forEach(e -> out.put(e.getKey(), e.getValue()));
+		return out;
+	}
+
+	private static long MAX_MINUS(long cents) {
+		return Money.MAX_CENTS - cents;
+	}
+
+	private void put(UUID id, String name, long cents) {
+		cache.put(id, cents);
+		upsert(id, name, cents);
+	}
+
+	private void upsert(UUID id, String name, long cents) {
+		try (PreparedStatement st = conn.prepareStatement(
+				"INSERT INTO balances(uuid, cents, name) VALUES(?,?,?) "
+				+ "ON CONFLICT(uuid) DO UPDATE SET cents=excluded.cents, name=excluded.name")) {
+			st.setString(1, id.toString());
+			st.setLong(2, cents);
+			st.setString(3, name);
+			st.executeUpdate();
+		} catch (SQLException e) {
+			throw new RuntimeException("economy write failed for " + id, e);
+		}
+	}
+}

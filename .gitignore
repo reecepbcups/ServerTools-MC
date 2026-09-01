@@ -28,7 +28,6 @@ hs_err_pid*
 target/
 *.classpath
 *.project
-src/test/*
 
 # Local server data
 server/

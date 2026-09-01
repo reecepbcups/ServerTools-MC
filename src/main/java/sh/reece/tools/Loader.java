@@ -46,7 +46,7 @@ public class Loader {
 
 	private static final String[][] PHASES = {
 		{"Commands",      "sh.reece.cmds", "sh.reece.bungee"},
-		{"Core Features", "sh.reece.core", "sh.reece.core.warp"},
+		{"Core Features", "sh.reece.core", "sh.reece.core.warp", "sh.reece.core.economy"},
 		{"Chat",          "sh.reece.chat"},
 		{"Events",        "sh.reece.events"},
 		{"Cooldowns",     "sh.reece.cooldowns"},
