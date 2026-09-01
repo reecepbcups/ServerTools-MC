@@ -64,6 +64,11 @@ public class AntiCraft extends BaseCommand implements Listener {
 		if (raw == null) return;
 		for (String s : raw) {
 			ItemStack item = toItemStack(s);
+			if (item == null) {
+				// legacy/unknown material name (e.g. old 1.8 names like "web", "eye_of_ender")
+				Util.consoleMSG("&e[AntiCraft] Skipping unknown material in AntiCraft.yml: " + s);
+				continue;
+			}
 			blockedCache.computeIfAbsent(item.getType(), k -> new HashSet<>()).add(item.getDurability());
 		}
 	}
@@ -204,6 +209,8 @@ public class AntiCraft extends BaseCommand implements Listener {
 			if (!durStr.isEmpty()) data = Short.parseShort(durStr);
 			s = s.substring(0, dashIdx);
 		}
-		return new ItemStack(Material.getMaterial(s), 1, data);
+		Material mat = Material.getMaterial(s);
+		if (mat == null) return null;
+		return new ItemStack(mat, 1, data);
 	}
 }
