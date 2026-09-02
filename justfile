@@ -5,6 +5,7 @@ plugins_dir := "server/plugins"
 build:
     mvn -o -T1C package -DskipTests || mvn -T1C package -DskipTests
     mkdir -p {{plugins_dir}}
+    rm -f {{plugins_dir}}/servertools-*.jar
     cp {{output_dir}}/{{jar_name}} {{plugins_dir}}/{{jar_name}}
     @echo "deployed {{jar_name}} -> {{plugins_dir}}"
 
