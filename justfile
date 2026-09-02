@@ -3,6 +3,11 @@ output_dir := "../output"
 plugins_dir := "server/plugins"
 folia_plugins_dir := "server-folia/plugins"
 
+# separate compose projects so the paper + folia stacks never share a docker
+# network. (shared network = `down` on one breaks the other's container.)
+paper := "docker compose -p servertools-paper"
+folia := "docker compose -p servertools-folia -f docker-compose.folia.yml"
+
 build:
     mvn -o -T1C package -DskipTests || mvn -T1C package -DskipTests
     mkdir -p {{plugins_dir}}
@@ -19,27 +24,27 @@ build-all: build
 
 # start paper server (first run downloads paper + generates world)
 server-up:
-    docker compose up
+    {{paper}} up
 
 server-down:
-    docker compose down
+    {{paper}} down
 
-# --- folia test server (same jar, separate world + port 25566) ---
+# --- folia test server (same jar, separate world; shares port 25565 so run one at a time) ---
 
 # start folia server (first run downloads folia + generates world)
 folia-up:
-    docker compose -f docker-compose.folia.yml up
+    {{folia}} up
 
 folia-down:
-    docker compose -f docker-compose.folia.yml down
+    {{folia}} down
 
 # send a command to the folia console (e.g. just folia-cmd "tps")
 folia-cmd cmd:
-    docker compose -f docker-compose.folia.yml exec folia rcon-cli {{cmd}}
+    {{folia}} exec folia rcon-cli {{cmd}}
 
 # send a command to the mc console (e.g. just mc-cmd "reload confirm")
 mc-cmd cmd:
-    docker compose exec mc rcon-cli {{cmd}}
+    {{paper}} exec mc rcon-cli {{cmd}}
 
 # --- unit tests ---
 
