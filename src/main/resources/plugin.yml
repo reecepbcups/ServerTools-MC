@@ -60,6 +60,10 @@ commands:
   clearchat:
     description: clears the chat
     usage: Syntax error!
+  hopperopt:
+    description: status of the experimental hopper optimizer
+    permission: hopperopt.use
+    usage: "Usage: /<command>"
   buy:
     description: custom buycraft buy message
     usage: Syntax error!  

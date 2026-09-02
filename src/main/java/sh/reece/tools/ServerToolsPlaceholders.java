@@ -30,22 +30,25 @@ public class ServerToolsPlaceholders extends PlaceholderExpansion {
 	public String onPlaceholderRequest(Player player, String identifier) {
 		
 		if (identifier == null) {
-			return null; 
-		}		
-		
-		String[] args = identifier.split("_");
+			return null;
+		}
 
-		switch (args[0]) {
+		// fast path: nearly all placeholders have no "_" arg, so avoid split()'s
+		// String[] allocation on every per-player per-tick request.
+		int underscore = identifier.indexOf('_');
+		String key = underscore == -1 ? identifier : identifier.substring(0, underscore);
 
-			case "isvisible": // %stools_isvisible%				
+		switch (key) {
+
+			case "isvisible": // %stools_isvisible%
 				return Visibility.isPlayerHidden(player) ? "true" : "false";
-				
-				
+
+
 			case "age": // %stools_age_1622318400%
-				// 2nd identifier = epoch time ( %stools_age_https://www.epochconverter.com/% )			
-				if(args.length == 2){
-					return Util.placeholderTimeRequest(args[1]);
-				} 
+				// 2nd identifier = epoch time ( %stools_age_https://www.epochconverter.com/% )
+				if(underscore != -1){
+					return Util.placeholderTimeRequest(identifier.substring(underscore + 1));
+				}
 				return "%stools_age_<EPOCHTIME>%";
 			
 			case "commandspy":

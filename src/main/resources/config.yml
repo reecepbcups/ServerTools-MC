@@ -38,6 +38,23 @@ PluginVariables:
 FeaturesGUI:
   Enabled: false
 
+# EXPERIMENTAL hopper optimizer. Test on a dev server before enabling in production.
+# Freezes vanilla hopper ticking and runs cheaper, event-driven transfer logic instead.
+# Fail-safe: if it can't hook the server internals it stays off and leaves hoppers alone.
+# Run /hopperopt to see live status + counters.
+Hoppers:
+  Optimize:
+    Enabled: false
+    Permission: hopperopt.use
+    # hoppers serviced per cycle (round-robin). Lower = smoother MSPT, slower item flow.
+    BudgetPerTick: 512
+    # ticks between transfer attempts (vanilla default is 8).
+    TransferInterval: 8
+    # items moved per transfer (vanilla default is 1).
+    TransferAmount: 1
+    # worlds to leave on vanilla hoppers (case-insensitive).
+    DisabledWorlds: []
+
 Disabled:
   DisableCropTrample:
     Enabled: false

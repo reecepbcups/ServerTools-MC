@@ -49,6 +49,7 @@ public class Loader {
 		{"Core Features", "sh.reece.core", "sh.reece.core.warp", "sh.reece.core.economy"},
 		{"Chat",          "sh.reece.chat"},
 		{"Events",        "sh.reece.events"},
+		{"Hoppers",       "sh.reece.hoppers"},
 		{"Cooldowns",     "sh.reece.cooldowns"},
 		{"Toggleable",    "sh.reece.disabled"},
 		{"Moderation",    "sh.reece.moderation"},
