@@ -17,9 +17,13 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
+
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -256,7 +260,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 			case "removenear":
 				int removed = 0;
 				for(Entity e : p.getNearbyEntities(2, 2, 2)) {
-					if(e instanceof ArmorStand && e.getLocation().distance(p.getLocation()) <= 2) {
+					if((e instanceof TextDisplay || e instanceof ArmorStand) && e.getLocation().distance(p.getLocation()) <= 2) {
 						e.remove();
 						removed++;
 					}
@@ -288,10 +292,12 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 	}
 
 	public void spawnHolo(String key) {
-		Location loc = getLocFromConfig(key).clone().subtract(0, 2, 0);
+		// TextDisplay renders text at the entity location itself, unlike an ArmorStand
+		// nameplate which floated ~2 blocks above the stand, so no -2 base offset here
+		Location loc = getLocFromConfig(key).clone();
 		World world = loc.getWorld();
 		//Util.consoleMSG("Loading in hologram: " + key);
-		ArmorStand as;
+		TextDisplay td;
 
 		for(String line : getLinesFromConfig(key)) {
 			loc = loc.clone().subtract(0, 0.25, 0);
@@ -305,16 +311,13 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 
 
 			if(msg.length() > 0) {
-				//ArmorStand as = world.spawn(loc, ArmorStand.class); // <- slower by 36%
-				as = (ArmorStand) world.spawnEntity(loc, EntityType.ARMOR_STAND);
-				EntitiyIDs.put(loc, as.getEntityId());
-				as.setCustomName(msg);
-				as.setGravity(false);
-				as.setCanPickupItems(false);
-				as.setCustomNameVisible(true);
-				as.setVisible(false);
-				as.setMarker(true);	// very small collision box
-				as.setRemoveWhenFarAway(false);
+				// display entities have no AI/gravity/collision and aren't ticked like
+				// a mob - far cheaper than an ArmorStand nameplate
+				td = (TextDisplay) world.spawnEntity(loc, EntityType.TEXT_DISPLAY);
+				EntitiyIDs.put(loc, td.getEntityId());
+				// legacy '&'/hex codes come through Util.color as section-sign text
+				td.text(LegacyComponentSerializer.legacySection().deserialize(msg));
+				td.setBillboard(Display.Billboard.CENTER); // always face the player, like a nameplate
 			}
 		}
 
@@ -362,7 +365,9 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 			// x/z radius must be non-zero: marker stands have a zero-width box and a
 			// zero-width search box never overlaps it, so they'd never get removed
 			for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
-				if(e instanceof ArmorStand && e.isCustomNameVisible()) {
+				// TextDisplay = current holos; ArmorStand w/ visible name = legacy holos
+				// from before the TextDisplay migration, cleaned up here on (re)load
+				if(e instanceof TextDisplay || (e instanceof ArmorStand && e.isCustomNameVisible())) {
 					//Util.consoleMSG("Removed " + e.getCustomName() + " ID:" + e.getEntityId());
 					e.remove();
 				}
@@ -384,10 +389,11 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		// non-zero x/z radius: marker stands have a zero-width box that a zero-width
 		// search box never overlaps, so they'd never get removed
 		for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
-			if(e instanceof ArmorStand) {
-				if (e.isCustomNameVisible()) {
-					e.remove();
-				}
+			if(e instanceof TextDisplay) {
+				e.remove();
+			} else if(e instanceof ArmorStand && e.isCustomNameVisible()) {
+				// legacy holo from before the TextDisplay migration
+				e.remove();
 			}
 		}
 	}
