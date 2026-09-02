@@ -1,5 +1,6 @@
-# Folia test server. Separate data dir + port from the Paper compose so the two
-# never share a world (Folia's region format isn't interchangeable with Paper's).
+# Folia test server. Separate data dir from the Paper compose so the two never
+# share a world (Folia's region format isn't interchangeable with Paper's).
+# Uses the same port (25565) as the Paper server, so only run ONE at a time.
 #   just folia-up      # start it (first run downloads Folia + generates world)
 #   just folia-down
 #   just folia-cmd "tps"
@@ -7,7 +8,7 @@ services:
   folia:
     image: itzg/minecraft-server
     ports:
-      - "25566:25565"
+      - "25565:25565"
     environment:
       EULA: "TRUE"
       TYPE: "FOLIA"
@@ -21,8 +22,8 @@ services:
       MAX_PLAYERS: 200
       MOTD: "ServerTools Folia"
       # only Folia-capable plugins here so the server boots clean
+      # (spark's spigot build isn't folia-marked, so it's left out on purpose)
       MODRINTH_PROJECTS: "luckperms,placeholderapi"
-      SPIGET_RESOURCES: "57242" # spark (Folia-compatible)
       OPS: "reecepbcups"
       RCON_CMDS_STARTUP: "lp user reecepbcups permission set * true"
     volumes:

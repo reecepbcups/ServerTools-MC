@@ -8,6 +8,7 @@ import org.bukkit.GameRule;
 import org.bukkit.World;
 
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class TimeChange {
@@ -18,14 +19,18 @@ public class TimeChange {
 			List<World> dayWorlds = getNonNullWorlds(instance.getConfig().getStringList(Section + ".DayWorlds"));
 			List<World> nightWorlds = getNonNullWorlds(instance.getConfig().getStringList(Section + ".NightWorlds"));
 
-			for (World w : dayWorlds) {
-				w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-				w.setTime(4000);
-			}
-			for (World w : nightWorlds) {
-				w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-				w.setTime(16000);
-			}
+			// gamerule/time are world settings - Folia only lets you touch those from the
+			// global region thread, and this runs during onEnable, so hop over to it.
+			Schedulers.global(instance, () -> {
+				for (World w : dayWorlds) {
+					w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+					w.setTime(4000);
+				}
+				for (World w : nightWorlds) {
+					w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+					w.setTime(16000);
+				}
+			});
 		}
 	}
 
