@@ -3,7 +3,7 @@ output_dir := "../output"
 plugins_dir := "server/plugins"
 
 build:
-    mvn package -q -DskipTests
+    mvn package -DskipTests
     mkdir -p {{plugins_dir}}
     cp {{output_dir}}/{{jar_name}} {{plugins_dir}}/{{jar_name}}
     @echo "deployed {{jar_name}} -> {{plugins_dir}}"
