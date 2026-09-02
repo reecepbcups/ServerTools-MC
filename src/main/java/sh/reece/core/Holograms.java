@@ -28,9 +28,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import me.clip.placeholderapi.PlaceholderAPI;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 import sh.reece.tools.AlternateCommandHandler;
 import sh.reece.tools.ConfigUtils;
@@ -82,12 +82,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		if(randomPlayer == null) {
 			randomPlayer = e.getPlayer();
 
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					loadInit();
-				}
-			}.runTaskLater(plugin, 10L);
+			Schedulers.globalLater(plugin, this::loadInit, 10L);
 		}
 	}
 
@@ -204,7 +199,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 					if(holoKeys.contains(args[1])) {
 						Util.coloredMessage(p, "&4[!] &cTeleported to " + args[1] + " location");
 
-						p.teleport(getLocFromConfig(args[1]));
+						p.teleportAsync(getLocFromConfig(args[1]));
 
 					} else {
 						Util.coloredMessage(p, "&c[!] Holo" + args[1] + " does not exsist!");
@@ -258,14 +253,16 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 				return true;
 
 			case "removenear":
-				int removed = 0;
-				for(Entity e : p.getNearbyEntities(2, 2, 2)) {
-					if((e instanceof TextDisplay || e instanceof ArmorStand) && e.getLocation().distance(p.getLocation()) <= 2) {
-						e.remove();
-						removed++;
+				Schedulers.region(plugin, p.getLocation(), () -> {
+					int removed = 0;
+					for(Entity e : p.getNearbyEntities(2, 2, 2)) {
+						if((e instanceof TextDisplay || e instanceof ArmorStand) && e.getLocation().distance(p.getLocation()) <= 2) {
+							e.remove();
+							removed++;
+						}
 					}
-				}
-				Util.coloredMessage(p, "\n&aRemoved " + removed + " armour stand(s) within a radius of 2\n ");
+					Util.coloredMessage(p, "\n&aRemoved " + removed + " armour stand(s) within a radius of 2\n ");
+				});
 				return true;
 
 			case "reload":
@@ -296,32 +293,36 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		// nameplate which floated ~2 blocks above the stand.
 		// LEGACY: saved Y values in Holograms.yml were authored against the old
 		// ArmorStand offset, so subtract 2 to keep existing holos where they were.
-		Location loc = getLocFromConfig(key).clone().subtract(0, 2, 0);
-		World world = loc.getWorld();
+		Location base = getLocFromConfig(key).clone().subtract(0, 2, 0);
+		World world = base.getWorld();
 		//Util.consoleMSG("Loading in hologram: " + key);
-		TextDisplay td;
 
-		for(String line : getLinesFromConfig(key)) {
-			loc = loc.clone().subtract(0, 0.25, 0);
+		Schedulers.region(plugin, base, () -> {
+			Location loc = base;
+			TextDisplay td;
 
-			String msg = Util.color(ConfigUtils.replaceVariable(line));
-			if(papiSupport && randomPlayer != null) {
-				// sets a random online to be the msg.
-				// so this adds support for none player specific Placeholders like %server_uptime%
-				msg = PlaceholderAPI.setPlaceholders(randomPlayer, msg);
+			for(String line : getLinesFromConfig(key)) {
+				loc = loc.clone().subtract(0, 0.25, 0);
+
+				String msg = Util.color(ConfigUtils.replaceVariable(line));
+				if(papiSupport && randomPlayer != null) {
+					// sets a random online to be the msg.
+					// so this adds support for none player specific Placeholders like %server_uptime%
+					msg = PlaceholderAPI.setPlaceholders(randomPlayer, msg);
+				}
+
+
+				if(msg.length() > 0) {
+					// display entities have no AI/gravity/collision and aren't ticked like
+					// a mob - far cheaper than an ArmorStand nameplate
+					td = (TextDisplay) world.spawnEntity(loc, EntityType.TEXT_DISPLAY);
+					EntitiyIDs.put(loc, td.getEntityId());
+					// legacy '&'/hex codes come through Util.color as section-sign text
+					td.text(LegacyComponentSerializer.legacySection().deserialize(msg));
+					td.setBillboard(Display.Billboard.CENTER); // always face the player, like a nameplate
+				}
 			}
-
-
-			if(msg.length() > 0) {
-				// display entities have no AI/gravity/collision and aren't ticked like
-				// a mob - far cheaper than an ArmorStand nameplate
-				td = (TextDisplay) world.spawnEntity(loc, EntityType.TEXT_DISPLAY);
-				EntitiyIDs.put(loc, td.getEntityId());
-				// legacy '&'/hex codes come through Util.color as section-sign text
-				td.text(LegacyComponentSerializer.legacySection().deserialize(msg));
-				td.setBillboard(Display.Billboard.CENTER); // always face the player, like a nameplate
-			}
-		}
+		});
 
 	}
 
@@ -367,17 +368,19 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 			if(l == null) {
 				continue;
 			}
-			l.getChunk(); // force-load the chunk so persisted stands are found
-			// x/z radius must be non-zero: marker stands have a zero-width box and a
-			// zero-width search box never overlaps it, so they'd never get removed
-			for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
-				// TextDisplay = current holos; ArmorStand w/ visible name = legacy holos
-				// from before the TextDisplay migration, cleaned up here on (re)load
-				if(e instanceof TextDisplay || (e instanceof ArmorStand && e.isCustomNameVisible())) {
-					//Util.consoleMSG("Removed " + e.getCustomName() + " ID:" + e.getEntityId());
-					e.remove();
+			Schedulers.region(plugin, l, () -> {
+				l.getChunk(); // force-load the chunk so persisted stands are found
+				// x/z radius must be non-zero: marker stands have a zero-width box and a
+				// zero-width search box never overlaps it, so they'd never get removed
+				for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
+					// TextDisplay = current holos; ArmorStand w/ visible name = legacy holos
+					// from before the TextDisplay migration, cleaned up here on (re)load
+					if(e instanceof TextDisplay || (e instanceof ArmorStand && e.isCustomNameVisible())) {
+						//Util.consoleMSG("Removed " + e.getCustomName() + " ID:" + e.getEntityId());
+						e.remove();
+					}
 				}
-			}
+			});
 		}
 		EntitiyIDs.clear();
 	}
@@ -394,14 +397,16 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		Location l = getLocFromConfig(key);
 		// non-zero x/z radius: marker stands have a zero-width box that a zero-width
 		// search box never overlaps, so they'd never get removed
-		for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
-			if(e instanceof TextDisplay) {
-				e.remove();
-			} else if(e instanceof ArmorStand && e.isCustomNameVisible()) {
-				// legacy holo from before the TextDisplay migration
-				e.remove();
+		Schedulers.region(plugin, l, () -> {
+			for(Entity e : l.getWorld().getNearbyEntities(l, 2, 8, 2)) {
+				if(e instanceof TextDisplay) {
+					e.remove();
+				} else if(e instanceof ArmorStand && e.isCustomNameVisible()) {
+					// legacy holo from before the TextDisplay migration
+					e.remove();
+				}
 			}
-		}
+		});
 	}
 
 
@@ -421,7 +426,7 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 		// spawn new armour stand at location, but bring back some
 		// and try to center more
 
-		l = l.clone().subtract(0, 2, 0);
+		Location spawnLoc = l.clone().subtract(0, 2, 0);
 //		ArmorStand as = l.getWorld().spawn(l, ArmorStand.class);
 //		EntitiyIDs.put(l, as.getEntityId());
 //		as.setGravity(false);
@@ -431,13 +436,15 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 //		as.setItemInHand(item);
 //		as.setRightArmPose(new EulerAngle(-3.25, -0, -2.5));
 //		EntitiyIDs.put(l, as.getEntityId());
-		ArmorStand as = l.getWorld().spawn(l, ArmorStand.class);
-		EntitiyIDs.put(l, as.getEntityId());
-		as.setGravity(false);
-		as.setCanPickupItems(false);
-		as.setVisible(false);
-		Entity e = l.getWorld().dropItem(l, item);
-		as.setPassenger(e);
+		Schedulers.region(plugin, spawnLoc, () -> {
+			ArmorStand as = spawnLoc.getWorld().spawn(spawnLoc, ArmorStand.class);
+			EntitiyIDs.put(spawnLoc, as.getEntityId());
+			as.setGravity(false);
+			as.setCanPickupItems(false);
+			as.setVisible(false);
+			Entity e = spawnLoc.getWorld().dropItem(spawnLoc, item);
+			as.setPassenger(e);
+		});
 
 	}
 }

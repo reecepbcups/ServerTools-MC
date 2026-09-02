@@ -9,7 +9,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+
+import sh.reece.utiltools.Schedulers;
 
 import java.util.Random;
 
@@ -49,22 +50,19 @@ public class TPAll implements CommandExecutor {//,  {
 		Util.coloredBroadcast(ConfigUtils.lang("TP_ALL").replace("%player%", player.getName()));
 		
 		for(Player target : Bukkit.getOnlinePlayers()) {
-			new BukkitRunnable(){
-				public void run() {	
-					if(target != player) {
-						target.teleport(loc);
+			if(target != player) {
+				Schedulers.entityLater(plugin, target, () -> {
+					target.teleportAsync(loc).thenRun(() -> {
 						target.sendMessage(ConfigUtils.lang("TP_ALL_SUCCESS").replace("%player%", player.getName()));
-					}										
-				}
-			}.runTaskLater(plugin, rand.nextInt(100)); // 5 second delay
-		}
-		
-		// 5 second delay to tell them it worked
-		new BukkitRunnable(){
-			public void run() {	
-				player.sendMessage(Util.color("\n&a&o (( All Players Teleported! ))"));									
+					});
+				}, rand.nextInt(100)); // 5 second delay
 			}
-		}.runTaskLater(plugin, 100); // 5 second delay
+		}
+
+		// 5 second delay to tell them it worked
+		Schedulers.globalLater(plugin, () -> {
+			player.sendMessage(Util.color("\n&a&o (( All Players Teleported! ))"));
+		}, 100); // 5 second delay
 		
 
 		return true;

@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.util.Vector;
 
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class LaunchPads implements Listener, CommandExecutor {
@@ -57,7 +58,7 @@ public class LaunchPads implements Listener, CommandExecutor {
 
 		Player p = e.getPlayer();
 		Vector dir = loc.getDirection().multiply(LaunchPower);
-		p.setVelocity(new Vector(dir.getX(), 1.0D, dir.getZ()));
+		Schedulers.entity(plugin, p, () -> p.setVelocity(new Vector(dir.getX(), 1.0D, dir.getZ())));
 	}
 
 	@Override
@@ -76,8 +77,10 @@ public class LaunchPads implements Listener, CommandExecutor {
 
 		switch (args[0]) {
 			case "create":
-				p.getLocation().getWorld().getBlockAt(p.getLocation()).getRelative(0, -1, 0).setType(BlockType);
-				p.getLocation().getWorld().getBlockAt(p.getLocation()).setType(PlateType);
+				Schedulers.region(plugin, p.getLocation(), () -> {
+					p.getLocation().getWorld().getBlockAt(p.getLocation()).getRelative(0, -1, 0).setType(BlockType);
+					p.getLocation().getWorld().getBlockAt(p.getLocation()).setType(PlateType);
+				});
 				return true;
 			default:
 				sendHelpMenu(p);

@@ -18,6 +18,7 @@ import org.bukkit.inventory.Inventory;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.tools.Unloadable;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class Enderchest extends BaseCommand implements Listener, Unloadable {
@@ -59,10 +60,16 @@ public class Enderchest extends BaseCommand implements Listener, Unloadable {
 			}
 		}
 
-		Player opener = (Player) sender;
+		final Player opener = (Player) sender;
+		final Player finalTarget = target;
 		opener.closeInventory();
 		setEnderSee(opener, !(target.equals(opener)));
-		opener.openInventory(target.getEnderChest());
+		// read the target's enderchest on the target's region thread, then hop back
+		// to the opener's thread to open the screen for them.
+		Schedulers.entity(plugin, finalTarget, () -> {
+			final Inventory ec = finalTarget.getEnderChest();
+			Schedulers.entity(plugin, opener, () -> opener.openInventory(ec));
+		});
 		return true;
 	}
 
@@ -100,7 +107,7 @@ public class Enderchest extends BaseCommand implements Listener, Unloadable {
 	public void onUnload() {
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (openEnderChest.contains(p.getUniqueId())) {
-				p.getOpenInventory().close();
+				Schedulers.entity(plugin, p, () -> p.getOpenInventory().close());
 			}
 		}
 		openEnderChest.clear();

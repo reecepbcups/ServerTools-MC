@@ -2,6 +2,7 @@ package sh.reece.core;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -61,7 +62,7 @@ public class Heal extends BaseCommand {
 			}
 		} else if (label.equalsIgnoreCase("healall")) {
 			if (checkPerm(sender, cmd.getName(), HealOthersPerm)) {
-				Bukkit.getOnlinePlayers().forEach(target -> heal(target));
+				Bukkit.getOnlinePlayers().forEach(target -> Schedulers.entity(plugin, target, () -> heal(target)));
 			}
 		}
 

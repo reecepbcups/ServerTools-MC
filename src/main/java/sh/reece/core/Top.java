@@ -20,7 +20,7 @@ public class Top extends BaseCommand {
 
 		Player p = (Player) sender;
 		Block block = p.getWorld().getHighestBlockAt(p.getLocation());
-		p.teleport(block.getLocation().add(0, 1, 0));
+		p.teleportAsync(block.getLocation().add(0, 1, 0));
 		Util.coloredMessage(p, configUtils.lang("TOP_TELEPORT").replace("%block%", block.getY() + ""));
 
 		return true;

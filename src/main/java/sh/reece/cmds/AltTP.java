@@ -132,7 +132,7 @@ public class AltTP extends BaseCommand {
 		case "tp":
 			if(alttpconfig.getStringList(p.getUniqueId()+".accounts").contains(other.getUniqueId().toString())) {
 				Util.coloredMessage(p, "&aTeleporting alt...");
-				other.teleport(p.getLocation());
+				other.teleportAsync(p.getLocation());
 			} else {
 				Util.coloredMessage(p, "You do not seem you own the alt " + other.getName());
 			}

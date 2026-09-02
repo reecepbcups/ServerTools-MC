@@ -6,10 +6,10 @@ import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -28,7 +28,7 @@ public class WarpCMD implements CommandExecutor, TabCompleter {
 	String setWarpPerm, delWarpPerm, viewWarpPerm, warpOtherPlayerPerm;
 
 	// name, warp_data
-	private static Map<String, Warp> warps = new HashMap<>();
+	private static Map<String, Warp> warps = new ConcurrentHashMap<>();
 	
 	public WarpCMD(Main instance) {
 		plugin = instance;
@@ -276,8 +276,8 @@ public class WarpCMD implements CommandExecutor, TabCompleter {
 			}
 		}
 		
-		player.teleport(warpLoc);
-		Util.coloredMessage(player, "&2[!] &aTeleported to &n"+warpingTo.getName()+"&2. " + fromWho);		
+		player.teleportAsync(warpLoc).thenRun(() ->
+			Util.coloredMessage(player, "&2[!] &aTeleported to &n"+warpingTo.getName()+"&2. " + fromWho));
 	}
 
 	public static void loadWarpsFromConfig() {

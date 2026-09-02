@@ -49,7 +49,7 @@ public class TP extends BaseCommand {
 				Player from = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
 				if (from != null) {
 					Util.coloredMessage(from, configUtils.lang("TELEPORT_HASACCEPTED").replace("%player%", p.getName()));
-					from.teleport(p);
+					from.teleportAsync(p.getLocation());
 				}
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_ACCEPTED").replace("%player%", from != null ? from.getName() : "?"));
 				currentRequest.remove(p.getUniqueId());
@@ -93,7 +93,7 @@ public class TP extends BaseCommand {
 				case "tpo":
 					if (checkPerm(p, label, TPPerm)) {
 						output = configUtils.lang("TELEPORT_TO").replace("%player%", args[0]);
-						p.teleport(target);
+						p.teleportAsync(target.getLocation());
 					} else {
 						return true;
 					}
@@ -102,7 +102,7 @@ public class TP extends BaseCommand {
 				case "tphere":
 					if (checkPerm(p, label, TPHerePerm)) {
 						output = "&aTeleported &f" + args[0] + " &ato &fYou";
-						target.teleport(p);
+						target.teleportAsync(p.getLocation());
 						Util.coloredMessage(target, configUtils.lang("TELEPORT_TO").replace("%player%", p.getName()));
 					} else {
 						return true;
@@ -144,7 +144,7 @@ public class TP extends BaseCommand {
 				double x = Double.parseDouble(args[1]);
 				double y = Double.parseDouble(args[2]);
 				double z = Double.parseDouble(args[3]);
-				target.teleport(new Location(target.getWorld(), x, y, z));
+				target.teleportAsync(new Location(target.getWorld(), x, y, z));
 				sender.sendMessage("Teleported " + target.getName() + " to " + x + ", " + y + ", " + z);
 			} catch (NumberFormatException e) {
 				sender.sendMessage("Invalid coordinates.");
@@ -158,7 +158,7 @@ public class TP extends BaseCommand {
 			sender.sendMessage("Player " + args[1] + " is not online.");
 			return true;
 		}
-		target.teleport(dest);
+		target.teleportAsync(dest.getLocation());
 		sender.sendMessage("Teleported " + target.getName() + " to " + dest.getName());
 		return true;
 	}

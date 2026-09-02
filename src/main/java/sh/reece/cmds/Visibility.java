@@ -2,6 +2,7 @@ package sh.reece.cmds;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -112,11 +113,11 @@ public class Visibility extends BaseCommand {
 			if(online != p) {
 				if(hidePlayer) {
 					if(!hasPermission(online, permission)) {
-						p.hidePlayer(online);
+						Schedulers.entity(plugin, p, () -> p.hidePlayer(online));
 						hiddenPlayers.add(online);
 					}
 				} else {
-					p.showPlayer(online);
+					Schedulers.entity(plugin, p, () -> p.showPlayer(online));
 				}
 			}
 		}

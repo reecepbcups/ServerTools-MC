@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -31,7 +32,7 @@ public class ConfigUtils {
 	private static final DateFormat dateFormat = new SimpleDateFormat("MMMM-dd-yyyy_HH:mm:ss-a");
 
 	// moved from Main
-	public static final Map<String, String> SERVER_VARIABLES = new HashMap<>();
+	public static final Map<String, String> SERVER_VARIABLES = new ConcurrentHashMap<>();
 	public static final List<String> SERVER_VARIABLE_KEYS = new ArrayList<>();
 	public static final List<String> ENV_VARIABLE_PATHS = new ArrayList<>();
 	public final List<String> modulesList = new ArrayList<>();

@@ -17,6 +17,7 @@ import org.bukkit.util.Vector;
 
 import sh.reece.tools.Main;
 import sh.reece.tools.ToggleableListener;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class DisableWorldGuardGlitchBuilding extends ToggleableListener {
@@ -55,10 +56,13 @@ public class DisableWorldGuardGlitchBuilding extends ToggleableListener {
 
 			Player player = event.getPlayer();
 
-			player.teleport(player.getLocation());
-			player.setVelocity(new Vector(0, -1, 0));
+			player.teleportAsync(player.getLocation()).thenRun(() -> {
+				Schedulers.entity(plugin, player, () -> {
+					player.setVelocity(new Vector(0, -1, 0));
 
-			player.openInventory(StopGUI);
+					player.openInventory(StopGUI);
+				});
+			});
 		}
 	}
 

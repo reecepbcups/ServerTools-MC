@@ -22,6 +22,7 @@ import org.bukkit.inventory.InventoryHolder;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.tools.Unloadable;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class InvSee extends BaseCommand implements Listener, Unloadable {
@@ -65,19 +66,27 @@ public class InvSee extends BaseCommand implements Listener, Unloadable {
 			return true;
 		}
 
-		final Inventory inv;
+		final boolean armour = args.length > 1;
+		final String invTitle = args[0] + " Armour";
 
-		if (args.length > 1) {
-			inv = Bukkit.getServer().createInventory(target, 9, args[0] + " Armour");
-			inv.setContents(target.getInventory().getArmorContents());
-		} else {
-			inv = target.getInventory();
-		}
-
-		Player opener = (Player) sender;
+		final Player opener = (Player) sender;
+		final Player finalTarget = target;
 		opener.closeInventory();
-		opener.openInventory(inv);
-		setInvSee(opener, !target.equals(opener));
+		// read the target's inventory on the target's region thread, then hop back
+		// to the opener's thread to actually open the screen for them.
+		Schedulers.entity(plugin, target, () -> {
+			final Inventory inv;
+			if (armour) {
+				inv = Bukkit.getServer().createInventory(finalTarget, 9, invTitle);
+				inv.setContents(finalTarget.getInventory().getArmorContents());
+			} else {
+				inv = finalTarget.getInventory();
+			}
+			Schedulers.entity(plugin, opener, () -> {
+				opener.openInventory(inv);
+				setInvSee(opener, !finalTarget.equals(opener));
+			});
+		});
 		return true;
 	}
 
@@ -134,7 +143,7 @@ public class InvSee extends BaseCommand implements Listener, Unloadable {
 	public void onUnload() {
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (openInvsee.contains(p.getUniqueId())) {
-				p.getOpenInventory().close();
+				Schedulers.entity(plugin, p, () -> p.getOpenInventory().close());
 			}
 		}
 		openInvsee.clear();

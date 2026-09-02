@@ -17,8 +17,9 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.spigotmc.event.player.PlayerSpawnLocationEvent;
+
+import sh.reece.utiltools.Schedulers;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -102,7 +103,7 @@ public class Spawn implements Listener, CommandExecutor {
 			} else {
 				if(args.length == 0) {
 					output = configUtils.lang("SPAWN_TP");
-					player.teleport(getSpawnLocation());
+					player.teleportAsync(getSpawnLocation());
 
 				} else {	
 					
@@ -111,7 +112,7 @@ public class Spawn implements Listener, CommandExecutor {
 						
 						if(target != null) {
 							output = "&7&l[&c&l!&7&l] &fSent " + args[0] + " to spawn!";
-							target.teleport(getSpawnLocation());
+							target.teleportAsync(getSpawnLocation());
 							Util.coloredMessage(target, configUtils.lang("SPAWN_SENT_TO_SPAWN").replace("%sender%", sender.getName()));
 						}	
 					} else {
@@ -150,13 +151,13 @@ public class Spawn implements Listener, CommandExecutor {
 				if(getSpawnLocation() != null) {
 					Util.log("To spawn.");
 					// move player to spawn
-					p.teleport(getSpawnLocation());
+					p.teleportAsync(getSpawnLocation());
 					e.setCancelled(true);
 					Util.coloredMessage(p, voidmsg);
 					
 				} else {
 					// teleport them to the default spawn
-					p.teleport(p.getWorld().getSpawnLocation());
+					p.teleportAsync(p.getWorld().getSpawnLocation());
 					Util.coloredMessage(p, voidmsg);
 				}			
 			} 
@@ -195,12 +196,9 @@ public class Spawn implements Listener, CommandExecutor {
 	}
 
 	public void sendToSpawn(Player p) {
-		new BukkitRunnable() {
-            @Override
-            public void run() {
-            	p.teleport(getSpawnLocation());
-            }	           
-        }.runTaskLater(plugin, 2L);
+		Schedulers.entityLater(plugin, p, () -> {
+			p.teleportAsync(getSpawnLocation());
+		}, 2L);
 	}
 	
 	public Location getSpawnLocation() {

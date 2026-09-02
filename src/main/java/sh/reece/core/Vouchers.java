@@ -26,6 +26,7 @@ import java.util.Set;
 import sh.reece.tools.AlternateCommandHandler;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 
 public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
@@ -303,7 +304,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 			case "giveall":
 				// /voucher giveall <voucher>
 				ItemStack item = createItem(args[1], 1);
-				Bukkit.getOnlinePlayers().stream().forEach(t -> t.getInventory().addItem(item));
+				Bukkit.getOnlinePlayers().stream().forEach(t -> Schedulers.entity(plugin, t, () -> t.getInventory().addItem(item)));
 				return true;
 
 			case "list":
@@ -331,7 +332,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 		}
 
 		// add check here if voucher is real?
-		target.getInventory().addItem(createItem(Voucher, amount));
+		Schedulers.entity(plugin, target, () -> target.getInventory().addItem(createItem(Voucher, amount)));
 	}
 
 
