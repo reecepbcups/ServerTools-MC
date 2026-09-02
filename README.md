@@ -11,7 +11,7 @@ Perfect for Skyblock, Factions, Survival, or Hub servers. Tested by over 6,000 u
 **Optional integrations:** [LuckPerms](https://luckperms.net/), [Vault](https://www.spigotmc.org/resources/vault.34315/), [PlaceholderAPI](https://hangar.papermc.io/HelpChat/PlaceholderAPI), [TAB](https://www.spigotmc.org/resources/tab-1-5-x-1-21-4.57806/), and [WorldGuard](https://enginehub.org/worldguard). All soft depends. ServerTools runs fine without them and lights up extra features when they're installed.
 
 <p align="center">
-  <img width="984" height="522" alt="ServerTools feature banner" src="https://github.com/user-attachments/assets/693f9c31-6d66-4995-af98-3a7516b5581c" />
+  <img width="984" height="522" alt="ServerTools feature banner" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/feature-banner.png?raw=true" />
 </p>
 
 [![Spigot](https://img.shields.io/badge/Spigot-Resource-orange)](https://www.spigotmc.org/resources/servertools-%E2%9E%9C-modular-server-management-1-8-1-21-open-source.95853/)
@@ -60,7 +60,7 @@ Fly, god, heal, repair, enchant, hat, invsee, enderchest, trash, workbench, spee
 Chat formatting, emotes, chat cooldowns, join MOTD, MuteChat, ClearChat, plus **ChatColor** and **NameColor** GUIs with HEX support. ChatPolls let players vote inline.
 
 <p align="center">
-  <img width="555" height="205" alt="Chat Welcome Message and Announcements" src="https://github.com/user-attachments/assets/b9ba606f-dcdd-496e-b5ea-d05b76deffc0" />
+  <img width="555" height="205" alt="Chat Welcome Message and Announcements" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/chat-welcome.png?raw=true" />
   <br/><em>Chat Welcome Message (with PAPI support) and recurring timed announcements</em>
 </p>
 
@@ -69,7 +69,7 @@ Chat formatting, emotes, chat cooldowns, join MOTD, MuteChat, ClearChat, plus **
 Freeze, reports, command spy, **Command Protection**, staff AFK, whitelist bypass, and admin chat.
 
 <p align="center">
-  <img width="624" height="236" alt="Chat Moderation" src="https://github.com/user-attachments/assets/dc2e8cb3-3915-49d6-b51f-4d08ab39bcc7" />
+  <img width="624" height="236" alt="Chat Moderation" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/chat-moderation.png?raw=true" />
   <br/><em>Chat moderation</em>
 </p>
 
@@ -78,7 +78,7 @@ Freeze, reports, command spy, **Command Protection**, staff AFK, whitelist bypas
 HEX-colored & gradient holographic displays with placeholder support. Great for Hub info panels and Tebex (Buycraft) store links.
 
 <p align="center">
-  <img width="1031" height="516" alt="image" src="https://github.com/user-attachments/assets/cb473ea0-7a84-4f2b-8319-66f03a81ea07" />
+  <img width="1031" height="516" alt="image" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/motd-tablist.png?raw=true" />
   <br/><em>Example spawn hologram with HEX color codes and gradients. Holograms support non-player-specific PAPI placeholders (e.g. <code>%server_time%</code>).</em>
 </p>
 
@@ -91,7 +91,7 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 **Vouchers** and bundles, **Tags**, daily rewards, and **Launchpads**.
 
 <p align="center">
-  <img width="441" height="222" alt="Tags GUI" src="https://github.com/user-attachments/assets/8f95b6d7-e8c2-46a9-8b39-fe687036a7f4" />
+  <img width="441" height="222" alt="Tags GUI" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/tags-gui.png?raw=true" />
   <br/><em>Tags that support full colors, hex, and gradients</em>
 </p>
 
@@ -100,7 +100,7 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 **AutoBroadcast**, **Custom Announcements**, **Scheduled Tasks**, and **Server-Age** (PAPI `%stools_age_<EPOCHTIME>%` ) tracking.
 
 <p align="center">
-  <img width="1335" height="268" alt="Custom Announcement" src="https://github.com/user-attachments/assets/693be474-07fb-4081-9b1e-325981830d1e" />
+  <img width="1335" height="268" alt="Custom Announcement" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/custom-announcement.png?raw=true" />
   <br/><em>Custom Announcement - format and replace entirely in the config (PAPI placeholders work as well)</em>
 </p>
 
@@ -109,7 +109,7 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 **Command Aliases** (replace or remap text), custom death messages, death cooldowns, **Anti-Crafting** (block crafting of specific items), on-join commands, no bed explosions, and world effects.
 
 <p align="center">
-  <img width="492" height="107" alt="Chat alias replacing text" src="https://github.com/user-attachments/assets/f6b619b0-42d2-4d3d-9118-5ba6d0555b99" />
+  <img width="492" height="107" alt="Chat alias replacing text" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/chat-alias.png?raw=true" />
   <br/><em>Chat alias replacing text</em>
 </p>
 
@@ -122,7 +122,7 @@ Money and EXP **Withdraw**, **XP Bottles**, item **Rename**, and stack-unstackab
 Pulls staff from a LuckPerms group and displays it in-game.
 
 <p align="center">
-  <img width="266" height="187" alt="Staff list" src="https://github.com/user-attachments/assets/8314161d-a7ee-4a05-98c5-74a7cbe265e1" />
+  <img width="266" height="187" alt="Staff list" src="https://github.com/reecepbcups/ServerTools-MC/blob/main/imgs/staff-list.png?raw=true" />
   <br/><em>Staff list (requires LuckPerms)</em>
 </p>
 
