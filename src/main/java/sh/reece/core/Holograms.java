@@ -293,8 +293,10 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 
 	public void spawnHolo(String key) {
 		// TextDisplay renders text at the entity location itself, unlike an ArmorStand
-		// nameplate which floated ~2 blocks above the stand, so no -2 base offset here
-		Location loc = getLocFromConfig(key).clone();
+		// nameplate which floated ~2 blocks above the stand.
+		// LEGACY: saved Y values in Holograms.yml were authored against the old
+		// ArmorStand offset, so subtract 2 to keep existing holos where they were.
+		Location loc = getLocFromConfig(key).clone().subtract(0, 2, 0);
 		World world = loc.getWorld();
 		//Util.consoleMSG("Loading in hologram: " + key);
 		TextDisplay td;
@@ -326,6 +328,10 @@ public class Holograms implements CommandExecutor, Listener, TabCompleter {
 
 
 	public void createNewHolo(Location l, String newKey) {
+		// LEGACY: spawnHolo subtracts 2 from the saved Y at render time (old ArmorStand
+		// offset), so store Y+2 here to keep the convention and land the holo where the
+		// player is standing. Value is stable across restarts since -2 is always applied.
+		l = l.clone().add(0, 2, 0);
 		HoloConfig.set(newKey+".location", locationToStringFormat(l));
 		HoloConfig.set(newKey+".lines", Arrays.asList("&fEdit this line in", "&bthe Holograms.yml"));
 		configUtils.saveConfig(HoloConfig, "Holograms.yml");
