@@ -18,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -43,6 +44,10 @@ public class XPBottle extends BaseCommand implements Listener {
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onExpBottleEvent(PlayerInteractEvent e) {
+		// PlayerInteractEvent fires once per hand; only handle the main hand
+		if (e.getHand() != EquipmentSlot.HAND) {
+			return;
+		}
 		Player p = e.getPlayer();
 
 		if (!(e.getAction().equals(Action.RIGHT_CLICK_BLOCK) || e.getAction().equals(Action.RIGHT_CLICK_AIR))) {

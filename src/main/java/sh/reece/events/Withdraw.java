@@ -20,6 +20,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -64,6 +65,10 @@ public class Withdraw extends BaseCommand implements Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	private void noteRedeem(PlayerInteractEvent e) {
+		// PlayerInteractEvent fires once per hand; only handle the main hand
+		if (e.getHand() != EquipmentSlot.HAND) {
+			return;
+		}
 		Player p = e.getPlayer();
 		if (e.getMaterial() == null) {
 			return;
