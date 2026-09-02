@@ -52,6 +52,10 @@ public class Main extends JavaPlugin implements Listener {
 		Collections.sort(configUtils.modulesList);
 		loader.output();
 
+		// warm the material sets now so the first isArmour/isWeapon/isTool call
+		// during play doesn't pay for the full material scan mid-tick
+		Util.initMaterialSets();
+
 		// Must be last - sets up fallback aliases for disabled commands
 		new AlternateCommandHandler(this);
 	}

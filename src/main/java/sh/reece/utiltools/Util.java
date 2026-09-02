@@ -643,7 +643,9 @@ public class Util {
 
 
 	private static volatile EnumSet<Material> ARMOUR_MATS, WEAPON_MATS, TOOL_MATS;
-	private static void initMaterialSets() {
+	// warmed once at plugin load (see Main.onEnable) so the ~1000-material scan never
+	// stalls a live tick. Still guards itself for the lazy path / unit tests.
+	public static void initMaterialSets() {
 		if (ARMOUR_MATS != null) return;
 		EnumSet<Material> armour = EnumSet.noneOf(Material.class);
 		EnumSet<Material> weapon = EnumSet.noneOf(Material.class);
