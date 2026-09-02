@@ -42,12 +42,9 @@ public class CMDAlias extends ToggleableListener {
 			permission = instance.getConfig().getString("Misc.CMDAliases.Permission");
 			Alises = instance.getConfig().getConfigurationSection("Misc.CMDAliases.cmds");
 
-			// every 15 mins it refreshes this
-			Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(instance, new Runnable() {
-				public void run() {
-					saveDisabledCommands();
-				}
-			}, 0, 900 * 20L);
+			// config only changes on /reload (which rebuilds this listener), so build
+			// the disabled-command map once here instead of re-scanning every 15 min
+			saveDisabledCommands();
 
 			if (instance.getConfig().contains("Misc.CMDAliases.preCooldownCommands")) {
 				stopIfMoved = instance.getConfig().getBoolean("Misc.CMDAliases.preCooldownCommands.stopIfMoved");
@@ -80,7 +77,7 @@ public class CMDAlias extends ToggleableListener {
 	}
 
 	// saves all commands which should be disabled to the list.
-	// Every 15 mins this is refreshed to make sure it doesnt unload
+	// Built once at load; rebuilt on /reload when this listener is recreated.
 	public void saveDisabledCommands() {
 		worlddisabled = new HashMap<>();
 		if (plugin.getConfig().contains("Misc.CMDAliases.disabledWorlds")) {

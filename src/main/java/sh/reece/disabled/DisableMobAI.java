@@ -23,6 +23,9 @@ public class DisableMobAI extends ToggleableListener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void MobAI(EntityTargetLivingEntityEvent e) {
+		if (worlds.isEmpty()) {
+			return;
+		}
 		if (worlds.contains(e.getEntity().getWorld().getName())) {
 			e.setCancelled(true);
 		}

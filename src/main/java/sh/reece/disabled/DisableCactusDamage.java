@@ -15,9 +15,8 @@ public class DisableCactusDamage extends ToggleableListener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onDamage(EntityDamageEvent e) {
-		if(e.getEntity() instanceof Player){
-			if (e.getCause() == EntityDamageEvent.DamageCause.CONTACT)
-				e.setCancelled(true);
-			}
+		if (e.getCause() == EntityDamageEvent.DamageCause.CONTACT && e.getEntity() instanceof Player) {
+			e.setCancelled(true);
 		}
+	}
 }

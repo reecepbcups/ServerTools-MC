@@ -2,9 +2,9 @@ package sh.reece.moderation;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -29,8 +29,8 @@ public class StaffAFK extends BaseCommand implements Listener {
 
 	public FileConfiguration config, MAINCONFIG;
 
-	// used for PAPI
-	private static Set<UUID> staffWhoAreAFK = new HashSet<UUID>();
+	// used for PAPI - read from the async PAPI thread, mutated on the main thread
+	private static Set<UUID> staffWhoAreAFK = ConcurrentHashMap.newKeySet();
 	public static boolean isStaffAfk(UUID uuid) {
 		return staffWhoAreAFK.contains(uuid);
 	}

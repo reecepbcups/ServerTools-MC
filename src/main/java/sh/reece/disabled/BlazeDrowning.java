@@ -18,7 +18,7 @@ public class BlazeDrowning extends ToggleableListener {
 	@EventHandler(ignoreCancelled = true)
 	public void onDmg(EntityDamageEvent e) {
 		Entity ent = e.getEntity();
-		if (ent instanceof Blaze && e.getCause() == EntityDamageEvent.DamageCause.DROWNING) {
+		if (e.getCause() == EntityDamageEvent.DamageCause.DROWNING && ent instanceof Blaze) {
 			e.setCancelled(true);
 		}
 	}

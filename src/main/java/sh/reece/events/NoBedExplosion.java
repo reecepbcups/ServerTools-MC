@@ -1,10 +1,12 @@
 package sh.reece.events;
 
+import org.bukkit.Tag;
 import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
@@ -22,9 +24,13 @@ public class NoBedExplosion extends ToggleableListener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onInteract(PlayerInteractEvent e) {
+		// PlayerInteractEvent fires once per hand; only handle the main hand
+		if (e.getHand() != EquipmentSlot.HAND) {
+			return;
+		}
 		Player p = e.getPlayer();
 		if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-			if (e.getClickedBlock().toString().toLowerCase().contains("bed")) {
+			if (Tag.BEDS.isTagged(e.getClickedBlock().getType())) {
 				if (e.getClickedBlock().getLocation().getWorld().getEnvironment() == Environment.NETHER) {
 					Util.coloredMessage(p, configUtils.lang("NOBEDEXPLOSION"));
 					e.setCancelled(true);
