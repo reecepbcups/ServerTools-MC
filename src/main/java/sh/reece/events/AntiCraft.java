@@ -117,11 +117,33 @@ public class AntiCraft extends BaseCommand implements Listener {
 		ItemStack item = e.getRecipe().getResult();
 		if (isBlocked(item) && perms(item, e.getViewers())) {
 			e.getInventory().setItem(0, null);
-			if (Message != null && !Message.isEmpty()) {
-				for (HumanEntity h : e.getViewers()) {
-					h.sendMessage(Util.color(Message.replace("%item%", item.getType().toString().replace("_", " ").toLowerCase())));
-				}
-			}
+			notifyBlocked(e.getViewers(), item.getType(), "craft");
+		}
+	}
+
+	// last block message shown to a viewer + when - the Prepare* events fire
+	// repeatedly for one item placement, so we drop identical repeats within a window
+	private final Map<java.util.UUID, String> lastNotify = new HashMap<>();
+	private final Map<java.util.UUID, Long> lastNotifyAt = new HashMap<>();
+	private static final long NOTIFY_WINDOW_MS = 1000;
+
+	// tell every viewer the station action is blocked, reusing the shared MSG
+	private void notifyBlocked(List<HumanEntity> viewers, Material type, String action) {
+		if (Message == null || Message.isEmpty()) return;
+		// legacy: old configs hardcoded ' craft ' instead of %action%, so swap the
+		// bare word in when the placeholder is missing
+		String template = Message.contains("%action%") ? Message : Message.replace(" craft ", " %action% ");
+		String msg = Util.color(template
+				.replace("%action%", action)
+				.replace("%item%", type.toString().replace("_", " ").toLowerCase()));
+		long now = System.currentTimeMillis();
+		for (HumanEntity h : viewers) {
+			java.util.UUID id = h.getUniqueId();
+			Long at = lastNotifyAt.get(id);
+			if (at != null && now - at < NOTIFY_WINDOW_MS && msg.equals(lastNotify.get(id))) continue;
+			lastNotify.put(id, msg);
+			lastNotifyAt.put(id, now);
+			h.sendMessage(msg);
 		}
 	}
 
@@ -142,25 +164,40 @@ public class AntiCraft extends BaseCommand implements Listener {
 	@EventHandler(ignoreCancelled = true)
 	public void onAnvil(PrepareAnvilEvent e) {
 		if (!anvilEnabled) return;
-		if (isStationBlocked(bannedAnvil, e.getResult())) e.setResult(null);
+		ItemStack result = e.getResult();
+		if (isStationBlocked(bannedAnvil, result)) {
+			notifyBlocked(e.getViewers(), result.getType(), "use the anvil on");
+			e.setResult(null);
+		}
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onSmithing(PrepareSmithingEvent e) {
 		if (!smithingEnabled) return;
-		if (isStationBlocked(bannedSmithing, e.getInventory().getResult())) e.setResult(null);
+		ItemStack result = e.getInventory().getResult();
+		if (isStationBlocked(bannedSmithing, result)) {
+			notifyBlocked(e.getViewers(), result.getType(), "smith");
+			e.setResult(null);
+		}
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onGrindstone(PrepareGrindstoneEvent e) {
 		if (!grindstoneEnabled) return;
-		if (isStationBlocked(bannedGrindstone, e.getResult())) e.setResult(null);
+		ItemStack result = e.getResult();
+		if (isStationBlocked(bannedGrindstone, result)) {
+			notifyBlocked(e.getViewers(), result.getType(), "use the grindstone on");
+			e.setResult(null);
+		}
 	}
 
 	@EventHandler(ignoreCancelled = true)
 	public void onEnchant(PrepareItemEnchantEvent e) {
 		if (!enchantingEnabled) return;
-		if (isStationBlocked(bannedEnchanting, e.getItem())) e.setCancelled(true);
+		if (isStationBlocked(bannedEnchanting, e.getItem())) {
+			notifyBlocked(e.getViewers(), e.getItem().getType(), "enchant");
+			e.setCancelled(true);
+		}
 	}
 
 	// package-private for tests: an output is blocked when its type is in the station's ban list
