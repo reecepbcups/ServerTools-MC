@@ -1,4 +1,4 @@
-jar_name := "servertools-8.3.0.jar"
+jar_name := "servertools-8.3.1.jar"
 output_dir := "../output"
 plugins_dir := "server/plugins"
 

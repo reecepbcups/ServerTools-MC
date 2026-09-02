@@ -75,13 +75,23 @@ public class ConfigUtils {
 
 		reloadLanguage(plugin.getConfig().getString("Language"));
 
-		// only re-merge config template when the plugin version changes
+		// only re-merge config templates when the plugin version changes
 		if (versionChanged) {
 			try {
 				ConfigUpdater.update(plugin, "config.yml", new File(plugin.getDataFolder(), "config.yml"),
 						new ArrayList<String>());
 			} catch (final IOException e) {
 				e.printStackTrace();
+			}
+
+			// merge new sections into AntiCraft.yml too (only if the user already has one)
+			final File antiCraft = new File(plugin.getDataFolder(), "AntiCraft.yml");
+			if (antiCraft.exists()) {
+				try {
+					ConfigUpdater.update(plugin, "AntiCraft.yml", antiCraft, new ArrayList<String>());
+				} catch (final IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
