@@ -165,7 +165,11 @@ public class AntiCraft extends BaseCommand implements Listener {
 
 	// package-private for tests: an output is blocked when its type is in the station's ban list
 	static boolean isStationBlocked(Set<Material> banned, ItemStack result) {
-		return result != null && banned.contains(result.getType());
+		return result != null && isStationBlocked(banned, result.getType());
+	}
+
+	static boolean isStationBlocked(Set<Material> banned, Material type) {
+		return type != null && banned.contains(type);
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {

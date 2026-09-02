@@ -7,7 +7,6 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,24 +19,24 @@ class AntiCraftTest {
 	@Test
 	void blocksWhenOutputTypeIsInBanList() {
 		Set<Material> banned = EnumSet.of(Material.DIAMOND_CHESTPLATE);
-		assertTrue(AntiCraft.isStationBlocked(banned, new ItemStack(Material.DIAMOND_CHESTPLATE)));
+		assertTrue(AntiCraft.isStationBlocked(banned, Material.DIAMOND_CHESTPLATE));
 	}
 
 	@Test
 	void allowsWhenOutputTypeIsNotInBanList() {
 		Set<Material> banned = EnumSet.of(Material.DIAMOND_CHESTPLATE);
-		assertFalse(AntiCraft.isStationBlocked(banned, new ItemStack(Material.STONE)));
+		assertFalse(AntiCraft.isStationBlocked(banned, Material.STONE));
 	}
 
 	@Test
 	void allowsWhenBanListIsEmpty() {
 		Set<Material> banned = EnumSet.noneOf(Material.class);
-		assertFalse(AntiCraft.isStationBlocked(banned, new ItemStack(Material.DIAMOND_CHESTPLATE)));
+		assertFalse(AntiCraft.isStationBlocked(banned, Material.DIAMOND_CHESTPLATE));
 	}
 
 	@Test
 	void allowsWhenThereIsNoOutput() {
 		Set<Material> banned = EnumSet.of(Material.DIAMOND_CHESTPLATE);
-		assertFalse(AntiCraft.isStationBlocked(banned, null));
+		assertFalse(AntiCraft.isStationBlocked(banned, (Material) null));
 	}
 }
