@@ -18,7 +18,8 @@ public class DisableGrassDecay extends ToggleableListener {
 	@EventHandler(ignoreCancelled = true)
 	public void onDecay(BlockPhysicsEvent e) {
 
-		if(e.getBlock().getType() == Material.SHORT_GRASS || e.getBlock().getType() == Material.TALL_GRASS){
+		Material type = e.getBlock().getType();
+		if(type == Material.SHORT_GRASS || type == Material.TALL_GRASS){
 			e.setCancelled(true);
 		}
 

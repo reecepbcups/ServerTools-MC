@@ -1,6 +1,6 @@
 package sh.reece.disabled;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 import org.bukkit.Material;
@@ -18,7 +18,7 @@ public class DisableWaterBreakingRedstone extends ToggleableListener {
 		super(instance, "Disabled.DisableWaterBreakingRedstone");
 
 		if (isEnabled()) {
-			blockedMaterials = new HashSet<>();
+			blockedMaterials = EnumSet.noneOf(Material.class);
 			for(String s : plugin.getConfig().getStringList("Disabled.DisableWaterBreakingRedstone.items")) {
 				try {
 					blockedMaterials.add(Material.valueOf(s.toUpperCase()));
