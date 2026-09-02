@@ -11,6 +11,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Util;
@@ -69,30 +70,50 @@ public class FancyAnnounce extends BaseCommand {
 			return true;
 		}
 
-		if(!(args.length == cmd_syntax.split(" ").length+1)) {
+		int syntaxCount = cmd_syntax.split(" ").length;
+		if(args.length < syntaxCount + 1) {
 			sender.sendMessage("Usage: /" + cmd.getName() + " " + args[0] + " " + cmd_syntax);
 			return true;
 		}
 
+		// build each %arg-N% value up front. the last declared argument absorbs
+		// every remaining word, so <Location> can be "The Nether Fortress"
+		String[] argValues = new String[syntaxCount + 1];
+		for (int i = 0; i <= syntaxCount; i++) {
+			if (i == syntaxCount) {
+				argValues[i] = String.join(" ", Arrays.copyOfRange(args, i, args.length));
+			} else {
+				argValues[i] = args[i];
+			}
+		}
+
 		for (String str : config.getStringList(Section + ".Message")) {
 
-			for(String arg : args) {
-				int argnum = Arrays.asList(args).indexOf(arg);
-				str = str.replace("%arg-" + argnum + "%", args[argnum]);
-				str = str.replace("%player%", sender.getName());
+			for(int i = 0; i <= syntaxCount; i++) {
+				str = str.replace("%arg-" + i + "%", argValues[i]);
 			}
+			str = str.replace("%player%", sender.getName());
 
 			if(config.getString(Section + ".CenterMessage").equalsIgnoreCase("true")) {
 				for (Player all : Bukkit.getOnlinePlayers()) {
-					Util.sendCenteredMessage(all, str);
+					Util.sendCenteredMessage(all, applyPlaceholders(all, str));
 				}
 			} else {
-				Bukkit.broadcastMessage(str);
+				Player ref = (sender instanceof Player) ? (Player) sender : Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
+				Bukkit.broadcastMessage(applyPlaceholders(ref, str));
 			}
 
 
 		}
 
 		return true;
+	}
+
+	// non-player-specific placeholders (e.g. %stools_age_...%) still resolve fine with any online player
+	private String applyPlaceholders(Player player, String str) {
+		if (player != null && Main.isPAPIEnabled() && str.contains("%")) {
+			return PlaceholderAPI.setPlaceholders(player, str);
+		}
+		return str;
 	}
 }
