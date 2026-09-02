@@ -46,11 +46,17 @@ Hoppers:
   Optimize:
     Enabled: false
     Permission: hopperopt.use
-    # hoppers serviced per cycle (round-robin). Lower = smoother MSPT, slower item flow.
-    BudgetPerTick: 512
-    # ticks between transfer attempts (vanilla default is 8).
-    TransferInterval: 8
-    # items moved per transfer (vanilla default is 1).
+    # Idle hoppers are put to sleep; vanilla still does every transfer/pickup/sort while they're awake.
+    # ticks a hopper stays awake (full vanilla speed) after its last activity before going back to sleep.
+    AwakeTicks: 60
+    # cooldown a sleeping hopper is pinned to. Also the self-heal window: if the plugin stops,
+    # sleeping hoppers resume normal vanilla behavior within this many ticks. Keep modest.
+    SleepTicks: 200
+    # ticks between item-entity sweeps that wake hoppers sitting under dropped items.
+    # Lower = snappier pickup of items already on the ground, slightly more CPU.
+    ItemSweepInterval: 10
+    # items vanilla moves per hopper transfer (vanilla default is 1). Applied per-world via the
+    # Spigot hopper-amount setting, so it affects every hopper in the world, not just managed ones.
     TransferAmount: 1
     # worlds to leave on vanilla hoppers (case-insensitive).
     DisabledWorlds: []

@@ -25,6 +25,8 @@ final class HopperNMS {
 	private Method getHandle;              // CraftWorld#getHandle -> ServerLevel
 	private Method getBlockEntity;         // Level#getBlockEntity(BlockPos) -> BlockEntity
 	private Field cooldownField;           // HopperBlockEntity#cooldownTime (int), resolved lazily
+	private Field spigotConfigField;       // Level#spigotConfig -> SpigotWorldConfig
+	private Field hopperAmountField;       // SpigotWorldConfig#hopperAmount (int)
 	private boolean bound;
 
 	boolean bind() {
@@ -43,17 +45,23 @@ final class HopperNMS {
 		return bound;
 	}
 
+	/** Convenience overload for the event paths that already hold a {@link Block}. */
+	boolean pin(Block block, int value) {
+		return pinAt(block.getWorld(), block.getX(), block.getY(), block.getZ(), value);
+	}
+
 	/**
 	 * Set the live hopper's transfer cooldown to {@code value} and confirm via read-back.
+	 * Takes raw coords so the hot re-pin loop never allocates a {@code CraftBlock}.
 	 * Returns false (do not manage this hopper) if the block entity isn't loaded or the
 	 * write can't be verified - vanilla stays in charge, so no double transfers.
 	 */
-	boolean pin(Block block, int value) {
+	boolean pinAt(World world, int x, int y, int z, int value) {
 		if (!bound) {
 			return false;
 		}
 		try {
-			Object be = liveBlockEntity(block);
+			Object be = liveBlockEntity(world, x, y, z);
 			if (be == null) {
 				return false;
 			}
@@ -73,16 +81,87 @@ final class HopperNMS {
 		pin(block, 0);
 	}
 
-	private Object liveBlockEntity(Block block) throws ReflectiveOperationException {
-		Object nmsWorld = handleOf(block.getWorld());
+	/** Coord-based {@link #reset(Block)} for the hot paths. */
+	void resetAt(World world, int x, int y, int z) {
+		pinAt(world, x, y, z, 0);
+	}
+
+	private Object liveBlockEntity(World world, int x, int y, int z) throws ReflectiveOperationException {
+		Object nmsWorld = handleOf(world);
 		if (nmsWorld == null) {
 			return null;
 		}
 		if (getBlockEntity == null) {
 			getBlockEntity = nmsWorld.getClass().getMethod("getBlockEntity", blockPosCtor.getDeclaringClass());
 		}
-		Object pos = blockPosCtor.newInstance(block.getX(), block.getY(), block.getZ());
+		Object pos = blockPosCtor.newInstance(x, y, z);
 		return getBlockEntity.invoke(nmsWorld, pos);
+	}
+
+	/**
+	 * Set this world's Spigot {@code hopper-amount} - how many items vanilla moves per hopper
+	 * transfer (default 1). It's a per-world runtime value, so this changes every hopper in the
+	 * world, not just managed ones, and resets to spigot.yml on a full restart. Returns false
+	 * (leave the server default alone) if the field can't be located or the write can't be verified.
+	 */
+	boolean setHopperAmount(World world, int amount) {
+		if (!bound) {
+			return false;
+		}
+		try {
+			Object nmsWorld = handleOf(world);
+			if (nmsWorld == null) {
+				return false;
+			}
+			Object spigotConfig = spigotConfig(nmsWorld);
+			if (spigotConfig == null) {
+				return false;
+			}
+			Field f = hopperAmountField(spigotConfig);
+			if (f == null) {
+				return false;
+			}
+			f.setInt(spigotConfig, amount);
+			return f.getInt(spigotConfig) == amount;
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+
+	private Object spigotConfig(Object nmsWorld) throws ReflectiveOperationException {
+		if (spigotConfigField == null) {
+			for (Class<?> c = nmsWorld.getClass(); c != null; c = c.getSuperclass()) {
+				try {
+					Field f = c.getDeclaredField("spigotConfig");
+					f.setAccessible(true);
+					spigotConfigField = f;
+					break;
+				} catch (NoSuchFieldException ignored) {
+				}
+			}
+			if (spigotConfigField == null) {
+				return null;
+			}
+		}
+		return spigotConfigField.get(nmsWorld);
+	}
+
+	private Field hopperAmountField(Object spigotConfig) {
+		if (hopperAmountField != null) {
+			return hopperAmountField;
+		}
+		for (Class<?> c = spigotConfig.getClass(); c != null; c = c.getSuperclass()) {
+			try {
+				Field f = c.getDeclaredField("hopperAmount");
+				if (f.getType() == int.class) {
+					f.setAccessible(true);
+					hopperAmountField = f;
+					return f;
+				}
+			} catch (NoSuchFieldException ignored) {
+			}
+		}
+		return null;
 	}
 
 	private Object handleOf(World world) throws ReflectiveOperationException {
