@@ -40,7 +40,7 @@ public class Rename extends BaseCommand implements Listener {
 		if (event.getSlotType() != SlotType.RESULT) {
 			return;
 		}
-		if (event.getCurrentItem() == null) {
+		if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) {
 			return;
 		}
 		if (disabledRenameItems.contains(event.getCurrentItem().getType().toString())) {
