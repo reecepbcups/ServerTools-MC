@@ -18,11 +18,16 @@ public class ColonInCommands extends ToggleableListener {
 	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
 	public void onCommand(PlayerCommandPreprocessEvent e) {
 
-		if (e.getMessage().split(" ")[0].contains(":")) {
+		String msg = e.getMessage();
+		int space = msg.indexOf(' ');
+		int firstWordEnd = space == -1 ? msg.length() : space;
+		int colon = msg.indexOf(':');
+
+		if (colon != -1 && colon < firstWordEnd) {
 			if(!hasPermission(e.getPlayer())) {
 
 				// Essentials:fly -> [essentials, fly, args] -? [fly, args][0]
-				String CMD = e.getMessage().split(":")[1].split(" ")[0];
+				String CMD = msg.substring(colon + 1, firstWordEnd);
 				if(AlternateCommandHandler.containsDisabledCommand(CMD)){
 					Util.log("[ColonInCommands] CMD Bypass due to being main alias: ");
 					return;

@@ -43,30 +43,20 @@ public class FeaturesGUI extends ToggleableListener {
 		}
 	}
 
+	// Build the inventory + items once. Config only changes on /reload, which
+	// rebuilds this listener from scratch (so configLoaded resets with it).
 	private void ensureConfigLoaded() {
-		if (!configLoaded) {
-			InvName = Util.color(config.getString("Name"));
-			rows = config.getInt("Rows") * 9;
-
-			DefaultItemNameColor = config.getString("DefaultItemNameColor");
-			DefaultItemIfNotSet = config.getString("DefaultItemIfNotSet");
-
-			featuresInv = Bukkit.createInventory(null, rows, InvName);
-			configLoaded = true;
-		}
-	}
-
-	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-	public void onCommand(PlayerCommandPreprocessEvent e) {
-		Player p = e.getPlayer();
-
-		if (!e.getMessage().toLowerCase().startsWith(command)) {
+		if (configLoaded) {
 			return;
 		}
 
-		ensureConfigLoaded();
-		// reload items from disk on every open
-		config = configUtils.getConfigFile("FeaturesGUI.yml");
+		InvName = Util.color(config.getString("Name"));
+		rows = config.getInt("Rows") * 9;
+
+		DefaultItemNameColor = config.getString("DefaultItemNameColor");
+		DefaultItemIfNotSet = config.getString("DefaultItemIfNotSet");
+
+		featuresInv = Bukkit.createInventory(null, rows, InvName);
 
 		Set<String> keys = config.getConfigurationSection("Items").getKeys(false);
 
@@ -88,6 +78,19 @@ public class FeaturesGUI extends ToggleableListener {
 			createDisplay(featuresInv, Material.getMaterial(item.toUpperCase()), i, name, lores);
 			i += 1;
 		}
+
+		configLoaded = true;
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void onCommand(PlayerCommandPreprocessEvent e) {
+		Player p = e.getPlayer();
+
+		if (!e.getMessage().toLowerCase().startsWith(command)) {
+			return;
+		}
+
+		ensureConfigLoaded();
 		p.openInventory(featuresInv);
 
 		e.setCancelled(true);
