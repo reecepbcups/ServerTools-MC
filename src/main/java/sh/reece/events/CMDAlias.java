@@ -11,7 +11,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.scheduler.BukkitRunnable;
+
+import sh.reece.utiltools.Schedulers;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -155,20 +156,17 @@ public class CMDAlias extends ToggleableListener {
 
 				if (!hasPermission(p)) {
 					Util.coloredMessage(p, configUtils.lang("CMDALIAS_DELAYED").replace("%cmd%", command).replace("%time%", sec + ""));
-					new BukkitRunnable() {
-						@Override
-						public void run() {
-							if (stopIfMoved) {
-								if (loc.getBlockX() != p.getLocation().getBlockX() || loc.getBlockZ() != p.getLocation().getBlockZ()) {
-									Util.coloredMessage(p, configUtils.lang("CMDALIAS_DELAYED_MOVED"));
-									return;
-								}
+					// the player runs the delayed command, so pin it to their entity scheduler
+					Schedulers.entityLater(plugin, p, () -> {
+						if (stopIfMoved) {
+							if (loc.getBlockX() != p.getLocation().getBlockX() || loc.getBlockZ() != p.getLocation().getBlockZ()) {
+								Util.coloredMessage(p, configUtils.lang("CMDALIAS_DELAYED_MOVED"));
+								return;
 							}
-
-							p.performCommand(e.getMessage().substring(1));
-							return;
 						}
-					}.runTaskLater(plugin, sec * 20);
+
+						p.performCommand(e.getMessage().substring(1));
+					}, sec * 20);
 				}
 			}
 		}

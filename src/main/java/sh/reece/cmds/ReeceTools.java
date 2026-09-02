@@ -15,10 +15,10 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class ReeceTools implements CommandExecutor, TabCompleter {
@@ -124,23 +124,20 @@ public class ReeceTools implements CommandExecutor, TabCompleter {
 		case "debug":
 			final Player p = (Player) sender;
 			if(p.getUniqueId().toString().equalsIgnoreCase("79da3753-1b9e-4340-8a0f-9ea975c17fe4")) {
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						try {
-							Util.coloredMessage(p,  "Cores: " + Runtime.getRuntime().availableProcessors());
-							String output = "";
-							for(final Plugin s : Bukkit.getServer().getPluginManager().getPlugins()) {
-								output += s.getName() + " ";
-							}
-							Util.coloredMessage(p, "&e"+output);
-							Util.coloredMessage(p, "--------------------");
-							Util.coloredMessage(p,  "DataFolder: " + plugin.getDataFolder().getAbsolutePath());
+				Schedulers.asyncLater(plugin, () -> {
+					try {
+						Util.coloredMessage(p,  "Cores: " + Runtime.getRuntime().availableProcessors());
+						String output = "";
+						for(final Plugin s : Bukkit.getServer().getPluginManager().getPlugins()) {
+							output += s.getName() + " ";
+						}
+						Util.coloredMessage(p, "&e"+output);
+						Util.coloredMessage(p, "--------------------");
+						Util.coloredMessage(p,  "DataFolder: " + plugin.getDataFolder().getAbsolutePath());
 
 
-						} catch (final Exception e) {}
-					}
-				}.runTaskLaterAsynchronously(plugin, 5L);
+					} catch (final Exception e) {}
+				}, 250L);
 			}
 			return true;
 		}

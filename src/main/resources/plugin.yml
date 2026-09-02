@@ -7,6 +7,7 @@ softdepend: [LuckPerms, Vault, PlaceholderAPI, TAB, WorldGuard]
 website: https://reece.sh/
 api: "1.18"
 api-version: 1.18
+folia-supported: true
 
 # runtime-loaded by Paper; backs the SQLite economy store (no shading needed)
 libraries:

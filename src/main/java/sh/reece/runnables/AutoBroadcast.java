@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import sh.reece.tools.Announcements;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
-public class AutoBroadcast extends BukkitRunnable {
+public class AutoBroadcast {
 
 	private static Main plugin;
 	private FileConfiguration config;
@@ -56,11 +56,10 @@ public class AutoBroadcast extends BukkitRunnable {
 			for (int i = 0; i < size; i++) {
 				messages.add(config.getStringList("Messages." + groups.get(i)));
 			}
-			runTaskTimer(plugin, 0, config.getInt("Interval") * 20);
+			Schedulers.globalTimer(plugin, this::run, 0, config.getInt("Interval") * 20);
 		}
 	}
 
-	@Override
 	public void run() {
 		if (size == id) {
 			id = 0;

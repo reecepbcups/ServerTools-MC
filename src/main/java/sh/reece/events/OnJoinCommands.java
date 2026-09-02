@@ -5,10 +5,10 @@ import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import sh.reece.tools.Main;
 import sh.reece.tools.ToggleableListener;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class OnJoinCommands extends ToggleableListener {
@@ -39,26 +39,22 @@ public class OnJoinCommands extends ToggleableListener {
 		// First Join commands enabled & Player has not played before
 		if (isFirstJoinEnabled) {
 			if (!(p.hasPlayedBefore())) {
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						for (String cmd : FirstJoinCMDS) {
-							Util.console(cmd.replace("%player%", p.getName()));
-						}
+				// console commands - global region scheduler
+				Schedulers.globalLater(plugin, () -> {
+					for (String cmd : FirstJoinCMDS) {
+						Util.console(cmd.replace("%player%", p.getName()));
 					}
-				}.runTaskLater(plugin, 10L);
+				}, 10L);
 			}
 		}
 
 		if (isPlayerRunEnabled) {
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					for (String command : PlayerRunOnJoin) {
-						p.performCommand(command.replace("%player%", p.getName()));
-					}
+			// the player runs these, so pin to their entity scheduler
+			Schedulers.entityLater(plugin, p, () -> {
+				for (String command : PlayerRunOnJoin) {
+					p.performCommand(command.replace("%player%", p.getName()));
 				}
-			}.runTaskLater(plugin, 10L);
+			}, 10L);
 		}
 	}
 }

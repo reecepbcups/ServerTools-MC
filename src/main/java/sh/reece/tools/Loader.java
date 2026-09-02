@@ -213,7 +213,10 @@ public class Loader {
 	public void unloadAll() {
 		plugin.saveDefaultConfig();
 		plugin.getConfigUtils().modulesList.clear();
-		Bukkit.getServer().getScheduler().cancelTasks(plugin);
+		// Folia has no global cancelTasks(plugin); cancel the global + async schedulers
+		// (this also works on Paper). Per-entity/region tasks are cleaned up when the
+		// plugin disables, and each Unloadable cancels its own tasks below.
+		sh.reece.utiltools.Schedulers.cancelAll(plugin);
 		for (Unloadable u : unloadables) {
 			try {
 				u.onUnload();

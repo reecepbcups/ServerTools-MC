@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,6 +13,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 public class ScheduledTask implements CommandExecutor {
@@ -23,7 +23,9 @@ public class ScheduledTask implements CommandExecutor {
 	private String Section, permision;
 	private Boolean debug = false;
 
-	private static List<Integer> runnableIDs = new ArrayList<Integer>();
+	// Folia has no global task IDs; hold the ScheduledTask handles so we can cancel them
+	// on /scheduledtask reload. (fully-qualified: this class is also named ScheduledTask.)
+	private static List<io.papermc.paper.threadedregions.scheduler.ScheduledTask> runnableTasks = new ArrayList<>();
 	private ConfigUtils configUtils;
 
 	public ScheduledTask(Main instance) {
@@ -89,12 +91,8 @@ public class ScheduledTask implements CommandExecutor {
 			Util.log("[" + timeUntilRun + " sec] Scheduled: " + CMDS.toString());
 		}
 
-		int id = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-			public void run() {
-				CMDS.forEach(cmd -> Util.console(cmd));
-			}
-		}, 2 + timeUntilRun * 20L);
-		runnableIDs.add(id);
+		var task = Schedulers.globalLater(plugin, () -> CMDS.forEach(cmd -> Util.console(cmd)), 2 + timeUntilRun * 20L);
+		runnableTasks.add(task);
 	}
 
 	public void taskToRunEvery(Long SecondsToRunEvery, Long Delay, List<String> CMDS) {
@@ -102,12 +100,8 @@ public class ScheduledTask implements CommandExecutor {
 			Util.log("[" + SecondsToRunEvery + " sec Repeating] Scheduled: " + CMDS.toString());
 		}
 
-		int id = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-			public void run() {
-				CMDS.forEach(cmd -> Util.console(cmd));
-			}
-		}, Delay * 20L, SecondsToRunEvery * 20L);
-		runnableIDs.add(id);
+		var task = Schedulers.globalTimer(plugin, () -> CMDS.forEach(cmd -> Util.console(cmd)), Delay * 20L, SecondsToRunEvery * 20L);
+		runnableTasks.add(task);
 	}
 
 	@Override
@@ -123,10 +117,10 @@ public class ScheduledTask implements CommandExecutor {
 
 		if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
 
-			if (runnableIDs.size() > 0)
-				runnableIDs.forEach(id -> Bukkit.getScheduler().cancelTask(id));
+			if (runnableTasks.size() > 0)
+				runnableTasks.forEach(io.papermc.paper.threadedregions.scheduler.ScheduledTask::cancel);
 
-			runnableIDs.clear();
+			runnableTasks.clear();
 			loadAllTimingRunnables();
 			sender.sendMessage(Util.color("&aScheduledTask Reloaded!"));
 		}

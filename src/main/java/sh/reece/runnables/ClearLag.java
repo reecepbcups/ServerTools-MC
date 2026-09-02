@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,12 +17,12 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
-public class ClearLag extends BukkitRunnable implements CommandExecutor {
+public class ClearLag implements CommandExecutor {
 
 	private static Main plugin;
 	private FileConfiguration config;
@@ -47,7 +48,7 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 			firstRun = true;
 
 			if (AutoClearItems) {
-				runTaskLater(plugin, 0 * 20);
+				Schedulers.global(plugin, this::run);
 			}
 
 			ClearSoonMSG = config.getString(Section + ".AutoClearItems.ClearSoonMSG");
@@ -59,26 +60,23 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 
 	private int test;
 
-	@Override
 	public void run() {
 		test = delay;
 
-		new BukkitRunnable() {
-			public void run() {
+		Schedulers.globalTimer(plugin, () -> {
 
-				if (test <= 0) {
-					clearItemsInAllWorlds();
-					test = delay;
-					return;
-				}
-
-				if (warningTimes.contains(test)) {
-					Util.coloredBroadcast(ClearSoonMSG.replace("%seconds%", test + ""));
-				}
-
-				test -= 5;
+			if (test <= 0) {
+				clearItemsInAllWorlds();
+				test = delay;
+				return;
 			}
-		}.runTaskTimer(plugin, 0, 5 * 20L);
+
+			if (warningTimes.contains(test)) {
+				Util.coloredBroadcast(ClearSoonMSG.replace("%seconds%", test + ""));
+			}
+
+			test -= 5;
+		}, 0, 5 * 20L);
 	}
 
 	@Override
@@ -132,23 +130,47 @@ public class ClearLag extends BukkitRunnable implements CommandExecutor {
 			return;
 		}
 
-		// spread entity removal across ticks to avoid stalling the main thread.
-		// each world gets its own deferred task so we don't process thousands of entities in one tick.
-		List<World> worlds = Bukkit.getWorlds();
-		for (int i = 0; i < worlds.size(); i++) {
-			final World w = worlds.get(i);
-			final boolean clearMobs = AutoClearMobs;
-			Bukkit.getScheduler().runTaskLater(plugin, () -> {
-				for (Entity e : w.getEntities()) {
-					if (e instanceof Item) {
-						e.remove();
-					} else if (clearMobs && (e instanceof Animals || e instanceof Monster) && e.getCustomName() == null) {
-						e.remove();
+		if (Schedulers.isFolia()) {
+			// Folia: no thread may touch a whole world at once. Sweep each loaded chunk on
+			// the region thread that owns it.
+			clearItemsFolia();
+		} else {
+			// Paper: spread entity removal across ticks to avoid stalling the main thread.
+			// each world gets its own deferred task so we don't process thousands of entities in one tick.
+			List<World> worlds = Bukkit.getWorlds();
+			for (int i = 0; i < worlds.size(); i++) {
+				final World w = worlds.get(i);
+				final boolean clearMobs = AutoClearMobs;
+				Schedulers.globalLater(plugin, () -> {
+					for (Entity e : w.getEntities()) {
+						removeIfClearable(e, clearMobs);
 					}
-				}
-			}, i); // stagger by 1 tick per world
+				}, i); // stagger by 1 tick per world
+			}
 		}
 		Util.coloredBroadcast(ClearedMSG);
+	}
+
+	// per-chunk region sweep - the Folia-safe way to clear a world's entities.
+	private void clearItemsFolia() {
+		final boolean clearMobs = AutoClearMobs;
+		for (World w : Bukkit.getWorlds()) {
+			for (Chunk c : w.getLoadedChunks()) {
+				Schedulers.regionChunk(plugin, w, c.getX(), c.getZ(), () -> {
+					for (Entity e : c.getEntities()) {
+						removeIfClearable(e, clearMobs);
+					}
+				});
+			}
+		}
+	}
+
+	private void removeIfClearable(Entity e, boolean clearMobs) {
+		if (e instanceof Item) {
+			e.remove();
+		} else if (clearMobs && (e instanceof Animals || e instanceof Monster) && e.getCustomName() == null) {
+			e.remove();
+		}
 	}
 
 	public void sendHelpMenu(Player p) {

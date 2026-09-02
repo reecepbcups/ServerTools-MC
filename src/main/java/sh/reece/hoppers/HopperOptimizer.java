@@ -100,6 +100,14 @@ public class HopperOptimizer implements Listener, Unloadable {
 			return;
 		}
 
+		// This engine runs one global per-tick timer that scans hoppers across every world
+		// and pins NMS cooldowns - there is no such global thread under Folia's region
+		// threading, so the feature can't exist there. Gate it off (stays fully Paper-only).
+		if (sh.reece.utiltools.Schedulers.isFolia()) {
+			Util.consoleMSG("&e[Hoppers] optimizer disabled - not supported on Folia (Paper only).");
+			return;
+		}
+
 		this.awakeTicks = Math.max(1, instance.getConfig().getInt(SECTION + ".AwakeTicks", 60));
 		this.sleepTicks = Math.max(20, instance.getConfig().getInt(SECTION + ".SleepTicks", 100));
 		this.itemSweepInterval = Math.max(1, instance.getConfig().getInt(SECTION + ".ItemSweepInterval", 10));
