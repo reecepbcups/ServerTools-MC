@@ -33,6 +33,7 @@ target/
 
 # Local server data
 server/
+server-folia/
 
 # Load test
 loadtest/node_modules/

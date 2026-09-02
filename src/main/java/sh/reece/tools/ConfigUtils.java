@@ -69,7 +69,7 @@ public class ConfigUtils {
 		}
 
 		// BStats - defer to next tick so it doesn't block onEnable
-		Bukkit.getScheduler().runTaskLater(plugin, () -> new Metrics(plugin, 11289), 1L);
+		sh.reece.utiltools.Schedulers.globalLater(plugin, () -> new Metrics(plugin, 11289), 1L);
 
 		createConfig("config.yml");
 		plugin.getConfig().options().copyDefaults(true);

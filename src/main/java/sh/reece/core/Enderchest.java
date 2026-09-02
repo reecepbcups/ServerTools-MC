@@ -99,7 +99,7 @@ public class Enderchest extends BaseCommand implements Listener, Unloadable {
 			refreshPlayer = p;
 		}
 		if (refreshPlayer != null) {
-			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, refreshPlayer::updateInventory, 1);
+			Schedulers.entityLater(plugin, refreshPlayer, refreshPlayer::updateInventory, 1);
 		}
 	}
 

@@ -122,7 +122,7 @@ public class InvSee extends BaseCommand implements Listener, Unloadable {
 			}
 		}
 		if (refreshPlayer != null) {
-			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, refreshPlayer::updateInventory, 1);
+			Schedulers.entityLater(plugin, refreshPlayer, refreshPlayer::updateInventory, 1);
 		}
 	}
 
