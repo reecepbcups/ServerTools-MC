@@ -9,12 +9,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * SQLite-backed balance store. Everything here is whole cents (long) - no floats.
- * Reads come from an in-memory cache; mutations write through to the DB under a lock
- * so transfers stay atomic. No Bukkit imports, so it unit tests against an in-memory
- * database (jdbc:sqlite::memory:).
+ * Reads come from an in-memory cache; mutations update the cache under a lock (so
+ * transfers stay atomic) then queue the disk write onto a single background thread -
+ * the main thread never blocks on SQLite IO. No Bukkit imports, so it unit tests
+ * against an in-memory database (jdbc:sqlite::memory:).
  */
 public class EconomyStorage {
 
@@ -26,6 +30,9 @@ public class EconomyStorage {
 	private final long startingCents;
 	private Connection conn;
 	private PreparedStatement upsertStmt;
+	// single background thread drains queued writes in order, so the reusable upsert
+	// statement is only ever touched off the main thread and writes stay serialized.
+	private ExecutorService writer;
 	private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
 
 	public EconomyStorage(String jdbcUrl, long startingCents) {
@@ -51,9 +58,24 @@ public class EconomyStorage {
 		upsertStmt = conn.prepareStatement(
 			"INSERT INTO balances(uuid, cents, name) VALUES(?,?,?) "
 			+ "ON CONFLICT(uuid) DO UPDATE SET cents=excluded.cents, name=excluded.name");
+		writer = Executors.newSingleThreadExecutor(r -> {
+			Thread t = new Thread(r, "ServerTools-EconomyWriter");
+			t.setDaemon(true);
+			return t;
+		});
 	}
 
 	public void close() {
+		// drain any queued writes before we tear down the connection, so a shutdown
+		// right after a deposit still persists it.
+		if (writer != null) {
+			writer.shutdown();
+			try {
+				writer.awaitTermination(30, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
 		if (upsertStmt != null) {
 			try {
 				upsertStmt.close();
@@ -82,7 +104,7 @@ public class EconomyStorage {
 			return false;
 		}
 		cache.put(id, startingCents);
-		upsert(id, name, startingCents);
+		enqueueUpsert(id, name, startingCents);
 		return true;
 	}
 
@@ -158,7 +180,13 @@ public class EconomyStorage {
 
 	private void put(UUID id, String name, long cents) {
 		cache.put(id, cents);
-		upsert(id, name, cents);
+		enqueueUpsert(id, name, cents);
+	}
+
+	// hand the write to the background thread; the cache already holds the truth,
+	// so callers return immediately without waiting on disk.
+	private void enqueueUpsert(UUID id, String name, long cents) {
+		writer.execute(() -> upsert(id, name, cents));
 	}
 
 	private void upsert(UUID id, String name, long cents) {
