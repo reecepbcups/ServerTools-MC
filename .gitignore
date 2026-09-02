@@ -29,6 +29,7 @@ hs_err_pid*
 target/
 *.classpath
 *.project
+.claude/extern/
 
 # Local server data
 server/
