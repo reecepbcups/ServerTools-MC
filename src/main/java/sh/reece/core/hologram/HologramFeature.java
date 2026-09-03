@@ -55,8 +55,6 @@ public final class HologramFeature implements Unloadable {
      * Takes down whatever is up, re-reads {@code Holograms.yml}, and draws the result.
      */
     public void load() {
-        unload();
-
         for (final Hologram hologram : Hologram.parseConfig(this.configUtils.getConfigFile(CONFIG_FILE))) {
             // spawn sweeps first, so a cold start clears last run's displays rather than doubling
             if (!hologram.spawn(this.plugin)) {
@@ -66,17 +64,9 @@ public final class HologramFeature implements Unloadable {
         }
     }
 
-    /**
-     * Best-effort on shutdown: Folia halts the region scheduler before disabling plugins, so these tasks may never run.
-     * Harmless, because {@code spawn} sweeps before it draws.
-     */
-    public void unload() {
-        this.holograms.forEach((hologram) -> hologram.despawn(this.plugin));
-        this.holograms.clear();
-    }
-
     @Override
     public void onUnload() {
-        unload();
+        this.holograms.forEach((hologram) -> hologram.despawn(this.plugin));
+        this.holograms.clear();
     }
 }

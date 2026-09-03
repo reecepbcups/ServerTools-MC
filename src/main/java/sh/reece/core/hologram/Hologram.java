@@ -8,6 +8,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.TextDisplay;
@@ -61,8 +62,9 @@ public record Hologram(String key, List<Component> lines, Location location) {
             return false;
         }
 
-        Bukkit.getRegionScheduler().execute(plugin, this.location, () -> {
-            removeDisplays(world);
+        loadLocationAndExecute(plugin, () -> {
+            erase(world);
+            eraseLegacy(world);
             draw(world);
         });
         return true;
@@ -77,7 +79,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
             return;
         }
 
-        Bukkit.getRegionScheduler().execute(plugin, this.location, () -> removeDisplays(world));
+        loadLocationAndExecute(plugin, () -> erase(world));
     }
 
     private void draw(final World world) {
@@ -98,14 +100,37 @@ public record Hologram(String key, List<Component> lines, Location location) {
         }
     }
 
-    private void removeDisplays(final World world) {
-        // getNearbyEntitiesByType only sees loaded chunks
-        this.location.getChunk();
-
+    private void erase(final World world) {
         world.getNearbyEntitiesByType(TextDisplay.class, this.location, SWEEP_XZ, SWEEP_Y, (display) -> {
             final PersistentDataContainer container = display.getPersistentDataContainer();
             return this.key.equals(container.get(IDENTIFIER_KEY, PersistentDataType.STRING));
         }).forEach(Entity::remove);
+    }
+
+    private void eraseLegacy(final World world) {
+        world.getNearbyEntities(this.location, SWEEP_XZ, SWEEP_Y, SWEEP_XZ, (entity) -> {
+            PersistentDataContainer container = entity.getPersistentDataContainer();
+            if (container.has(IDENTIFIER_KEY)) {
+                return false;
+            }
+
+            return entity instanceof TextDisplay || entity instanceof ArmorStand;
+        }).forEach(Entity::remove);
+    }
+
+    private void loadLocationAndExecute(final Plugin plugin, final Runnable runnable) {
+        World world = this.location.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        world.getChunkAtAsync(this.location).whenComplete((chunk, exception) -> {
+            if (exception != null) {
+                throw new RuntimeException(exception);
+            }
+
+            Bukkit.getRegionScheduler().execute(plugin, this.location, runnable);
+        });
     }
 
     /**
@@ -127,25 +152,15 @@ public record Hologram(String key, List<Component> lines, Location location) {
     public static Hologram parse(final String key, final ConfigurationSection section) {
         final String[] locationParts = section.getString(LOCATION_KEY).trim().split(",");
         final World world = Bukkit.getWorld(locationParts[0]);
-        final Location location = new Location(
-                world,
-                Double.parseDouble(locationParts[1]),
-                Double.parseDouble(locationParts[2]),
-                Double.parseDouble(locationParts[3])
-        );
+        final Location location = new Location(world, Double.parseDouble(locationParts[1]), Double.parseDouble(locationParts[2]), Double.parseDouble(locationParts[3]));
 
-        final List<Component> lines = section.getStringList(TEXT_KEY).stream()
-                .map(Hologram::render)
-                .toList();
+        final List<Component> lines = section.getStringList(TEXT_KEY).stream().map(Hologram::render).toList();
 
         return new Hologram(key, lines, location);
     }
 
     static void warn(final String key, final String problem) {
-        TextUtil.consoleMessage(TextUtil.color("<red>[!] Hologram <white>")
-                .append(text(key))
-                .append(TextUtil.color("<red> "))
-                .append(text(problem)));
+        TextUtil.consoleMessage(TextUtil.color("<red>[!] Hologram <white>").append(text(key)).append(TextUtil.color("<red> ")).append(text(problem)));
     }
 
     private static Component render(final String line) {
@@ -154,6 +169,6 @@ public record Hologram(String key, List<Component> lines, Location location) {
             text = PlaceholderAPI.setPlaceholders(null, text);
         }
 
-        return text.isEmpty() ? Component.empty() : TextUtil.color(text);
+        return text.isEmpty() ? Component.empty() : TextUtil.color(text, true);
     }
 }
