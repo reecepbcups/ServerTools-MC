@@ -7,10 +7,12 @@ import sh.reece.tools.Unloadable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Lifecycle for the holograms in {@code Holograms.yml}. Successor to {@code sh.reece.core.Holograms}; parsing and
- * entities belong to {@link Hologram}, commands to {@link HologramCommand}.
+ * Lifecycle for the holograms in {@code Holograms.yml}; parsing and entities belong to {@link Hologram}, commands
+ * to {@link HologramCommand}.
  */
 public final class HologramFeature implements Unloadable {
 
@@ -55,7 +57,18 @@ public final class HologramFeature implements Unloadable {
      * Takes down whatever is up, re-reads {@code Holograms.yml}, and draws the result.
      */
     public void load() {
-        for (final Hologram hologram : Hologram.parseConfig(this.configUtils.getConfigFile(CONFIG_FILE))) {
+        final List<Hologram> parsed = Hologram.parseConfig(this.configUtils.getConfigFile(CONFIG_FILE));
+        final Set<String> keys = parsed.stream().map(Hologram::key).collect(Collectors.toSet());
+
+        // a key that left the config since the last load keeps its displays otherwise:
+        // spawn() only sweeps around the holograms it is about to draw. Keys that stayed
+        // are left alone so their despawn cannot race the redraw below.
+        this.holograms.stream()
+                .filter((hologram) -> !keys.contains(hologram.key()))
+                .forEach((hologram) -> hologram.despawn(this.plugin));
+        this.holograms.clear();
+
+        for (final Hologram hologram : parsed) {
             // spawn sweeps first, so a cold start clears last run's displays rather than doubling
             if (!hologram.spawn(this.plugin)) {
                 Hologram.warn(hologram.key(), "references a world that is not loaded, it will not be drawn");

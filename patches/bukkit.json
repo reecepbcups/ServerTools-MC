@@ -1,0 +1,12 @@
+{
+  "file": "/data/bukkit.yml",
+  "ops": [
+    {
+      "$set": {
+        "path": "$.settings.connection-throttle",
+        "value": 0,
+        "value-type": "int"
+      }
+    }
+  ]
+}

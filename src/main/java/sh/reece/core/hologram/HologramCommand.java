@@ -1,7 +1,7 @@
 package sh.reece.core.hologram;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -123,9 +123,8 @@ public final class HologramCommand extends BaseCommand {
             return;
         }
 
-        // despawn first: once the config entry is gone, nothing says where its displays are
-        this.feature.hologram(key).ifPresent((hologram) -> hologram.despawn(this.plugin));
-
+        // load() below takes the displays down: it still holds this hologram, and the
+        // key is about to be gone from the config it re-reads
         config.set(key, null);
         this.configUtils.saveConfig(config, HologramFeature.CONFIG_FILE);
 
@@ -182,7 +181,13 @@ public final class HologramCommand extends BaseCommand {
             return;
         }
 
-        player.teleportAsync(configLocation(hologram.get()));
+        final Location destination = configLocation(hologram.get());
+        if (destination.getWorld() == null) {
+            send(sender, "<red>The world <white>", key, "<red> lives in is not loaded.");
+            return;
+        }
+
+        player.teleportAsync(destination);
         send(sender, "<green>Teleported to <white>", key, "<green>.");
     }
 
@@ -261,9 +266,14 @@ public final class HologramCommand extends BaseCommand {
 
     /** Matches the {@code world, x, y, z} format Holograms.yml has always used. */
     private static String formatLocation(final Location location) {
+        // an entry naming a world the server never loaded still has to list, so the name
+        // is a placeholder rather than an NPE - only create() writes this back, and its
+        // location comes from a player, so it always has a world
+        final World world = location.getWorld();
         // Locale.ROOT: a ',' decimal separator would write a string parse cannot split back apart
         return String.format(Locale.ROOT, "%s, %.3f, %.3f, %.3f",
-                location.getWorld().getName(), location.getX(), location.getY(), location.getZ());
+                world == null ? "unknown" : world.getName(),
+                location.getX(), location.getY(), location.getZ());
     }
 
     private static List<String> startingWith(final Iterable<String> candidates, final String prefix) {

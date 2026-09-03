@@ -6,6 +6,9 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 
+// protocol version to speak - must match VERSION in docker-compose.yml
+const MC_VERSION = process.env.MC_VERSION ?? "1.21.11";
+
 // connect a bot, resolve when it spawns
 export function createBot(username) {
   return new Promise((resolve, reject) => {
@@ -13,7 +16,7 @@ export function createBot(username) {
       host: "localhost",
       port: 25565,
       username,
-      version: "1.21.5",
+      version: MC_VERSION,
     });
 
     const timeout = setTimeout(() => {
@@ -41,7 +44,7 @@ export function createBotCollecting(username, extraMs = 3000) {
       host: "localhost",
       port: 25565,
       username,
-      version: "1.21.5",
+      version: MC_VERSION,
     });
 
     const messages = [];
