@@ -182,6 +182,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
             text = PlaceholderAPI.setPlaceholders(null, text);
         }
 
-        return text.isEmpty() ? Component.empty() : TextUtil.color(text, true);
+        // don't nag: hologram lines are user config authored in legacy '&' codes by design
+        return text.isEmpty() ? Component.empty() : TextUtil.color(text, false);
     }
 }
