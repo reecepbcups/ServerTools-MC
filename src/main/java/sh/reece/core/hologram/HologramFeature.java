@@ -68,9 +68,15 @@ public final class HologramFeature implements Unloadable {
                 .forEach((hologram) -> hologram.despawn(this.plugin));
         this.holograms.clear();
 
+        // one-time migration off the pre-rewrite class: its displays carried no PDC tag, so the
+        // normal sweep skips them and lines would render twice after the switchover. Sweep them
+        // at each configured location on the first load after the version bump only. The version
+        // is written by loadConfig at startup, so this is false again on the next restart.
+        final boolean sweepLegacy = this.configUtils.isVersionChanged();
+
         for (final Hologram hologram : parsed) {
             // spawn sweeps first, so a cold start clears last run's displays rather than doubling
-            if (!hologram.spawn(this.plugin)) {
+            if (!hologram.spawn(this.plugin, sweepLegacy)) {
                 Hologram.warn(hologram.key(), "references a world that is not loaded, it will not be drawn");
             }
             this.holograms.add(hologram);

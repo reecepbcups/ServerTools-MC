@@ -57,6 +57,14 @@ public record Hologram(String key, List<Component> lines, Location location) {
      * @return false if the world is not loaded; true only means the draw was scheduled
      */
     public boolean spawn(final Plugin plugin) {
+        return spawn(plugin, false);
+    }
+
+    /**
+     * @param sweepLegacy also removes untagged displays drawn by the pre-rewrite class; done once on the
+     *                    first load after the version bump, see {@link HologramFeature#load()}
+     */
+    public boolean spawn(final Plugin plugin, final boolean sweepLegacy) {
         final World world = this.location.getWorld();
         if (world == null) {
             return false;
@@ -64,7 +72,9 @@ public record Hologram(String key, List<Component> lines, Location location) {
 
         loadLocationAndExecute(plugin, () -> {
             erase(world);
-            eraseLegacy(world);
+            if (sweepLegacy) {
+                eraseLegacy(world);
+            }
             draw(world);
         });
         return true;
@@ -114,7 +124,10 @@ public record Hologram(String key, List<Component> lines, Location location) {
                 return false;
             }
 
-            return entity instanceof TextDisplay || entity instanceof ArmorStand;
+            // same predicate the old class used to clean up after itself: its TextDisplays
+            // carried no tag, and the ArmorStand-era holos had a visible name
+            return entity instanceof TextDisplay
+                    || (entity instanceof ArmorStand && entity.isCustomNameVisible());
         }).forEach(Entity::remove);
     }
 

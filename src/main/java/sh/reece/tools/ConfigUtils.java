@@ -25,6 +25,10 @@ public class ConfigUtils {
 	private Main plugin;
 	private static ConfigUtils configInstance;
 
+	// true for the first load after the plugin version changes (and on a fresh install); read by
+	// features that need a one-time migration on update. Computed in loadConfig, immutable after.
+	private boolean versionChanged;
+
 	private final HashMap<String, String> LANG = new HashMap<>();
 
 	private static final String VERSION_FILE = "VERSION.yml";
@@ -43,6 +47,13 @@ public class ConfigUtils {
 		configInstance = this;
 	}
 
+	/**
+	 * @return true if this is the first load after a plugin version change (or a fresh install)
+	 */
+	public boolean isVersionChanged() {
+		return versionChanged;
+	}
+
 	public static ConfigUtils getInstance() {
 		// used for backups
 		return configInstance;
@@ -57,7 +68,7 @@ public class ConfigUtils {
 
 		String ver = plugin.getDescription().getVersion();
 		String verString = versionConfig.getString("version");
-		boolean versionChanged = verString == null || !verString.equalsIgnoreCase(ver);
+		versionChanged = verString == null || !verString.equalsIgnoreCase(ver);
 
 		if (versionChanged) {
 			if (verString != null) {
