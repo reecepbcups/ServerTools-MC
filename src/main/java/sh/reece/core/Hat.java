@@ -2,7 +2,6 @@ package sh.reece.core;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
-import sh.reece.utiltools.Util;
 
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -11,6 +10,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class Hat extends BaseCommand {
+
+	public static final String NO_ITEM = "<red>[!] You can not set your hat as nothing!";
+	public static final String HAT_SET = "<green>[+] Hat has been set!";
 
 	public Hat(Main instance) {
 		super(instance, "Core.Hat", "hat");
@@ -28,7 +30,7 @@ public class Hat extends BaseCommand {
 		ItemStack helmet = player.getInventory().getHelmet();
 
 		if (item == null || item.getType() == Material.AIR) {
-			Util.coloredMessage(sender, "&c[!] You can not set your hat as nothing!");
+			sender.sendRichMessage(NO_ITEM);
 			return true;
 
 		} else if (helmet != null) {
@@ -40,7 +42,7 @@ public class Hat extends BaseCommand {
 			player.getInventory().setItem(slot, null);
 		}
 
-		Util.coloredMessage(sender, "&a[+] Hat has been set!");
+		sender.sendRichMessage(HAT_SET);
 
 		return true;
 	}

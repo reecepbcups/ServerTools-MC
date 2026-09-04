@@ -2,14 +2,18 @@ package sh.reece.core;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
-import sh.reece.utiltools.Util;
 
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class Extinguish extends BaseCommand {
+
+	public static final String NOT_ONLINE = "<red>Player <u><player></u> is not online.";
+	public static final String EXTINGUISHED = "<green>[+] You have been extinguished!";
+	public static final String EXTINGUISHED_OTHER = "<green>[+] Successfully Extinguished <u><player>";
 
 	private String StaffPermission;
 
@@ -31,17 +35,17 @@ public class Extinguish extends BaseCommand {
 			if (Bukkit.getPlayer(args[0]) != null) {
 				target = Bukkit.getPlayer(args[0]);
 			} else {
-				Util.coloredMessage(sender, "&cPlayer &n" + args[0] + "&c is not online.");
+				sender.sendRichMessage(NOT_ONLINE, Placeholder.unparsed("player", args[0]));
 				return true;
 			}
 		}
 
 		// remove fire from the player
 		target.setFireTicks(0);
-		Util.coloredMessage(target, "&a[+] You have been extinguished!");
+		target.sendRichMessage(EXTINGUISHED);
 
 		if (!target.getName().equalsIgnoreCase(sender.getName())) {
-			Util.coloredMessage(sender, "&a[+] Successfully Extinguished &n" + target.getName());
+			sender.sendRichMessage(EXTINGUISHED_OTHER, Placeholder.unparsed("player", target.getName()));
 		}
 
 		return true;

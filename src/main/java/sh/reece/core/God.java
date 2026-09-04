@@ -15,9 +15,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
-import sh.reece.utiltools.Util;
 
 public class God extends BaseCommand implements Listener {
+
+	public static final String GOD_ENABLED = "<white>[!] God mode <green>enabled<white>.";
+	public static final String GOD_DISABLED = "<white>[!] God mode <red>disabled<white>.";
 
 	public God(Main instance) {
 		super(instance, "Core.God", "god");
@@ -34,9 +36,9 @@ public class God extends BaseCommand implements Listener {
 
 		if (!GODS.remove(uid)) {
 			GODS.add(uid);
-			Util.coloredMessage(p, "&f[!] &fGod mode &aenabled&f.");
+			p.sendRichMessage(GOD_ENABLED);
 		} else {
-			Util.coloredMessage(p, "&f[!] &fGod mode &cdisabled&f.");
+			p.sendRichMessage(GOD_DISABLED);
 		}
 		return true;
 	}

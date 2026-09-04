@@ -34,6 +34,35 @@ public final class TextUtil {
     }
 
     /**
+     * Parses a string and sends it to the console.
+     * <p>
+     * The non-legacy counterpart to {@code Util.consoleMSG(String)}, which parses its argument as
+     * legacy only. Parsing runs through {@link #color(String)}, so a mini-message string is read
+     * as one while a legacy string still renders - call sites can move over one at a time.
+     * <p>
+     * Note that {@link #color(String)} reads a tie as legacy, so a mini-message string needs at
+     * least one more {@literal <} than it has ampersands to be recognised. In practice any string
+     * carrying a real tag clears that bar.
+     *
+     * @param message the mini-message (or legacy) string to parse and send
+     */
+    public static void consoleMessage(String message) {
+        consoleMessage(color(message));
+    }
+
+    /**
+     * Parses a string and sends it to the console, optionally logging a nag when the string turns
+     * out to be legacy.
+     *
+     * @param message   the mini-message (or legacy) string to parse and send
+     * @param nagLegacy whether to log a warning if the string is read as legacy
+     * @see #color(String, boolean)
+     */
+    public static void consoleMessage(String message, boolean nagLegacy) {
+        consoleMessage(color(message, nagLegacy));
+    }
+
+    /**
      * Converts a legacy string into a component
      *
      * @param legacy the legacy string
