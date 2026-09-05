@@ -420,6 +420,12 @@ Events:
   NoBedExplosionInNether:
     Enabled: true
 
+  # stops the "player has made the advancement" messages in chat.
+  # leave Worlds empty to hush every world, or list world names to scope it.
+  NoAdvancementAnnouncements:
+    Enabled: false
+    Worlds: []
+
   # https://helpch.at/docs/1.12.2/org/bukkit/Material.html
   Launchpads:
     Enabled: true
