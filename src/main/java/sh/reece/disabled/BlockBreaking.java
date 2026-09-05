@@ -26,6 +26,8 @@ public class BlockBreaking extends ToggleableListener {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();
 
+		if(!appliesInWorld(e.getBlock().getWorld())) return; // not a protected world, leave it alone
+
 		if(hasPermission(player)) { // can break
 			if(!allowed_to_break.contains(uuid)){
 				allowed_to_break.add(uuid);

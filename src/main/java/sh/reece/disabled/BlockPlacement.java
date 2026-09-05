@@ -27,6 +27,8 @@ public class BlockPlacement extends ToggleableListener {
 		Player player = e.getPlayer();
 		UUID uuid = player.getUniqueId();
 
+		if(!appliesInWorld(e.getBlock().getWorld())) return; // not a protected world, leave it alone
+
 		if(hasPermission(player)) { // can place
 			if(!allowed_to_place.contains(uuid)){
 				allowed_to_place.add(uuid);
