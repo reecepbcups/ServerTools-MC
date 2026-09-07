@@ -205,6 +205,10 @@ Core:
     Enabled: true
     Permission: essentials.fly
   Enchant:
+    # Levels above 10 have no vanilla tooltip translation, so they'd show the raw
+    # "enchantment.level.11" key. Install the optional PacketEvents plugin and we
+    # rewrite those tooltips to real numbers. Without it, enchanting still works,
+    # over-vanilla levels just show the raw key.
     Enabled: true
     Permission: essentials.enchant
   ClearInv:
