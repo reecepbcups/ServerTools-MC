@@ -3,7 +3,7 @@ version: ${project.version}
 author: Reecepbcups
 main: sh.reece.tools.Main
 description: A lot of little tools which make management easier
-softdepend: [LuckPerms, Vault, PlaceholderAPI, TAB, WorldGuard]
+softdepend: [LuckPerms, Vault, PlaceholderAPI, TAB, WorldGuard, packetevents]
 website: https://reece.sh/
 api: "1.18"
 api-version: 1.18

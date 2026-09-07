@@ -28,6 +28,8 @@ public class Main extends JavaPlugin implements Listener {
 	private EconomyStorage economyStorage;
 	private String currencySymbol = "$";
 
+	private com.github.retrooper.packetevents.event.PacketListenerCommon enchantTooltipListener;
+
 	public void onLoad() {
 		// Register the Vault economy provider during LOAD, before any plugin's onEnable.
 		// Economy consumers (EconomyShopGUI, etc.) look up the provider in their own
@@ -58,12 +60,34 @@ public class Main extends JavaPlugin implements Listener {
 
 		// Must be last - sets up fallback aliases for disabled commands
 		new AlternateCommandHandler(this);
+
+		setupEnchantTooltips();
+	}
+
+	/**
+	 * Register the packet listener that rewrites over-vanilla enchant tooltips to show real numbers.
+	 * Needs the standalone PacketEvents plugin; skips silently if it isn't installed.
+	 */
+	private void setupEnchantTooltips() {
+		if (Bukkit.getPluginManager().getPlugin("packetevents") == null) {
+			Util.consoleMSG("&ePacketEvents not installed - enchant tooltips will show raw level keys above 10.");
+			return;
+		}
+		enchantTooltipListener = com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
+				.registerListener(new sh.reece.core.EnchantTooltipListener());
+		Util.log("&aEnchant tooltip rewriter registered.");
 	}
 
 	public void onDisable() {
 		loader.unloadAll();
 		if (economyStorage != null) {
 			economyStorage.close();
+		}
+		// drop our packet listener so a reload doesn't stack a second one
+		if (enchantTooltipListener != null) {
+			com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
+					.unregisterListener(enchantTooltipListener);
+			enchantTooltipListener = null;
 		}
 	}
 

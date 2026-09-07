@@ -83,9 +83,24 @@ public class Enchant extends BaseCommand {
         p.getInventory().setItem(EquipmentSlot.HAND, heldItem);
 
         p.sendRichMessage(ENCHANTED,
-                Placeholder.component("enchantment", enchantment.displayName(level)),
+                Placeholder.component("enchantment", enchantmentDisplayName(enchantment, level)),
                 Placeholder.component("item", Component.translatable(heldItem)));
         return true;
+    }
+
+    /**
+     * Like {@link Enchantment#displayName(int)} but renders the level as a plain number instead of
+     * the {@code enchantment.level.N} translation, keeping Paper's name and colouring. The in-world
+     * item tooltip is rewritten separately by {@link EnchantTooltipListener}.
+     */
+    private static Component enchantmentDisplayName(final Enchantment enchantment, final int level) {
+        final Component full = enchantment.displayName(level);
+        if (level == 1 && enchantment.getMaxLevel() == 1) {
+            return full; // single-level enchant: vanilla shows no level at all
+        }
+        return full.children(List.of())
+                .append(Component.space())
+                .append(Component.text(level));
     }
 
     @Override
