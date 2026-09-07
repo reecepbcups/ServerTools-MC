@@ -9,20 +9,13 @@ import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
+
 public final class TextUtil {
 
     private static final char SECTION = '§';
-    private static final MiniMessage COLOR_MESSAGE = MiniMessage.builder()
-            .tags(TagResolver.builder()
-                    .resolver(StandardTags.color())
-                    .resolver(StandardTags.gradient())
-                    .resolvers(StandardTags.decorations())
-                    .build()
-            ).build();
-    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder()
-            .character(SECTION)
-            .hexColors()
-            .build();
+    private static final MiniMessage COLOR_MESSAGE = MiniMessage.builder().tags(TagResolver.builder().resolver(StandardTags.color()).resolver(StandardTags.gradient()).resolvers(StandardTags.decorations()).build()).build();
+    private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.builder().character(SECTION).hexColors().build();
     private static final Logger log = LoggerFactory.getLogger(TextUtil.class);
 
     private TextUtil() {
@@ -36,13 +29,13 @@ public final class TextUtil {
     /**
      * Parses a string and sends it to the console.
      * <p>
-     * The non-legacy counterpart to {@code Util.consoleMSG(String)}, which parses its argument as
-     * legacy only. Parsing runs through {@link #color(String)}, so a mini-message string is read
-     * as one while a legacy string still renders - call sites can move over one at a time.
+     * The non-legacy counterpart to {@code Util.consoleMSG(String)}, which parses its argument as legacy only. Parsing
+     * runs through {@link #color(String)}, so a mini-message string is read as one while a legacy string still renders
+     * - call sites can move over one at a time.
      * <p>
-     * Note that {@link #color(String)} reads a tie as legacy, so a mini-message string needs at
-     * least one more {@literal <} than it has ampersands to be recognised. In practice any string
-     * carrying a real tag clears that bar.
+     * Note that {@link #color(String)} reads a tie as legacy, so a mini-message string needs at least one more
+     * {@literal <} than it has ampersands to be recognised. In practice any string carrying a real tag clears that
+     * bar.
      *
      * @param message the mini-message (or legacy) string to parse and send
      */
@@ -51,8 +44,7 @@ public final class TextUtil {
     }
 
     /**
-     * Parses a string and sends it to the console, optionally logging a nag when the string turns
-     * out to be legacy.
+     * Parses a string and sends it to the console, optionally logging a nag when the string turns out to be legacy.
      *
      * @param message   the mini-message (or legacy) string to parse and send
      * @param nagLegacy whether to log a warning if the string is read as legacy
@@ -60,6 +52,34 @@ public final class TextUtil {
      */
     public static void consoleMessage(String message, boolean nagLegacy) {
         consoleMessage(color(message, nagLegacy));
+    }
+
+    /**
+     * Parses a mini-message (or legacy) template whose {@code %s} placeholders are filled from {@code placeholders}, in
+     * {@link String#format(java.util.Locale, String, Object...)} order.
+     * <p>
+     * Substitution happens before parsing, so each value is escaped first: a placeholder carrying something like
+     * {@literal <red>} renders as those characters rather than opening a tag. Only the template may contain markup,
+     * which is what makes this safe for user supplied values - warp names, player names, config keys.
+     * <p>
+     * Formatting uses {@link java.util.Locale#ROOT} so numeric values render the same everywhere, rather than picking
+     * up a comma decimal separator from the server's default locale.
+     *
+     * @param template     the mini-message (or legacy) template
+     * @param placeholders the values to substitute, escaped before parsing
+     * @return the parsed component
+     */
+    public static Component format(String template, Object... placeholders) {
+        if (placeholders.length == 0) {
+            return color(template);
+        }
+
+        Object[] escaped = new Object[placeholders.length];
+        for (int i = 0; i < placeholders.length; i++) {
+            escaped[i] = COLOR_MESSAGE.escapeTags(String.valueOf(placeholders[i]));
+        }
+
+        return color(String.format(Locale.ROOT, template, escaped));
     }
 
     /**
@@ -126,8 +146,8 @@ public final class TextUtil {
      * Occurance increments are made by 1 for each, where 0 indicates a tie.
      *
      * @param string the string to assess
-     * @return int confidence, 0 if equal confidence, negative range for legacy, positive range for mini-message.
-     *         Note a tie is read as legacy by {@link #color(String, boolean)}.
+     * @return int confidence, 0 if equal confidence, negative range for legacy, positive range for mini-message. Note a
+     * tie is read as legacy by {@link #color(String, boolean)}.
      */
     private static int isLegacyOrMiniMessage(String string) {
         int confidence = 0;

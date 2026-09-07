@@ -1,58 +1,88 @@
 package sh.reece.core.warp;
 
+import com.google.common.base.Preconditions;
 import org.bukkit.Location;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-
+import org.bukkit.entity.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.utiltools.Util;
 
-public class Warp {
-    
-    private String name;
-    private Location location;
-    private String permission = null;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-    public String getPermission() {
-        return permission;
+public record Warp(String name, String permission, Location location) {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Warp.class);
+
+    public static final String WARPS_FILE = "Warps.yml";
+
+    public Warp {
+        location = location.clone();
+        permission = permission == null ? "" : permission;
+        Preconditions.checkArgument(location.getWorld() != null, "the provided location must not be null");
     }
 
-    public void setPermission(String permission) {
-        this.permission = permission;
+    @Override
+    public Location location() {
+        return location.clone();
     }
 
-    public Location getLocation() {
-        return location;
+    public boolean canUse(Player player) {
+        return permission.isBlank() || player.hasPermission(permission);
     }
 
-    public void setLocation(Location location) {
-        this.location = location;
+    public static void saveAll(FileConfiguration config, List<Warp> warps, boolean forceSave) {
+        for (final Warp warp : warps) {
+            save(config, warp, false);
+        }
+
+        if (forceSave) {
+            ConfigUtils.getInstance().saveConfig(config, WARPS_FILE);
+        }
     }
 
-    public Warp(String name, Location location, String permission) {
-        this.name = name;
-        this.setLocation(location);
-        this.setPermission(permission);
-    }    
-
-    public String getName() {
-        return name;
+    public static void save(FileConfiguration config, Warp warp, boolean forceSave) {
+        ConfigurationSection warpSection = config.createSection(warp.name());
+        warpSection.set("permission", warp.permission());
+        warpSection.set("location", Util.locationToString(warp.location()));
+        if (forceSave) {
+            ConfigUtils.getInstance().saveConfig(config, WARPS_FILE);
+        }
     }
 
-    public void saveToConfig() {
-        configSet(this.name, Util.locationToString(getLocation()), getPermission());
+    public static void delete(FileConfiguration config, Warp warp, boolean forceSave) {
+        config.set(warp.name(), null);
+        if (forceSave) {
+            ConfigUtils.getInstance().saveConfig(config, WARPS_FILE);
+        }
     }
 
-    public void removeFromConfig() {
-        FileConfiguration warps = ConfigUtils.getInstance().getConfigFile("Warps.yml");        
-        warps.set(this.name, null);
-        ConfigUtils.getInstance().saveConfig(warps, "Warps.yml");        
+    public static List<Warp> parseWarps(ConfigurationSection root) {
+        return root.getKeys(false).stream()
+                .map((key) -> parseWarp(key, root.getConfigurationSection(key)))
+                .flatMap(Optional::stream)
+                .toList();
     }
 
-    private void configSet(String name, String location, String permission) {
-        FileConfiguration warps = ConfigUtils.getInstance().getConfigFile("Warps.yml");
-        warps.set(this.name + ".permission", permission);
-        warps.set(this.name + ".location", location);
-        ConfigUtils.getInstance().saveConfig(warps, "Warps.yml");
-    }
+    public static Optional<Warp> parseWarp(String sectionName, ConfigurationSection section) {
+        if (section == null) {
+            LOGGER.warn("Skipping warp {}: not a configuration section", sectionName);
+            return Optional.empty();
+        }
 
+        try {
+            return Optional.of(new Warp(
+                    sectionName,
+                    section.getString("permission", ""),
+                    Util.stringToLocation(section.getString("location"))
+            ));
+        } catch (final RuntimeException e) {
+            LOGGER.warn("Skipping warp {}", sectionName, e);
+            return Optional.empty();
+        }
+    }
 }
