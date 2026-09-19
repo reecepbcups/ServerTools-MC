@@ -24,6 +24,8 @@ TAGS_LOCKED: "&c&lGESCHLOSSEN"
 TAGS_NO_ACCESS: "&7&o(( &c&oDu hast keinen Zugang zu diesem Tag! &7&o))"
 TAG_GUI_FORMAT: "&f&l[!] &f&n%tag%"
 TAG_CLEAR: "&c&lTAG LEEREN"
+TAG_PREV_PAGE: "&e&l<< SEITE %page%"
+TAG_NEXT_PAGE: "&e&l>> SEITE %page%"
 TAG_RECEIVED: "&a&l[!]&a \"%tag%\" Tag wurde erhalten!"
 TAG_DENY_CUSTOM: "&cDu bist nicht befugt eigene Tags zu nutzen!"
 

@@ -15,13 +15,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.UUID;
 
 @RequiresPlugin({"Vault"})
 public class Tags extends BaseCommand implements Listener {
@@ -31,8 +34,15 @@ public class Tags extends BaseCommand implements Listener {
 	private String InvName;
 	private String CustomTagPerm;
 	private String CustomTagFormat;
-	public static Inventory tagsGUI;
 	public int rows, CustomTagMaxLen;
+
+	// bottom row is left empty for the clear tag anvil and the page feathers
+	private static final int TAGS_PER_PAGE = 36;
+	private static final int PREV_SLOT = 39;
+	private static final int CLEAR_SLOT = 40;
+	private static final int NEXT_SLOT = 41;
+
+	private final Map<UUID, Integer> pageByPlayer = new HashMap<UUID, Integer>();
 
 	private String selectedmsg, removedmsg, giveTagCMD;
 
@@ -99,16 +109,22 @@ public class Tags extends BaseCommand implements Listener {
 		return Main.chat != null;
 	}
 
-	public void openTagsForPlayer(Player p) {
+	public void openTagsForPlayer(Player p, int page) {
 
-		tagsGUI = Bukkit.createInventory(null, rows, InvName);
-
-		int i = 0;
 		var tagsSection = getTagsConfig().getConfigurationSection("Tags");
 		if (tagsSection == null) return;
-		Set<String> TAGS = tagsSection.getKeys(false);
+		List<String> TAGS = new ArrayList<String>(tagsSection.getKeys(false));
 
-		for (String tag : TAGS) {
+		int pages = Math.max(1, (TAGS.size() + TAGS_PER_PAGE - 1) / TAGS_PER_PAGE);
+		page = Math.max(0, Math.min(page, pages - 1));
+
+		Inventory tagsGUI = Bukkit.createInventory(null, rows, InvName);
+
+		int start = page * TAGS_PER_PAGE;
+		int end = Math.min(start + TAGS_PER_PAGE, TAGS.size());
+
+		for (int i = start; i < end; i++) {
+			String tag = TAGS.get(i);
 			String perm = "Tags." + tag;
 			String format = getTagsConfig().getString(perm);
 			List<String> lore = new ArrayList<String>();
@@ -128,11 +144,21 @@ public class Tags extends BaseCommand implements Listener {
 				lore.add(configUtils.lang("TAGS_NO_ACCESS"));
 			}
 
-			createDisplay(tagsGUI, itemmat, i, configUtils.lang("TAG_GUI_FORMAT").replace("%tag%", tag), lore);
-			i += 1;
+			createDisplay(tagsGUI, itemmat, i - start, configUtils.lang("TAG_GUI_FORMAT").replace("%tag%", tag), lore);
 		}
 
-		createDisplay(tagsGUI, Material.ANVIL, 40, configUtils.lang("TAG_CLEAR"), new ArrayList<String>());
+		createDisplay(tagsGUI, Material.ANVIL, CLEAR_SLOT, configUtils.lang("TAG_CLEAR"), new ArrayList<String>());
+
+		if (pages > 1) {
+			if (page > 0) {
+				createDisplay(tagsGUI, Material.FEATHER, PREV_SLOT, configUtils.lang("TAG_PREV_PAGE").replace("%page%", String.valueOf(page)), new ArrayList<String>());
+			}
+			if (page < pages - 1) {
+				createDisplay(tagsGUI, Material.FEATHER, NEXT_SLOT, configUtils.lang("TAG_NEXT_PAGE").replace("%page%", String.valueOf(page + 2)), new ArrayList<String>());
+			}
+		}
+
+		pageByPlayer.put(p.getUniqueId(), page);
 		p.openInventory(tagsGUI);
 	}
 
@@ -141,7 +167,7 @@ public class Tags extends BaseCommand implements Listener {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
 		if (args.length == 0) {
-			openTagsForPlayer((Player) sender);
+			openTagsForPlayer((Player) sender, 0);
 			return true;
 		}
 
@@ -262,6 +288,15 @@ public class Tags extends BaseCommand implements Listener {
 		}
 
 		if (event.getView().getTitle().equalsIgnoreCase(InvName)) {
+			int slot = event.getRawSlot();
+
+			if (clicked.getType() == Material.FEATHER && (slot == PREV_SLOT || slot == NEXT_SLOT)) {
+				int page = pageByPlayer.getOrDefault(p.getUniqueId(), 0);
+				openTagsForPlayer(p, slot == NEXT_SLOT ? page + 1 : page - 1);
+				event.setCancelled(true);
+				return;
+			}
+
 			String itemName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
 			String tag = itemName.substring(4);
 
@@ -279,6 +314,11 @@ public class Tags extends BaseCommand implements Listener {
 			p.closeInventory();
 			event.setCancelled(true);
 		}
+	}
+
+	@EventHandler
+	public void onQuit(PlayerQuitEvent event) {
+		pageByPlayer.remove(event.getPlayer().getUniqueId());
 	}
 
 	public void helpMenu(CommandSender sender) {

@@ -22,6 +22,8 @@ TAGS_LOCKED: "&c&lLOCKED"
 TAGS_NO_ACCESS: "&7&o(( &c&oYou do not have access to this tag! &7&o))"
 TAG_GUI_FORMAT: "&f&l[!] &f&n%tag%"
 TAG_CLEAR: "&c&lCLEAR TAG"
+TAG_PREV_PAGE: "&e&l<< PAGE %page%"
+TAG_NEXT_PAGE: "&e&l>> PAGE %page%"
 TAG_RECEIVED: "&a&l[!]&a Recieved the \"%tag%\" tag!"
 TAG_DENY_CUSTOM: "&cYou do not have permission to use custom tags"
 
