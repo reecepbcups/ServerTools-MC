@@ -328,6 +328,21 @@ public class Util {
 		return 0L;
 	}
 
+	/** Starts (or restarts) a cooldown for a player. A zero/negative duration is a no-op. */
+	public static void startCooldown(final Map<String, Long> cooldownHash, final int secondCooldown, final String playerName) {
+		if (secondCooldown <= 0) return;
+
+		final long currentTime = System.currentTimeMillis();
+
+		// passive eviction: remove expired entries when map gets large
+		if (cooldownHash.size() > 100) {
+			cooldownHash.entrySet().removeIf(e -> e.getValue() < currentTime);
+		}
+
+		cooldownHash.put(playerName, currentTime + secondCooldown * 1000L);
+	}
+
+
 	public int stringToInt(final String value) {
 		return Integer.parseInt(value);
 	}

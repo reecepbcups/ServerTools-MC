@@ -181,13 +181,21 @@ Core:
     ViewOthers: essentials.enderchest.others
     ModifyOthers: essentials.enderchest.modify
   Repair:
+    # Cooldown takes 600s, 15m, 1h30m or a plain number of seconds. 0 = none.
+    # Per rank costs/cooldowns come from permission nodes instead of this file:
+    #   servertools.repair.single.cost.750   servertools.repair.single.cooldown.30s
+    #   servertools.repair.all.cost.5000     servertools.repair.all.cooldown.15m
+    # Hold several and you get the cheapest cost + the shortest cooldown.
+    # Costs only apply when Vault + an economy plugin are installed.
     Enabled: false
     Single:
       Permission: essentials.repair
       Cost: 1500.0
+      Cooldown: 0
     All:
       Permission: essentials.repair.all
       Cost: 15000.0
+      Cooldown: 0
   Compass:
     Enabled: false
     Permission: essentials.compass
