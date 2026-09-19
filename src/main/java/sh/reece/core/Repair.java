@@ -100,7 +100,7 @@ public class Repair extends BaseCommand {
 			}
 
 			final int cooldown = resolveCooldown(p, SINGLE, SingleRepairCooldown);
-			if (onCooldown(p, singleCooldowns, "&c[!] You must wait &f%time% &cbefore repairing again!")) {
+			if (onCooldown(p, singleCooldowns, cooldown, "&c[!] You must wait &f%time% &cbefore repairing again!")) {
 				return true;
 			}
 			if (repairItem(p, p.getInventory().getItemInHand(), true)) {
@@ -179,7 +179,7 @@ public class Repair extends BaseCommand {
 
 	private void repairAllItems(Player p) {
 		final int cooldown = resolveCooldown(p, ALL, AllRepairCooldown);
-		if (onCooldown(p, allCooldowns, "&c[!] You must wait &f%time% &cbefore repairing everything again!")) {
+		if (onCooldown(p, allCooldowns, cooldown, "&c[!] You must wait &f%time% &cbefore repairing everything again!")) {
 			return;
 		}
 
@@ -200,7 +200,11 @@ public class Repair extends BaseCommand {
 		}
 	}
 
-	private boolean onCooldown(Player p, Map<String, Long> cooldowns, String msg) {
+	private boolean onCooldown(Player p, Map<String, Long> cooldowns, int cooldown, String msg) {
+		if (cooldown <= 0) {
+			return false;
+		}
+
 		final long left = Util.cooldownSecondsLeft(cooldowns, 0, p.getName());
 		if (left <= 0) {
 			return false;
@@ -222,8 +226,15 @@ public class Repair extends BaseCommand {
 		return values;
 	}
 
+	/** Ops and anyone holding * repair for free, with no cooldown. */
+	private boolean bypasses(Player p) {
+		return p.isOp() || p.hasPermission("*");
+	}
+
 	/** Cheapest cost the player's permissions grant, or the config default. */
 	private double resolveCost(Player p, String mode, double fallback) {
+		if (bypasses(p)) return 0;
+
 		double cost = fallback;
 		for (String raw : permValues(p, mode, "cost")) {
 			try {
@@ -237,6 +248,8 @@ public class Repair extends BaseCommand {
 
 	/** Shortest cooldown the player's permissions grant, or the config default. */
 	private int resolveCooldown(Player p, String mode, int fallback) {
+		if (bypasses(p)) return 0;
+
 		int cooldown = fallback;
 		for (String raw : permValues(p, mode, "cooldown")) {
 			final int seconds = TimeUtil.parseDuration(raw);
