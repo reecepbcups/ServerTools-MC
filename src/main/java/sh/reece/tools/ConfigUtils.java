@@ -2,6 +2,9 @@ package sh.reece.tools;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -234,11 +237,38 @@ public class ConfigUtils {
 		LANG.clear();
 
 		createDirectory("translations");
-		createConfig("translations/" + lang + ".yml");
-		final FileConfiguration language = getConfigFile("translations/" + lang + ".yml");
+		final String path = "translations/" + lang + ".yml";
+		createConfig(path);
+
+		final FileConfiguration language = mergeMissingLangKeys(path, getConfigFile(path));
 		for (final String key : language.getKeys(false)) {
 			LANG.put(key, language.getString(key));
 		}
+	}
+
+	// keys added by a plugin update never reach a translations file that already exists,
+	// createConfig only writes the bundled copy on a fresh install. Merge them in, otherwise
+	// lang() blows up on anything shipped after the admin's file was first written.
+	private FileConfiguration mergeMissingLangKeys(final String path, final FileConfiguration current) {
+		final InputStream bundled = plugin.getResource(path);
+		if (bundled == null) {
+			// admin supplied their own language, nothing to merge from
+			return current;
+		}
+
+		final FileConfiguration defaults = YamlConfiguration
+				.loadConfiguration(new InputStreamReader(bundled, StandardCharsets.UTF_8));
+		if (current.getKeys(false).containsAll(defaults.getKeys(false))) {
+			return current;
+		}
+
+		try {
+			ConfigUpdater.update(plugin, path, new File(plugin.getDataFolder(), path), new ArrayList<String>());
+		} catch (final IOException e) {
+			e.printStackTrace();
+			return current;
+		}
+		return getConfigFile(path);
 	}
 
 	public void clearModulesList() {
@@ -247,7 +277,12 @@ public class ConfigUtils {
 	}
 
 	public String lang(final String key) {
-		return Util.color(LANG.get(key).replace("%prefix%", "&7[&eServerTools&7]&r"));
+		final String value = LANG.get(key);
+		if (value == null) {
+			Util.consoleMSG(Util.color("&c[TOOLS] missing translation key: " + key));
+			return key;
+		}
+		return Util.color(value.replace("%prefix%", "&7[&eServerTools&7]&r"));
 	}
 
 	// enabledInConfig + env variable support (moved from Main)
