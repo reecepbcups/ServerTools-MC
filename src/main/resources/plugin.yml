@@ -137,6 +137,7 @@ commands:
     description: toggle view of other players
   vanish:
     description: hide yourself from players without the vanish permission
+    aliases: [v]
   alt:
     description: teleport players which alts you own
     aliases: [alttp, altteleport]

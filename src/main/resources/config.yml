@@ -662,7 +662,6 @@ Misc:
       cane: tokens
       croptop: croptop cane
       votetop: superbvote top
-      v: essentials:vanish
       ce: enchanter
       cactus: cactusshop
       mutechat: servertools:mutechat
