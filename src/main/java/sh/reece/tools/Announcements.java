@@ -27,7 +27,7 @@ public class Announcements {
             if (actualMessage.contains("<center>")) {
                 actualMessage = Util.centerMessage(actualMessage.replace("<center>", ""));
             }
-            TextComponent message = new TextComponent(actualMessage);
+            TextComponent message = new TextComponent(TextComponent.fromLegacyText(actualMessage));
             message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd));
             Bukkit.getServer().spigot().broadcast(message);
             return;
@@ -39,7 +39,7 @@ public class Announcements {
             if (actualMessage.contains("<center>")) {
                 actualMessage = Util.centerMessage(actualMessage.replace("<center>", ""));
             }
-            TextComponent message = new TextComponent(actualMessage);
+            TextComponent message = new TextComponent(TextComponent.fromLegacyText(actualMessage));
             message.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
             Bukkit.getServer().spigot().broadcast(message);
             return;
