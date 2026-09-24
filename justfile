@@ -1,4 +1,5 @@
-jar_name := "servertools-8.5.6.jar"
+version := `grep -m1 -oE '<version>[^<]+</version>' pom.xml | sed -E 's/<version>(.*)<\/version>/\1/'`
+jar_name := "servertools-" + version + ".jar"
 output_dir := "../output"
 plugins_dir := "server/plugins"
 folia_plugins_dir := "server-folia/plugins"

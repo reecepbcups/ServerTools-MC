@@ -432,6 +432,9 @@ Events:
   NoBedExplosionInNether:
     Enabled: true
 
+  RemoveResourcePacksOnJoin:
+    Enabled: false
+
   # stops the "player has made the advancement" messages in chat.
   # leave Worlds empty to hush every world, or list world names to scope it.
   NoAdvancementAnnouncements:
