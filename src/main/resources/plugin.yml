@@ -135,6 +135,8 @@ commands:
     description: reclaim rewards from your rank per season
   visibility:
     description: toggle view of other players
+  vanish:
+    description: hide yourself from players without the vanish permission
   alt:
     description: teleport players which alts you own
     aliases: [alttp, altteleport]

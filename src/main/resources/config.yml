@@ -634,6 +634,11 @@ Misc:
     Enabled: true
     bypassPerm: visibility.bypass
 
+  # self-toggle: hides you from anyone without `Permission` (staff see other staff).
+  Vanish:
+    Enabled: true
+    Permission: essentials.vanish
+
   BucketStacker:
     Enabled: false
     worldguard: false

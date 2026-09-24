@@ -138,3 +138,6 @@ RENAME_NOT_ENOUGH_LORE: "&cDu kannst Zeile %line% nicht entfernen weil die Besch
 VISIBILITY_DISABLED: "&4✖ &cSichtbarkeit ist zurzeit deaktiviert!"
 VISIBILITY_STAFF_ONLY: "&a✓ &fZeige nur Teammitglieder"
 VISIBILITY_EVERYONE: "&a✓ &fZeige alle Spieler"
+
+VANISH_ENABLED: "&a✓ &fDu bist jetzt unsichtbar"
+VANISH_DISABLED: "&c✖ &fDu bist nicht mehr unsichtbar"

@@ -136,3 +136,6 @@ RENAME_NOT_ENOUGH_LORE: "&cYou can not remove line %line% as the lore only conta
 VISIBILITY_DISABLED: "&4✖ &cVisibility is currently disabled!"
 VISIBILITY_STAFF_ONLY: "&a✓ &fOnly showing staff"
 VISIBILITY_EVERYONE: "&a✓ &fShowing all players"
+
+VANISH_ENABLED: "&a✓ &fYou are now vanished"
+VANISH_DISABLED: "&c✖ &fYou are no longer vanished"
