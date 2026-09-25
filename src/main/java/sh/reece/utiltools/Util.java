@@ -61,7 +61,7 @@ public class Util {
 		boolean previousCode = false;
 		boolean isBold = false;
 		for (final char c : message.toCharArray()){
-			if (c == '�'){
+			if (c == ChatColor.COLOR_CHAR){
 				previousCode = true;
 				continue;
 			} else if (previousCode == true){
