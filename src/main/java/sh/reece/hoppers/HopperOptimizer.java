@@ -12,7 +12,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Hopper;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -187,10 +186,8 @@ public class HopperOptimizer implements Listener, Unloadable {
 				continue;
 			}
 			for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
-				for (BlockState state : chunk.getTileEntities()) {
-					if (state instanceof Hopper) {
-						manage(state.getBlock());
-					}
+				for (BlockState state : chunk.getTileEntities(b -> b.getType() == Material.HOPPER, false)) {
+					manage(state.getBlock());
 				}
 			}
 		}
@@ -264,10 +261,8 @@ public class HopperOptimizer implements Listener, Unloadable {
 		if (skip(e.getWorld())) {
 			return;
 		}
-		for (BlockState state : e.getChunk().getTileEntities()) {
-			if (state instanceof Hopper) {
-				manage(state.getBlock());
-			}
+		for (BlockState state : e.getChunk().getTileEntities(b -> b.getType() == Material.HOPPER, false)) {
+			manage(state.getBlock());
 		}
 	}
 
@@ -277,10 +272,8 @@ public class HopperOptimizer implements Listener, Unloadable {
 		if (wh == null) {
 			return;
 		}
-		for (BlockState state : e.getChunk().getTileEntities()) {
-			if (state instanceof Hopper) {
-				unmanage(state.getBlock());
-			}
+		for (BlockState state : e.getChunk().getTileEntities(b -> b.getType() == Material.HOPPER, false)) {
+			unmanage(state.getBlock());
 		}
 	}
 
