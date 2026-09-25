@@ -80,9 +80,10 @@ public class Main extends JavaPlugin implements Listener {
 
 	public void onDisable() {
 		loader.unloadAll();
-		if (economyStorage != null) {
-			economyStorage.close();
-		}
+		// economyStorage is intentionally NOT closed here - it's a singleton shared
+		// across reloads (see EconomyStorage.acquire). Closing it would break every
+		// other plugin (EconomyShopGUI, etc.) still holding the Vault Economy we
+		// registered; it only ever shuts down when the JVM exits.
 		// drop our packet listener so a reload doesn't stack a second one
 		if (enchantTooltipHookupActive) {
 			sh.reece.packetevents.EnchantTooltipHookup.unregister();
@@ -122,9 +123,8 @@ public class Main extends JavaPlugin implements Listener {
 		File dataDir = new File(getDataFolder(), "data");
 		dataDir.mkdirs();
 		File db = new File(dataDir, "economy.db");
-		economyStorage = new EconomyStorage("jdbc:sqlite:" + db.getAbsolutePath(), startingCents);
 		try {
-			economyStorage.open();
+			economyStorage = EconomyStorage.acquire("jdbc:sqlite:" + db.getAbsolutePath(), startingCents);
 		} catch (Exception e) {
 			Util.consoleMSG("&cFailed to open economy database: " + e.getMessage());
 			economyStorage = null;

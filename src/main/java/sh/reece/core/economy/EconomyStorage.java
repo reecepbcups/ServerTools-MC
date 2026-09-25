@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,9 +36,28 @@ public class EconomyStorage {
 	private ExecutorService writer;
 	private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
 
+	// keyed by jdbc URL so a plugin reload (disable+enable without a JVM restart)
+	// hands out the SAME instance instead of opening a fresh connection. Other
+	// plugins (EconomyShopGUI, VotingPlugin, crates, ...) cache the Vault Economy
+	// they got at their own startup; if reload closed the old EconomyStorage,
+	// every stale reference would start throwing on the next write.
+	private static final Map<String, EconomyStorage> REGISTRY = new ConcurrentHashMap<>();
+
 	public EconomyStorage(String jdbcUrl, long startingCents) {
 		this.jdbcUrl = jdbcUrl;
 		this.startingCents = startingCents;
+	}
+
+	/** Opens (or reuses) the storage for this jdbc URL. Never closed by a plugin reload. */
+	public static synchronized EconomyStorage acquire(String jdbcUrl, long startingCents) throws SQLException {
+		EconomyStorage existing = REGISTRY.get(jdbcUrl);
+		if (existing != null) {
+			return existing;
+		}
+		EconomyStorage storage = new EconomyStorage(jdbcUrl, startingCents);
+		storage.open();
+		REGISTRY.put(jdbcUrl, storage);
+		return storage;
 	}
 
 	public void open() throws SQLException {
@@ -184,9 +204,16 @@ public class EconomyStorage {
 	}
 
 	// hand the write to the background thread; the cache already holds the truth,
-	// so callers return immediately without waiting on disk.
+	// so callers return immediately without waiting on disk. If a stale instance
+	// (e.g. held by another plugin after a /tools reload) gets used after our
+	// writer already shut down, fall back to a synchronous write instead of
+	// throwing RejectedExecutionException into the caller.
 	private void enqueueUpsert(UUID id, String name, long cents) {
-		writer.execute(() -> upsert(id, name, cents));
+		try {
+			writer.execute(() -> upsert(id, name, cents));
+		} catch (RejectedExecutionException e) {
+			upsert(id, name, cents);
+		}
 	}
 
 	private void upsert(UUID id, String name, long cents) {
