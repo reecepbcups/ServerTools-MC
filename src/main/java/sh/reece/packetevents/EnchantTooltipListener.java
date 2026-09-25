@@ -1,4 +1,4 @@
-package sh.reece.core;
+package sh.reece.packetevents;
 
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;

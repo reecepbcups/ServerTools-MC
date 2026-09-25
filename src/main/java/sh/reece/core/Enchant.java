@@ -91,7 +91,7 @@ public class Enchant extends BaseCommand {
     /**
      * Like {@link Enchantment#displayName(int)} but renders the level as a plain number instead of
      * the {@code enchantment.level.N} translation, keeping Paper's name and colouring. The in-world
-     * item tooltip is rewritten separately by {@link EnchantTooltipListener}.
+     * item tooltip is rewritten separately by {@link sh.reece.packetevents.EnchantTooltipListener}.
      */
     private static Component enchantmentDisplayName(final Enchantment enchantment, final int level) {
         final Component full = enchantment.displayName(level);

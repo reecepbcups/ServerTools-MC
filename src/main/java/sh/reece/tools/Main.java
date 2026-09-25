@@ -28,7 +28,7 @@ public class Main extends JavaPlugin implements Listener {
 	private EconomyStorage economyStorage;
 	private String currencySymbol = "$";
 
-	private com.github.retrooper.packetevents.event.PacketListenerCommon enchantTooltipListener;
+	private boolean enchantTooltipHookupActive;
 
 	public void onLoad() {
 		// Register the Vault economy provider during LOAD, before any plugin's onEnable.
@@ -73,8 +73,8 @@ public class Main extends JavaPlugin implements Listener {
 			Util.consoleMSG("&ePacketEvents not installed - enchant tooltips will show raw level keys above 10.");
 			return;
 		}
-		enchantTooltipListener = com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
-				.registerListener(new sh.reece.core.EnchantTooltipListener());
+		sh.reece.packetevents.EnchantTooltipHookup.register();
+		enchantTooltipHookupActive = true;
 		Util.log("&aEnchant tooltip rewriter registered.");
 	}
 
@@ -84,10 +84,9 @@ public class Main extends JavaPlugin implements Listener {
 			economyStorage.close();
 		}
 		// drop our packet listener so a reload doesn't stack a second one
-		if (enchantTooltipListener != null) {
-			com.github.retrooper.packetevents.PacketEvents.getAPI().getEventManager()
-					.unregisterListener(enchantTooltipListener);
-			enchantTooltipListener = null;
+		if (enchantTooltipHookupActive) {
+			sh.reece.packetevents.EnchantTooltipHookup.unregister();
+			enchantTooltipHookupActive = false;
 		}
 	}
 
