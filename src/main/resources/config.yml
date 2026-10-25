@@ -177,6 +177,11 @@ Core:
     prefixBypass: nickname.prefixbypass
     # needed for & codes, hex and gradients in a nick
     colorPerm: nickname.color
+    # names a nick can't copy (other players' nicks are always blocked):
+    #   any     no extra checks
+    #   joined  anyone who has played on this server
+    #   real    joined + any real Minecraft account, like Notch (asks Mojang, cached)
+    NameCheck: joined
   Top:
     Enabled: true
     Permission: essentials.top

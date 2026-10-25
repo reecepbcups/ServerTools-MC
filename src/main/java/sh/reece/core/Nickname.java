@@ -11,6 +11,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
@@ -57,6 +64,13 @@ public class Nickname extends BaseCommand implements Listener {
 			PREFIX = Util.color(plugin.getConfig().getString(section + ".prefix", ""));
 			BypassPrefixPerm = plugin.getConfig().getString(section + ".prefixBypass", "");
 			ColorPerm = plugin.getConfig().getString(section + ".colorPerm", "nickname.color");
+			String check = plugin.getConfig().getString(section + ".NameCheck", "joined");
+			try {
+				nameCheck = NameCheck.valueOf(check.trim().toUpperCase(Locale.ROOT));
+			} catch (IllegalArgumentException e) {
+				Util.consoleMSG("&c[Nickname] Unknown NameCheck '" + check + "', using joined");
+				nameCheck = NameCheck.JOINED;
+			}
 			load();
 			// re-apply for anyone already online after a reload
 			for (Player online : Bukkit.getOnlinePlayers()) {
@@ -106,61 +120,117 @@ public class Nickname extends BaseCommand implements Listener {
 			return true;
 		}
 
-		String message;
-		if (args[0].equalsIgnoreCase("off") || args[0].equalsIgnoreCase("reset")) {
+		if (args[0].equalsIgnoreCase("off") || args[0].equalsIgnoreCase("reset") || args[0].equalsIgnoreCase("clear")) {
 			nicks.remove(p.getUniqueId());
-			message = "&a[+] Your nickname has been reset back to normal";
-
-		} else {
-			// length limits count what players see, not the & codes
-			Nick nick = Nick.of(args[0]);
-			String visible = nick.stripped();
-
-			// coloring changed nothing means there were no codes or gradients in it
-			if (!nick.colored().equals(args[0]) && !p.hasPermission(ColorPerm)) {
-				Util.coloredMessage(p, "&c[!] You can't use colors in your nickname");
-				return true;
-			} else if (args[0].length() > MAX_RAW_LENGTH) {
-				Util.coloredMessage(p, "&c[!] Your nickname has too many color codes");
-				return true;
-			} else if (!VISIBLE_NAME.matcher(visible).matches()) {
-				// same characters as real usernames, so look-alike letters can't dodge the name check
-				Util.coloredMessage(p, "&c[!] Nicknames can only use letters, numbers and _");
-				return true;
-			} else if (visible.length() < 3) {
-				Util.coloredMessage(p, "&c[!] Your nickname is too short");
-				return true;
-			} else if (visible.length() > 20) {
-				Util.coloredMessage(p, "&c[!] Your nickname is too long");
-				return true;
-			} else if (isNameTaken(visible, p.getUniqueId())) {
-				Util.coloredMessage(p, "&c[!] Your nickname is already in use");
-				return true;
-			}
-
-			nicks.put(p.getUniqueId(), nick);
-			message = "&a[+] Your nickname has been changed to &f" + args[0];
+			finish(p, "&a[+] Your nickname has been reset back to normal");
+			return true;
 		}
 
-		apply(p);
-		Schedulers.async(plugin, this::save);
-		Util.coloredMessage(p, message);
+		// length limits count what players see, not the & codes
+		Nick nick = Nick.of(args[0]);
+		String visible = nick.stripped();
+
+		// coloring changed nothing means there were no codes or gradients in it
+		if (!nick.colored().equals(args[0]) && !p.hasPermission(ColorPerm)) {
+			Util.coloredMessage(p, "&c[!] You can't use colors in your nickname");
+			return true;
+		} else if (args[0].length() > MAX_RAW_LENGTH) {
+			Util.coloredMessage(p, "&c[!] Your nickname has too many color codes");
+			return true;
+		} else if (!VISIBLE_NAME.matcher(visible).matches()) {
+			// same characters as real usernames, so look-alike letters can't dodge the name check
+			Util.coloredMessage(p, "&c[!] Nicknames can only use letters, numbers and _");
+			return true;
+		} else if (visible.length() < 3) {
+			Util.coloredMessage(p, "&c[!] Your nickname is too short");
+			return true;
+		} else if (visible.length() > 20) {
+			Util.coloredMessage(p, "&c[!] Your nickname is too long");
+			return true;
+		} else if (isNameTaken(visible, p)) {
+			Util.coloredMessage(p, "&c[!] Your nickname is already in use");
+			return true;
+		}
+
+		if (nameCheck != NameCheck.REAL || visible.equalsIgnoreCase(p.getName())) {
+			setNick(p, nick);
+			return true;
+		}
+
+		// account lookup is network IO, so it runs off thread and the result comes back to the player
+		realAccountExists(visible).whenComplete((exists, error) -> Schedulers.entity(plugin, p, () -> {
+			if (error != null) {
+				Util.coloredMessage(p, "&c[!] Couldn't check that name right now, try again in a bit");
+			} else if (exists) {
+				Util.coloredMessage(p, "&c[!] That's a real player's name, pick another");
+			} else {
+				setNick(p, nick);
+			}
+		}));
 		return true;
 	}
 
-	private static boolean isNameTaken(String visible, UUID self) {
-		// anyone who has ever joined, online or not, so staff can't be impersonated while offline
-		OfflinePlayer known = Bukkit.getOfflinePlayerIfCached(visible);
-		if (known != null && !known.getUniqueId().equals(self)) {
-			return true;
+	private void setNick(Player p, Nick nick) {
+		nicks.put(p.getUniqueId(), nick);
+		finish(p, "&a[+] Your nickname has been changed to &f" + nick.raw());
+	}
+
+	private void finish(Player p, String message) {
+		apply(p);
+		Schedulers.async(plugin, this::save);
+		Util.coloredMessage(p, message);
+	}
+
+	/** Which player names a nick may not copy. Other players' nicks are always off limits. */
+	enum NameCheck {
+		ANY,    // nothing extra
+		JOINED, // anyone who has played on this server
+		REAL    // JOINED, plus any real Minecraft account (looked up with Mojang)
+	}
+
+	private static NameCheck nameCheck = NameCheck.JOINED;
+
+	private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+	// names don't stop existing, so each one is looked up once. Lower cased.
+	private static final Map<String, Boolean> REAL_NAMES = new ConcurrentHashMap<>();
+
+	private static CompletableFuture<Boolean> realAccountExists(String name) {
+		String key = name.toLowerCase(Locale.ROOT);
+		Boolean cached = REAL_NAMES.get(key);
+		if (cached != null) {
+			return CompletableFuture.completedFuture(cached);
 		}
-		for (Player online : Bukkit.getOnlinePlayers()) {
-			if (!online.getUniqueId().equals(self) && online.getName().equalsIgnoreCase(visible)) {
+
+		// name is already limited to [A-Za-z0-9_], safe in the path
+		HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.mojang.com/users/profiles/minecraft/" + key))
+				.timeout(Duration.ofSeconds(5)).GET().build();
+		return HTTP.sendAsync(request, HttpResponse.BodyHandlers.discarding()).thenApply(response -> {
+			int status = response.statusCode();
+			if (status == 200 || status == 204 || status == 404) {
+				boolean exists = status == 200;
+				REAL_NAMES.put(key, exists);
+				return exists;
+			}
+			// rate limited or Mojang is down: don't guess, and don't cache
+			throw new IllegalStateException("account lookup returned " + status);
+		});
+	}
+
+	private static boolean isNameTaken(String visible, Player self) {
+		if (nameCheck != NameCheck.ANY) {
+			// anyone who has ever joined, online or not, so staff can't be impersonated while offline
+			OfflinePlayer known = Bukkit.getOfflinePlayerIfCached(visible);
+			if (known != null && !known.getUniqueId().equals(self.getUniqueId())) {
 				return true;
+			}
+			for (Player online : Bukkit.getOnlinePlayers()) {
+				if (online != self && online.getName().equalsIgnoreCase(visible)) {
+					return true;
+				}
 			}
 		}
 		for (Map.Entry<UUID, Nick> entry : nicks.entrySet()) {
-			if (!entry.getKey().equals(self) && entry.getValue().stripped().equalsIgnoreCase(visible)) {
+			if (!entry.getKey().equals(self.getUniqueId()) && entry.getValue().stripped().equalsIgnoreCase(visible)) {
 				return true;
 			}
 		}
