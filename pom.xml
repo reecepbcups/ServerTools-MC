@@ -138,6 +138,17 @@
       <resource>
         <directory>src/main/resources/</directory>
         <filtering>true</filtering>
+        <excludes>
+          <exclude>**/*.gz</exclude>
+        </excludes>
+      </resource>
+      <!-- binary, filtering would corrupt it -->
+      <resource>
+        <directory>src/main/resources/</directory>
+        <filtering>false</filtering>
+        <includes>
+          <include>**/*.gz</include>
+        </includes>
       </resource>
     </resources>
 

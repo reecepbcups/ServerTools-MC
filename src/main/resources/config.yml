@@ -289,6 +289,27 @@ Core:
     ViewWarpPerm: tools.viewwarp
     WarpOtherPlayToWarpPerm: tools.warpother
 
+  # /kit /kits /createkit /delkit /showkit /kitreset. Kits live in Kits.yml.
+  Kits:
+    Enabled: true
+    Permission: essentials.kit
+    # each kit needs this + its name, e.g. essentials.kits.tools
+    KitPermPrefix: essentials.kits.
+    OthersPerm: essentials.kit.others
+    ExemptDelayPerm: essentials.kit.exemptdelay
+    CreateKitPerm: essentials.createkit
+    DeleteKitPerm: essentials.delkit
+    ShowKitPerm: essentials.showkit
+    KitResetPerm: essentials.kitreset
+    KitResetOthersPerm: essentials.kitreset.others
+    # put armor straight on if the slot is empty
+    AutoEquip: false
+    # false = refuse the kit when the inventory can't fit it
+    DropItemsIfFull: true
+    # hide one time kits from /kits once used
+    SkipUsedOneTimeKits: false
+    AllowUnsafeEnchantments: false
+
 Commands:
   Countdown:
     Enabled: false

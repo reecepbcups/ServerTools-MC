@@ -239,3 +239,8 @@ commands:
     usage: /<command> [player]
     aliases: [warps, setwarp, delwarp, remwarp, addwarp, warpinfo]
     description: Does warp stuff for warping
+
+  kit:
+    usage: /<command> [kit] [player]
+    aliases: [kits, createkit, delkit, deletekit, showkit, kitreset]
+    description: Claim and manage kits

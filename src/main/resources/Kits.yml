@@ -1,0 +1,40 @@
+# Kits. Same format as an Essentials kits.yml, so you can paste one straight in.
+# On first start, if this file doesn't exist yet, plugins/Essentials/kits.yml is copied here.
+#
+# Syntax: - item[:durability] amount [enchantment:level]... [itemmeta:value]...
+#   item     material name (diamond_pickaxe) or a short alias (dpickaxe)
+#   meta     name:, lore: (lines split by |), unbreakable, player:, color:, itemflags:,
+#            custom-model-data:, title:, author:, power: (fireworks), effect:/power:/duration:/splash: (potions)
+#   _ is a space in names and lore, \_ is a real underscore
+# slot:N item ...      puts the item in that inventory slot if it's empty (36-39 armor, 40 offhand)
+# @<base64>            exact item, this is what /createkit writes
+# $100                 gives money (needs Vault)
+# /command             runs as console. {USERNAME}/{player} = player name, {PLAYER} = display name
+#
+# delay is the cooldown in seconds. 0 = none, -1 = one time only.
+# cost is optional and charged per use (needs Vault).
+# Permission per kit: essentials.kits.<name> (prefix is in config.yml)
+#
+# You can also drop extra .yml files with a kits: section into the kits/ folder.
+
+kits:
+  tools:
+    delay: 10
+    items:
+      - stonesword 1
+      - stoneshovel 1
+      - stonepickaxe 1
+      - stoneaxe 1
+  dtools:
+    delay: 600
+    cost: 500
+    items:
+      - dpickaxe 1 efficiency:1 durability:1 fortune:1 name:&4Gigadrill lore:The_drill_that_&npierces|the_heavens
+      - dshovel 1 digspeed:3 name:Dwarf lore:Diggy|Diggy|Hole
+      - lhelm 1 color:255,255,255 name:Top_Hat lore:Good_day,_Good_day
+      - daxe:780 1
+      - /broadcast {USERNAME} just got some fancy tools!
+  notch:
+    delay: -1
+    items:
+      - playerhead 1 player:Notch

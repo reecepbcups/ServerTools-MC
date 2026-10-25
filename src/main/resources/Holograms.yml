@@ -9,7 +9,7 @@
 # Everything below location + lines is optional, leave it out for the old look.
 #   billboard:       center (always faces you), fixed, vertical, horizontal
 #   yaw / pitch:     direction a fixed board faces. /holo set <name> yaw here
-#   background:      default, #RRGGBB, or #AARRGGBB. #00000000 = no box at all
+#   background:      default, clear (no box at all), #RRGGBB, or #AARRGGBB
 #   see-through:     true = readable through blocks
 #   shadow:          true = drop shadow on the text
 #   update-interval: ticks between placeholder refreshes (20 = 1s), 0 = never
@@ -28,7 +28,7 @@ richest:
   billboard: fixed
   yaw: 180
   pitch: 0
-  background: '#00000000'
+  background: clear
   see-through: false
   shadow: true
   update-interval: 100
