@@ -44,7 +44,7 @@ public final class HologramCommand extends BaseCommand {
             Hologram.BILLBOARD_KEY, List.of("center", "fixed", "vertical", "horizontal"),
             Hologram.YAW_KEY, List.of("here", "0", "90", "180", "-90"),
             Hologram.PITCH_KEY, List.of("here", "0"),
-            Hologram.BACKGROUND_KEY, List.of("default", "#00000000", "#80000000"),
+            Hologram.BACKGROUND_KEY, List.of("default", "clear", "#80000000", "#CC000000"),
             Hologram.SEE_THROUGH_KEY, List.of("true", "false"),
             Hologram.SHADOW_KEY, List.of("true", "false"),
             Hologram.UPDATE_INTERVAL_KEY, List.of("0", "20", "100", "1200"));

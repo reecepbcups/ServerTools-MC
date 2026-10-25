@@ -254,15 +254,18 @@ public record Hologram(String key, List<String> lines, Location location, Appear
     }
 
     /**
-     * {@code default} or {@code #AARRGGBB}; {@code #RRGGBB} is taken as fully opaque.
+     * {@code default}, {@code clear} or {@code #AARRGGBB}; {@code #RRGGBB} is taken as fully opaque.
      */
     public static Color parseColor(final String value) {
         final String hex = value.trim().replace("#", "");
         if (hex.equalsIgnoreCase("default")) {
             return null;
         }
+        if (hex.equalsIgnoreCase("clear")) {
+            return Color.fromARGB(0);
+        }
         if (hex.length() != 6 && hex.length() != 8) {
-            throw new IllegalArgumentException("background must be 'default', #RRGGBB or #AARRGGBB, got " + value);
+            throw new IllegalArgumentException("background must be 'default', 'clear', #RRGGBB or #AARRGGBB, got " + value);
         }
 
         final long argb = Long.parseLong(hex, 16);
