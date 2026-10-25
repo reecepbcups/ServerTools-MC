@@ -322,7 +322,8 @@ Core:
     DropItemsIfFull: true
     # hide one time kits from /kits once used
     SkipUsedOneTimeKits: false
-    AllowUnsafeEnchantments: false
+    # kits are admin made, so levels over vanilla max (sharpness:10) are allowed
+    AllowUnsafeEnchantments: true
 
   # shared by homes, back, rtp and tpa. each one sets its own Warmup/Cooldown (seconds) and Cost
   TeleportSettings:

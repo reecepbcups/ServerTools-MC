@@ -141,7 +141,7 @@ public final class KitFeature implements Unloadable {
         this.autoEquip = config.getBoolean(SECTION + ".AutoEquip", false);
         this.dropIfFull = config.getBoolean(SECTION + ".DropItemsIfFull", true);
         this.skipUsedOneTime = config.getBoolean(SECTION + ".SkipUsedOneTimeKits", false);
-        this.allowUnsafe = config.getBoolean(SECTION + ".AllowUnsafeEnchantments", false);
+        this.allowUnsafe = config.getBoolean(SECTION + ".AllowUnsafeEnchantments", true);
 
         final Map<String, Kit> parsed = new LinkedHashMap<>();
         readKits(new File(this.plugin.getDataFolder(), KITS_FILE), parsed);
