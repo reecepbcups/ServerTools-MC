@@ -1,20 +1,23 @@
 package sh.reece.cmds;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
@@ -22,16 +25,37 @@ import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 
 // minimal vanish: hides the sender from everyone lacking `permission`, and hides
-// newly joining players who lack it from anyone currently vanished. Does not touch
-// join/quit messages, mob AI, or item drops - those are left to a dedicated plugin
-// if needed.
+// newly joining players who lack it from anyone currently vanished. Vanish survives
+// relogs (not restarts). Does not touch mob AI or item drops, those are left to a
+// dedicated plugin if needed.
 public class Vanish extends BaseCommand implements Listener {
 
 	private static final String METADATA_KEY = "vanished";
-	private final Set<UUID> vanished = new HashSet<>();
+	// concurrent since the action bar timer reads it off the entity threads (Folia).
+	private final Set<UUID> vanished = ConcurrentHashMap.newKeySet();
+	private final boolean silentJoinQuit;
+	private final boolean fakeMessages;
 
 	public Vanish(Main instance) {
 		super(instance, "Misc.Vanish", "vanish");
+		silentJoinQuit = plugin.getConfig().getBoolean(section + ".SilentJoinQuit", true);
+		fakeMessages = plugin.getConfig().getBoolean(section + ".FakeJoinQuitMessages", false);
+		if (isEnabled() && plugin.getConfig().getBoolean(section + ".ActionBar", true)) {
+			Schedulers.globalTimer(plugin, this::sendActionBars, 40L, 40L);
+		}
+	}
+
+	private void sendActionBars() {
+		if (vanished.isEmpty()) {
+			return;
+		}
+		var bar = LegacyComponentSerializer.legacySection().deserialize(configUtils.lang("VANISH_ACTIONBAR"));
+		for (UUID id : vanished) {
+			Player p = Bukkit.getPlayer(id);
+			if (p != null) {
+				Schedulers.entity(plugin, p, () -> p.sendActionBar(bar));
+			}
+		}
 	}
 
 	@Override
@@ -59,15 +83,28 @@ public class Vanish extends BaseCommand implements Listener {
 
 	private void vanish(Player p) {
 		vanished.add(p.getUniqueId());
-		p.setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, true));
+		hideFromOthers(p);
+		broadcastFake(p, "VANISH_FAKE_QUIT");
+		Util.coloredMessage(p, configUtils.lang("VANISH_ENABLED"));
+	}
 
+	private void hideFromOthers(Player p) {
+		p.setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, true));
 		for (Player online : Bukkit.getOnlinePlayers()) {
 			if (online != p && !hasPermission(online, permission)) {
 				Schedulers.entity(plugin, online, () -> online.hidePlayer(plugin, p));
 			}
 		}
+	}
 
-		Util.coloredMessage(p, configUtils.lang("VANISH_ENABLED"));
+	private void broadcastFake(Player p, String langKey) {
+		if (!fakeMessages) {
+			return;
+		}
+		String msg = configUtils.lang(langKey).replace("%player%", p.getName());
+		for (Player online : Bukkit.getOnlinePlayers()) {
+			online.sendMessage(msg);
+		}
 	}
 
 	private void unvanish(Player p) {
@@ -78,29 +115,41 @@ public class Vanish extends BaseCommand implements Listener {
 			Schedulers.entity(plugin, online, () -> online.showPlayer(plugin, p));
 		}
 
+		broadcastFake(p, "VANISH_FAKE_JOIN");
 		Util.coloredMessage(p, configUtils.lang("VANISH_DISABLED"));
 	}
 
-	@EventHandler(ignoreCancelled = true)
+	// HIGHEST so silencing wins over DisableJLMsg's custom messages.
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onJoin(PlayerJoinEvent e) {
 		if (vanished.isEmpty()) {
 			return;
 		}
 		Player joined = e.getPlayer();
+		if (vanished.contains(joined.getUniqueId())) {
+			if (silentJoinQuit) {
+				e.setJoinMessage(null);
+			}
+			hideFromOthers(joined);
+			Util.coloredMessage(joined, configUtils.lang("VANISH_ENABLED"));
+		}
 		if (hasPermission(joined, permission)) {
 			return;
 		}
 
 		for (UUID id : vanished) {
 			Player vanishedPlayer = Bukkit.getPlayer(id);
-			if (vanishedPlayer != null) {
+			if (vanishedPlayer != null && vanishedPlayer != joined) {
 				Schedulers.entity(plugin, joined, () -> joined.hidePlayer(plugin, vanishedPlayer));
 			}
 		}
 	}
 
-	@EventHandler(ignoreCancelled = true)
+	// kept in `vanished` so the player is still hidden when they relog.
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onQuit(PlayerQuitEvent e) {
-		vanished.remove(e.getPlayer().getUniqueId());
+		if (silentJoinQuit && vanished.contains(e.getPlayer().getUniqueId())) {
+			e.setQuitMessage(null);
+		}
 	}
 }
