@@ -39,6 +39,48 @@ public final class TimeUtil {
 		return consumed == trimmed.length() ? seconds : -1;
 	}
 
+	/**
+	 * Minecraft time of day for /time and /ptime: day, noon, sunset, night, midnight, sunrise,
+	 * ticks (6000 or 6000t) or a clock time (14:30). Returns -1 when it can't be read.
+	 */
+	public static long parseWorldTime(final String value) {
+		if (value == null) return -1;
+
+		final String v = value.trim().toLowerCase();
+		switch (v) {
+			case "day": case "morning": return 1000;
+			case "noon": return 6000;
+			case "sunset": case "dusk": case "evening": return 12000;
+			case "night": return 13000;
+			case "midnight": return 18000;
+			case "sunrise": case "dawn": return 23000;
+			default: break;
+		}
+
+		final int colon = v.indexOf(':');
+		try {
+			if (colon > 0) {
+				final int hours = Integer.parseInt(v.substring(0, colon));
+				final int minutes = Integer.parseInt(v.substring(colon + 1));
+				if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return -1;
+				// tick 0 is 06:00
+				return ((hours + 18) % 24) * 1000L + minutes * 1000L / 60;
+			}
+			final long ticks = Long.parseLong(v.endsWith("t") ? v.substring(0, v.length() - 1) : v);
+			return ticks < 0 ? -1 : ticks % 24000;
+		} catch (final NumberFormatException e) {
+			return -1;
+		}
+	}
+
+	/** World ticks as a clock, e.g. 6000 -> "12:00". */
+	public static String formatWorldTime(final long ticks) {
+		final long dayTicks = ((ticks % 24000) + 24000) % 24000;
+		final long hours = (dayTicks / 1000 + 6) % 24;
+		final long minutes = (dayTicks % 1000) * 60 / 1000;
+		return String.format("%02d:%02d", hours, minutes);
+	}
+
 	/** Formats seconds back into a short human string, e.g. 930 -> "15m 30s". */
 	public static String formatDuration(final long totalSeconds) {
 		if (totalSeconds <= 0) return "0s";

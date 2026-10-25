@@ -46,6 +46,26 @@ class EconomyStorageTest {
 		assertFalse(s.has(ALICE));
 	}
 
+	// --- baltop ---------------------------------------------------------------
+
+	@Test
+	void topReordersOnTheNextRead() throws Exception {
+		EconomyStorage s = fresh(0);
+		s.set(ALICE, "Alice", 500);
+		s.set(BOB, "Bob", 300);
+		s.createAccount(CAROL, "Carol");
+		assertEquals(List.of(ALICE, BOB, CAROL), List.copyOf(s.top(10).keySet()));
+
+		// $0 straight to first, no stale entry left behind
+		s.deposit(CAROL, "Carol", 1000);
+		assertEquals(List.of(CAROL, ALICE, BOB), List.copyOf(s.top(10).keySet()));
+		assertEquals(1000L, s.top(1).get(CAROL));
+
+		s.transfer(CAROL, "Carol", BOB, "Bob", 900);
+		assertEquals(List.of(BOB, ALICE, CAROL), List.copyOf(s.top(3).keySet()));
+		assertEquals(2, s.top(2).size());
+	}
+
 	// --- pay / transfer: the headline cases ---------------------------------
 
 	@Test

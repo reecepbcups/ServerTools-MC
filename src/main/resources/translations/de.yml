@@ -1,6 +1,9 @@
 # Thanks to https://github.com/toohard2explain
 
 VOUCHER_GUI_NAME: "&lGutscheine & Bundles ansehen"
+VOUCHER_NO_PERMISSION: "&c&l[!]&c Du brauchst &f%permission% &cum diesen Gutschein einzulösen."
+VOUCHER_ON_COOLDOWN: "&c&l[!]&c Du kannst diesen Gutschein in &f%seconds%s &cwieder einlösen."
+VOUCHER_LIMIT_REACHED: "&c&l[!]&c Du hast diesen Gutschein bereits &f%limit% &cmal eingelöst."
 NO_COLONS_IN_COMMANDS: "&7[ServerTools] &fDoppelpunkte sind in Commands nicht erlaubt!"
 
 TP_ALL: "&f&n[!]&f TP-All wurde von %player% ausgeführt &7&o((5 Sekunden Verzögerung))"
@@ -121,6 +124,7 @@ TELEPORT_SELF: "&cDu kannst dich nicht, zu dir selbst teleportieren."
 TELEPORT_TO: "&aTeleportiere zu &f%player%" 
 TELEPORT_SENT_REQUEST: "&fTeleportationsanfrage an &a%player% &fgesendet"
 TELEPORT_GOT_REQUEST1: "\n&n%player%&f hat dir eine Teleportationsanfrage geschickt"
+TELEPORT_GOT_HERE_REQUEST1: "\n&n%player%&f möchte, dass du dich zu ihm teleportierst"
 TELEPORT_GOT_REQUEST2: "         &fSchreibe &a/tpaccept&f oder&c /tpdeny\n"
 TELEPORT_TIMEOUT: "Deine Teleportationsanfrage ist abgelaufen."
 
@@ -141,3 +145,6 @@ VISIBILITY_EVERYONE: "&a✓ &fZeige alle Spieler"
 
 VANISH_ENABLED: "&a✓ &fDu bist jetzt unsichtbar"
 VANISH_DISABLED: "&c✖ &fDu bist nicht mehr unsichtbar"
+VANISH_FAKE_QUIT: "&e%player% hat das Spiel verlassen"
+VANISH_FAKE_JOIN: "&e%player% hat das Spiel betreten"
+VANISH_ACTIONBAR: "&b&lUNSICHTBAR"

@@ -1,4 +1,7 @@
 VOUCHER_GUI_NAME: "&lViewing Vouchers & Bundles"
+VOUCHER_NO_PERMISSION: "&c&l[!]&c You need &f%permission% &cto redeem this voucher."
+VOUCHER_ON_COOLDOWN: "&c&l[!]&c You can redeem this again in &f%seconds%s&c."
+VOUCHER_LIMIT_REACHED: "&c&l[!]&c You already redeemed this voucher the max of &f%limit% &ctimes."
 NO_COLONS_IN_COMMANDS: "&7[ServerTools] &fColons are not allowed in commands!"
 
 TP_ALL: "&f&n[!]&f TP-All initiated by %player% &7&o((5 Sec Delay))"
@@ -119,6 +122,7 @@ TELEPORT_SELF: "&cYou can not teleport yourself."
 TELEPORT_TO: "&aTeleported to &f%player%" 
 TELEPORT_SENT_REQUEST: "&fTeleport request sent to &a%player%"
 TELEPORT_GOT_REQUEST1: "\n&n%player%&f has sent you a teleport request"
+TELEPORT_GOT_HERE_REQUEST1: "\n&n%player%&f wants you to teleport to them"
 TELEPORT_GOT_REQUEST2: "         &fType &a/tpaccept&f or&c /tpdeny\n"
 TELEPORT_TIMEOUT: "Your teleport request timed out."
 
@@ -139,3 +143,6 @@ VISIBILITY_EVERYONE: "&a✓ &fShowing all players"
 
 VANISH_ENABLED: "&a✓ &fYou are now vanished"
 VANISH_DISABLED: "&c✖ &fYou are no longer vanished"
+VANISH_FAKE_QUIT: "&e%player% left the game"
+VANISH_FAKE_JOIN: "&e%player% joined the game"
+VANISH_ACTIONBAR: "&b&lVANISHED"

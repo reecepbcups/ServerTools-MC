@@ -1,5 +1,6 @@
 package sh.reece.core.hologram;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
 import sh.reece.tools.Unloadable;
@@ -22,6 +23,7 @@ public final class HologramFeature implements Unloadable {
     private final Main plugin;
     private final ConfigUtils configUtils;
     private final List<Hologram> holograms = new ArrayList<>();
+    private final List<ScheduledTask> refreshTasks = new ArrayList<>();
     private final boolean enabled;
 
     public HologramFeature(final Main plugin) {
@@ -57,6 +59,7 @@ public final class HologramFeature implements Unloadable {
      * Takes down whatever is up, re-reads {@code Holograms.yml}, and draws the result.
      */
     public void load() {
+        cancelRefreshTasks();
         final List<Hologram> parsed = Hologram.parseConfig(this.configUtils.getConfigFile(CONFIG_FILE));
         final Set<String> keys = parsed.stream().map(Hologram::key).collect(Collectors.toSet());
 
@@ -80,11 +83,22 @@ public final class HologramFeature implements Unloadable {
                 Hologram.warn(hologram.key(), "references a world that is not loaded, it will not be drawn");
             }
             this.holograms.add(hologram);
+
+            final ScheduledTask refresh = hologram.scheduleRefresh(this.plugin);
+            if (refresh != null) {
+                this.refreshTasks.add(refresh);
+            }
         }
+    }
+
+    private void cancelRefreshTasks() {
+        this.refreshTasks.forEach(ScheduledTask::cancel);
+        this.refreshTasks.clear();
     }
 
     @Override
     public void onUnload() {
+        cancelRefreshTasks();
         this.holograms.forEach((hologram) -> hologram.despawn(this.plugin));
         this.holograms.clear();
     }

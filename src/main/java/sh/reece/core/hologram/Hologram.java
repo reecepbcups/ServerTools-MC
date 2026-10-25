@@ -2,7 +2,9 @@ package sh.reece.core.hologram;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -14,24 +16,60 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Transformation;
+import org.joml.Vector3f;
+import sh.reece.core.economy.Money;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.TextUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static net.kyori.adventure.text.Component.text;
 
 /**
  * One hologram from {@code Holograms.yml}, and the displays that draw it.
  */
-public record Hologram(String key, List<Component> lines, Location location) {
+public record Hologram(String key, List<String> lines, Location location, Appearance appearance, long updateInterval) {
 
     public static final String LOCATION_KEY = "location";
     public static final String TEXT_KEY = "lines";
+    public static final String BILLBOARD_KEY = "billboard";
+    public static final String YAW_KEY = "yaw";
+    public static final String PITCH_KEY = "pitch";
+    public static final String BACKGROUND_KEY = "background";
+    public static final String SEE_THROUGH_KEY = "see-through";
+    public static final String SHADOW_KEY = "shadow";
+    public static final String UPDATE_INTERVAL_KEY = "update-interval";
     public static final NamespacedKey IDENTIFIER_KEY = new NamespacedKey("servertools", "hologram");
+    private static final NamespacedKey LINE_KEY = new NamespacedKey("servertools", "hologram_line");
+
+    // %baltop_<rank>_name% and %baltop_<rank>_balance%, ranks start at 1
+    private static final Pattern BALTOP = Pattern.compile("%baltop_(\\d{1,3})_(name|balance)%");
+    private static final Map<UUID, String> NAMES = new ConcurrentHashMap<>();
+
+    public static final String BRIGHTNESS_KEY = "brightness";
+    public static final String VIEW_DISTANCE_KEY = "view-distance";
+    public static final String SCALE_KEY = "scale";
+
+    /**
+     * How each line's display looks. A null background keeps the vanilla grey box, a null brightness
+     * takes the light of the block it sits in, a viewRange of 0 keeps the vanilla distance.
+     */
+    public record Appearance(Display.Billboard billboard, float yaw, float pitch, Color background,
+                             boolean seeThrough, boolean shadow, Display.Brightness brightness,
+                             float viewRange, Vector3f scale) {
+        public static final Appearance DEFAULT = new Appearance(Display.Billboard.CENTER, 0F, 0F, null,
+                false, false, null, 0F, new Vector3f(1F, 1F, 1F));
+    }
 
     /**
      * Stored Y values were authored against an ArmorStand nameplate, which floated ~2 above it.
@@ -56,7 +94,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
      *
      * @return false if the world is not loaded; true only means the draw was scheduled
      */
-    public boolean spawn(final Plugin plugin) {
+    public boolean spawn(final Main plugin) {
         return spawn(plugin, false);
     }
 
@@ -64,7 +102,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
      * @param sweepLegacy also removes untagged displays drawn by the pre-rewrite class; done once on the
      *                    first load after the version bump, see {@link HologramFeature#load()}
      */
-    public boolean spawn(final Plugin plugin, final boolean sweepLegacy) {
+    public boolean spawn(final Main plugin, final boolean sweepLegacy) {
         final World world = this.location.getWorld();
         if (world == null) {
             return false;
@@ -75,7 +113,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
             if (sweepLegacy) {
                 eraseLegacy(world);
             }
-            draw(world);
+            draw(world, Template.of(this.lines).render(plugin));
         });
         return true;
     }
@@ -83,7 +121,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
     /**
      * Removes only displays tagged with {@link #IDENTIFIER_KEY} for this key.
      */
-    public void despawn(final Plugin plugin) {
+    public void despawn(final Main plugin) {
         final World world = this.location.getWorld();
         if (world == null) {
             return;
@@ -92,29 +130,95 @@ public record Hologram(String key, List<Component> lines, Location location) {
         loadLocationAndExecute(plugin, () -> erase(world));
     }
 
-    private void draw(final World world) {
-        Location current = this.location();
-        for (final Component line : this.lines) {
-            current = current.clone().subtract(0, LINE_SPACING, 0);
+    /**
+     * Re-renders the lines into the displays already up, so placeholders stay live without respawning.
+     *
+     * @return null when {@code update-interval} is off
+     */
+    public ScheduledTask scheduleRefresh(final Main plugin) {
+        final World world = this.location.getWorld();
+        if (this.updateInterval <= 0 || world == null) {
+            return null;
+        }
+        // nothing to refresh when every line is plain text
+        final Template template = Template.of(this.lines);
+        if (!template.dynamic()) {
+            return null;
+        }
 
-            // a blank line is a gap: it moves the cursor down but gets no entity
-            if (Component.empty().equals(line)) {
+        final int chunkX = this.location.getBlockX() >> 4;
+        final int chunkZ = this.location.getBlockZ() >> 4;
+        return Bukkit.getRegionScheduler().runAtFixedRate(plugin, this.location, (task) -> {
+            // unloaded chunk means nobody is looking, so skip the placeholder work too
+            if (world.isChunkLoaded(chunkX, chunkZ)) {
+                refresh(world, template.render(plugin));
+            }
+        }, this.updateInterval, this.updateInterval);
+    }
+
+    private void draw(final World world, final List<Component> rendered) {
+        Location current = this.location();
+        current.setYaw(this.appearance.yaw());
+        current.setPitch(this.appearance.pitch());
+        for (int i = 0; i < this.lines.size(); i++) {
+            // bigger text needs taller rows or the lines overlap
+            current = current.clone().subtract(0, LINE_SPACING * this.appearance.scale().y(), 0);
+
+            // a blank line is a gap: it moves the cursor down but gets no entity. Judged on the raw
+            // line so a placeholder that resolves empty keeps its slot for refresh
+            if (this.lines.get(i).isEmpty()) {
                 continue;
             }
 
+            final int index = i;
             world.spawn(current, TextDisplay.class, (display) -> {
-                display.setBillboard(Display.Billboard.CENTER);
-                display.text(line);
+                display.setBillboard(this.appearance.billboard());
+                if (this.appearance.background() != null) {
+                    display.setDefaultBackground(false);
+                    display.setBackgroundColor(this.appearance.background());
+                }
+                display.setSeeThrough(this.appearance.seeThrough());
+                display.setShadowed(this.appearance.shadow());
+                if (this.appearance.brightness() != null) {
+                    display.setBrightness(this.appearance.brightness());
+                }
+                if (this.appearance.viewRange() > 0) {
+                    display.setViewRange(this.appearance.viewRange());
+                }
+                final Transformation base = display.getTransformation();
+                display.setTransformation(new Transformation(base.getTranslation(), base.getLeftRotation(),
+                        this.appearance.scale(), base.getRightRotation()));
+                display.text(rendered.get(index));
                 display.getPersistentDataContainer().set(IDENTIFIER_KEY, PersistentDataType.STRING, this.key);
+                display.getPersistentDataContainer().set(LINE_KEY, PersistentDataType.INTEGER, index);
             });
         }
     }
 
-    private void erase(final World world) {
-        world.getNearbyEntitiesByType(TextDisplay.class, this.location, SWEEP_XZ, SWEEP_Y, (display) -> {
+    private void refresh(final World world, final List<Component> rendered) {
+        for (final TextDisplay display : tagged(world)) {
+            final Integer index = display.getPersistentDataContainer().get(LINE_KEY, PersistentDataType.INTEGER);
+            if (index == null || index >= rendered.size()) {
+                continue;
+            }
+
+            // skip unchanged text so idle boards send no metadata packets
+            final Component line = rendered.get(index);
+            if (!line.equals(display.text())) {
+                display.text(line);
+            }
+        }
+    }
+
+    private Collection<TextDisplay> tagged(final World world) {
+        return world.getNearbyEntitiesByType(TextDisplay.class, this.location, SWEEP_XZ, SWEEP_Y, (display) -> {
             final PersistentDataContainer container = display.getPersistentDataContainer();
             return this.key.equals(container.get(IDENTIFIER_KEY, PersistentDataType.STRING));
-        }).forEach(Entity::remove);
+        });
+    }
+
+    private void erase(final World world) {
+        tagged(world).forEach(Entity::remove);
     }
 
     private void eraseLegacy(final World world) {
@@ -131,7 +235,7 @@ public record Hologram(String key, List<Component> lines, Location location) {
         }).forEach(Entity::remove);
     }
 
-    private void loadLocationAndExecute(final Plugin plugin, final Runnable runnable) {
+    private void loadLocationAndExecute(final Main plugin, final Runnable runnable) {
         World world = this.location.getWorld();
         if (world == null) {
             return;
@@ -167,13 +271,142 @@ public record Hologram(String key, List<Component> lines, Location location) {
         final World world = Bukkit.getWorld(locationParts[0]);
         final Location location = new Location(world, Double.parseDouble(locationParts[1]), Double.parseDouble(locationParts[2]), Double.parseDouble(locationParts[3]));
 
-        final List<Component> lines = section.getStringList(TEXT_KEY).stream().map(Hologram::render).toList();
+        final Appearance appearance = new Appearance(
+                Display.Billboard.valueOf(section.getString(BILLBOARD_KEY, "center").trim().toUpperCase(Locale.ROOT)),
+                (float) section.getDouble(YAW_KEY, 0D),
+                (float) section.getDouble(PITCH_KEY, 0D),
+                parseColor(section.getString(BACKGROUND_KEY, "default")),
+                section.getBoolean(SEE_THROUGH_KEY, false),
+                section.getBoolean(SHADOW_KEY, false),
+                parseBrightness(section.getString(BRIGHTNESS_KEY)),
+                // view range is in units of 64 blocks
+                (float) Math.max(0D, section.getDouble(VIEW_DISTANCE_KEY, 0D)) / 64F,
+                parseScale(section.getString(SCALE_KEY)));
 
-        return new Hologram(key, lines, location);
+        return new Hologram(key, section.getStringList(TEXT_KEY), location, appearance,
+                section.getLong(UPDATE_INTERVAL_KEY, 0L));
+    }
+
+    /** {@code 15} for both block and sky light, or {@code block,sky}. Null keeps the world's light. */
+    public static Display.Brightness parseBrightness(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        final String[] parts = value.split(",");
+        final int block = Integer.parseInt(parts[0].trim());
+        final int sky = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : block;
+        if (block < 0 || block > 15 || sky < 0 || sky > 15) {
+            throw new IllegalArgumentException("brightness must be 0 to 15, got " + value);
+        }
+        return new Display.Brightness(block, sky);
+    }
+
+    /** {@code 1.5} for every axis, or {@code x,y,z}. */
+    public static Vector3f parseScale(final String value) {
+        if (value == null || value.isBlank()) {
+            return new Vector3f(1F, 1F, 1F);
+        }
+        final String[] parts = value.split(",");
+        if (parts.length == 1) {
+            final float all = Float.parseFloat(parts[0].trim());
+            return new Vector3f(all, all, all);
+        }
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("scale must be one number or x,y,z, got " + value);
+        }
+        return new Vector3f(Float.parseFloat(parts[0].trim()), Float.parseFloat(parts[1].trim()),
+                Float.parseFloat(parts[2].trim()));
+    }
+
+    /**
+     * {@code default}, {@code clear} or {@code #AARRGGBB}; {@code #RRGGBB} is taken as fully opaque.
+     */
+    public static Color parseColor(final String value) {
+        final String hex = value.trim().replace("#", "");
+        if (hex.equalsIgnoreCase("default")) {
+            return null;
+        }
+        if (hex.equalsIgnoreCase("clear")) {
+            return Color.fromARGB(0);
+        }
+        if (hex.length() != 6 && hex.length() != 8) {
+            throw new IllegalArgumentException("background must be 'default', 'clear', #RRGGBB or #AARRGGBB, got " + value);
+        }
+
+        final long argb = Long.parseLong(hex, 16);
+        return Color.fromARGB((int) (hex.length() == 6 ? argb | 0xFF000000L : argb));
     }
 
     static void warn(final String key, final String problem) {
         TextUtil.consoleMessage(TextUtil.color("<red>[!] Hologram <white>").append(text(key)).append(TextUtil.color("<red> ")).append(text(problem)));
+    }
+
+    /**
+     * Lines without a % never change, so they are parsed once here. Only the rest are rendered per refresh.
+     *
+     * @param fixed   parsed line, or null when the line has placeholders
+     * @param maxRank deepest %baltop_N_...% rank used, 0 for none
+     */
+    private record Template(List<String> lines, Component[] fixed, boolean dynamic, int maxRank) {
+
+        static Template of(final List<String> lines) {
+            final Component[] fixed = new Component[lines.size()];
+            boolean dynamic = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).indexOf('%') >= 0) {
+                    dynamic = true;
+                } else {
+                    fixed[i] = Hologram.render(lines.get(i));
+                }
+            }
+            return new Template(lines, fixed, dynamic, Hologram.maxRank(lines));
+        }
+
+        List<Component> render(final Main plugin) {
+            final Map<UUID, Long> top = this.maxRank > 0 && plugin.getEconomyStorage() != null
+                    ? plugin.getEconomyStorage().top(this.maxRank) : Map.of();
+            final List<UUID> ranked = List.copyOf(top.keySet());
+
+            final List<Component> out = new ArrayList<>(this.lines.size());
+            for (int i = 0; i < this.lines.size(); i++) {
+                out.add(this.fixed[i] != null ? this.fixed[i]
+                        : Hologram.render(replaceBalTop(this.lines.get(i), ranked, top, plugin.getCurrencySymbol())));
+            }
+            return out;
+        }
+    }
+
+    private static int maxRank(final List<String> lines) {
+        int max = 0;
+        for (final String line : lines) {
+            final Matcher matcher = BALTOP.matcher(line);
+            while (matcher.find()) {
+                max = Math.max(max, Integer.parseInt(matcher.group(1)));
+            }
+        }
+        return max;
+    }
+
+    private static String replaceBalTop(final String line, final List<UUID> ranked, final Map<UUID, Long> top,
+                                        final String symbol) {
+        if (!line.contains("%baltop_")) {
+            return line;
+        }
+
+        return BALTOP.matcher(line).replaceAll((match) -> {
+            final int rank = Integer.parseInt(match.group(1));
+            if (rank < 1 || rank > ranked.size()) {
+                return match.group(2).equals("name") ? "---" : "";
+            }
+
+            final UUID id = ranked.get(rank - 1);
+            if (match.group(2).equals("balance")) {
+                return Matcher.quoteReplacement(Money.format(top.get(id), symbol));
+            }
+            // offline name lookups can hit the disk, and the top players rarely change
+            final String name = NAMES.computeIfAbsent(id, (key) -> Bukkit.getOfflinePlayer(key).getName());
+            return Matcher.quoteReplacement(name == null ? id.toString() : name);
+        });
     }
 
     private static Component render(final String line) {

@@ -366,6 +366,10 @@ public class Util {
 	private static final Pattern GRADIENT_PATTERN = Pattern.compile("(?i)<gradient:(#[a-fA-F0-9]{6}(?::#[a-fA-F0-9]{6})+)>(.*?)</gradient>");
 
 	private static String applyGradients(String message) {
+		// called on nearly every message, skip the regex when there's no tag at all
+		if (message.indexOf('<') < 0) {
+			return message;
+		}
 		Matcher matcher = GRADIENT_PATTERN.matcher(message);
 		if (!matcher.find()) {
 			return message;
@@ -403,14 +407,16 @@ public class Util {
 		int r = (int) Math.round(((from >> 16) & 0xFF) + t * (((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)));
 		int g = (int) Math.round(((from >> 8) & 0xFF) + t * (((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)));
 		int b = (int) Math.round((from & 0xFF) + t * ((to & 0xFF) - (from & 0xFF)));
-		return String.format("&#%02x%02x%02x", r, g, b);
+		// runs per character, String.format is far too slow here
+		String hex = Integer.toHexString((r << 16) | (g << 8) | b);
+		return "&#" + "000000".substring(hex.length()) + hex;
 	}
 
 	public static String color(String message) {
-		if (CHAT_COLOR_OF != null) {
+		if (CHAT_COLOR_OF != null && message != null) {
 			message = applyGradients(message);
-			Matcher matcher = HEX_PATTERN.matcher(message);
-			if (matcher.find()) {
+			Matcher matcher = message.indexOf('#') >= 0 ? HEX_PATTERN.matcher(message) : null;
+			if (matcher != null && matcher.find()) {
 				StringBuilder sb = new StringBuilder(message.length() + 32);
 				try {
 					do {

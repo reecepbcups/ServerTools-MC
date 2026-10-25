@@ -5,9 +5,42 @@
 # Trying to use a placeholder such as %player_killstats% would not work.
 # If you need support for that, please continue to use holo displays
 # and disable in ServerTools config.yml for Holograms: false.
+#
+# Everything below location + lines is optional, leave it out for the old look.
+#   billboard:       center (always faces you), fixed, vertical, horizontal
+#   yaw / pitch:     direction a fixed board faces. /holo set <name> yaw here
+#   background:      default, clear (no box at all), #RRGGBB, or #AARRGGBB
+#   see-through:     true = readable through blocks
+#   shadow:          true = drop shadow on the text
+#   update-interval: ticks between placeholder refreshes (20 = 1s), 0 = never
+#   brightness:      15 = full bright like it's lit (or block,sky e.g. 15,15). Leave out to use the world's light
+#   view-distance:   blocks away it can be seen from (vanilla is about 64)
+#   scale:           1.5 makes it 50% bigger, or x,y,z e.g. 2,2,1
+#
+# Built in leaderboard placeholders (rank 1 to 999):
+#   %baltop_1_name%  %baltop_1_balance%
 
 skyblock:
   location: world, 32.500, 127.500, -568.500
   lines:
   - '&7&k||&r &f&lSKYBLOCK &7&k||'
   - '&fClick to connect'
+
+richest:
+  location: world, 38.500, 127.500, -568.500
+  billboard: fixed
+  yaw: 180
+  pitch: 0
+  background: clear
+  see-through: false
+  shadow: true
+  update-interval: 100
+  lines:
+  - '&6&lRICHEST PLAYERS'
+  - '&7Online: &f%server_online%'
+  - ''
+  - '&e#1 &f%baltop_1_name% &7- &a%baltop_1_balance%'
+  - '&e#2 &f%baltop_2_name% &7- &a%baltop_2_balance%'
+  - '&e#3 &f%baltop_3_name% &7- &a%baltop_3_balance%'
+  - '&e#4 &f%baltop_4_name% &7- &a%baltop_4_balance%'
+  - '&e#5 &f%baltop_5_name% &7- &a%baltop_5_balance%'

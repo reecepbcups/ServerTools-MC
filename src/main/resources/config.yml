@@ -60,6 +60,9 @@ Disabled:
     Enabled: true
   DisableJoinLeaveMsg:
     Enabled: true
+    # Leave empty to hide. Placeholders: %player%, %displayname%, config vars, PAPI.
+    JoinMessage: ''
+    QuitMessage: ''
   DisableDisconnectSpamKick:
     Enabled: true
   DisableHunger:
@@ -151,6 +154,22 @@ Disabled:
 Core:
   Ping:
     Enabled: false
+  # /ptime <day/night/12:00/reset> [player], a time of day only you see
+  PlayerTime:
+    Enabled: true
+    Permission: essentials.ptime
+    OthersPerm: essentials.ptime.others
+  # /time shows every world, /time <day/12:00/add 1000> [world/all] changes it
+  Time:
+    Enabled: true
+    Permission: essentials.time
+    SetPerm: essentials.time.set
+  # /ignore <player> hides their chat and drops their /msg. /ignore lists who
+  Ignore:
+    Enabled: true
+    Permission: essentials.ignore
+    # staff with this can't be ignored
+    ExemptPerm: essentials.ignoreexempt
   Realname:
     Enabled: false
     Permission: essentials.realname
@@ -172,6 +191,13 @@ Core:
     Permission: nickname.use
     prefix: '~'
     prefixBypass: nickname.prefixbypass
+    # needed for & codes, hex and gradients in a nick
+    colorPerm: nickname.color
+    # names a nick can't copy (other players' nicks are always blocked):
+    #   any     no extra checks
+    #   joined  anyone who has played on this server
+    #   real    joined + any real Minecraft account, like Notch (asks Mojang, cached)
+    NameCheck: joined
   Top:
     Enabled: true
     Permission: essentials.top
@@ -262,12 +288,24 @@ Core:
       TP: essentials.tp
       TPA: essentials.tpa
       TPHere: essentials.tphere
+      TPAHere: tools.tpahere
+    # unanswered /tpa and /tpahere requests drop after this
+    RequestExpireSeconds: 60
+    # warmup is on whoever moves, cooldown and cost on whoever sent the request
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
   Spawn:
     Enabled: true
     CommandPermission: spawn.use
     Permission: spawn.admin
     onJoinInstantly: false
     spawnFirstUniqueJoinOnly: true
+    # send players to /spawn when they die
+    respawnAtSpawn:
+      Enabled: true
+      # if true, players with a bed or respawn anchor respawn there instead
+      respectBedAndAnchor: true
     teleportWhenInVoid:
       Enabled: true
       disabledWorlds:
@@ -280,6 +318,103 @@ Core:
     SetWarpPerm: tools.setwarp
     ViewWarpPerm: tools.viewwarp
     WarpOtherPlayToWarpPerm: tools.warpother
+
+  # /kit /kits /createkit /delkit /showkit /kitreset. Kits live in Kits.yml.
+  Kits:
+    Enabled: true
+    Permission: essentials.kit
+    # each kit needs this + its name, e.g. essentials.kits.tools
+    KitPermPrefix: essentials.kits.
+    OthersPerm: essentials.kit.others
+    ExemptDelayPerm: essentials.kit.exemptdelay
+    CreateKitPerm: essentials.createkit
+    DeleteKitPerm: essentials.delkit
+    ShowKitPerm: essentials.showkit
+    KitResetPerm: essentials.kitreset
+    KitResetOthersPerm: essentials.kitreset.others
+    # put armor straight on if the slot is empty
+    AutoEquip: false
+    # false = refuse the kit when the inventory can't fit it
+    DropItemsIfFull: true
+    # hide one time kits from /kits once used
+    SkipUsedOneTimeKits: false
+    # kits are admin made, so levels over vanilla max (sharpness:10) are allowed
+    AllowUnsafeEnchantments: true
+
+  # shared by homes, back, rtp and tpa. each one sets its own Warmup/Cooldown (seconds) and Cost
+  TeleportSettings:
+    CancelWarmupOnMove: true
+    CancelWarmupOnDamage: true
+    BypassWarmupPerm: tools.teleport.bypass.warmup
+    BypassCooldownPerm: tools.teleport.bypass.cooldown
+    BypassCostPerm: tools.teleport.bypass.cost
+
+  # /home [name], /homes, /sethome [name], /delhome <name>
+  # staff with OthersPerm can use player:name, e.g. /home steve:base
+  Homes:
+    Enabled: true
+    Permission: tools.home
+    OthersPerm: tools.home.others
+    # everyone gets 'default'. other tiers need LimitPermPrefix + tier, e.g. tools.homes.limit.vip
+    # highest tier wins, -1 = unlimited
+    LimitPermPrefix: tools.homes.limit.
+    Limits:
+      default: 3
+      vip: 5
+      mvp: 10
+      staff: -1
+    DisabledWorlds: []
+    # homes live in memory, Homes.yml is only written when something changed
+    SaveIntervalMinutes: 5
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
+
+  # /back to where you were before your last teleport
+  Back:
+    Enabled: true
+    Permission: tools.back
+    # with this you can also /back to where you died
+    OnDeathPerm: tools.back.ondeath
+    # no /back point is saved when leaving these worlds
+    DisabledWorlds: []
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
+
+  # /rtp [world], staff can /rtp <player> [world]
+  RandomTeleport:
+    Enabled: true
+    Permission: tools.rtp
+    OthersPerm: tools.rtp.others
+    # picking a world by name needs this + the world, e.g. tools.rtp.world.world_nether
+    WorldPermPrefix: tools.rtp.world.
+    # used when the player's current world isn't listed below
+    DefaultWorld: world
+    # only these worlds can be rtp'd in. players land between MinRadius and MaxRadius from the center
+    Worlds:
+      world:
+        CenterX: 0
+        CenterZ: 0
+        MinRadius: 200
+        MaxRadius: 5000
+    # spots tried before giving up
+    MaxAttempts: 10
+    UnsafeBlocks:
+    - LAVA
+    - WATER
+    - MAGMA_BLOCK
+    - CACTUS
+    - FIRE
+    - SOUL_FIRE
+    - CAMPFIRE
+    - SOUL_CAMPFIRE
+    - SWEET_BERRY_BUSH
+    - POWDER_SNOW
+    - POINTED_DRIPSTONE
+    Warmup: 3
+    Cooldown: 300
+    Cost: 0
 
 Commands:
   Countdown:
@@ -373,6 +508,26 @@ Chat:
     - '&2'
     - '&4'
     - '&7'
+    # key = permission: Chatcolor.<key>. format supports &codes, &#hex, <gradient:#hex:#hex>.
+    # format 'rainbow' picks a random RainbowColors code per char.
+    Colors:
+      White: {name: '&f&l[!] &fWhite', material: WHITE_STAINED_GLASS_PANE, format: '&f%message%'}
+      Orange: {name: '&6&l[!] &6Orange', material: ORANGE_STAINED_GLASS_PANE, format: '&6%message%'}
+      Aqua: {name: '&b&l[!] &bAqua', material: LIGHT_BLUE_STAINED_GLASS_PANE, format: '&b%message%'}
+      Yellow: {name: '&e&l[!] &eYellow', material: YELLOW_STAINED_GLASS_PANE, format: '&e%message%'}
+      Lime: {name: '&a&l[!] &aLime', material: LIME_STAINED_GLASS_PANE, format: '&a%message%'}
+      Pink: {name: '&d&l[!] &dPink', material: PINK_STAINED_GLASS_PANE, format: '&d%message%'}
+      Dark Gray: {name: '&8&l[!] &8Dark Gray', material: GRAY_STAINED_GLASS_PANE, format: '&8%message%'}
+      Gray: {name: '&7&l[!] &7Gray', material: LIGHT_GRAY_STAINED_GLASS_PANE, format: '&7%message%'}
+      Cyan: {name: '&3&l[!] &3Cyan', material: CYAN_STAINED_GLASS_PANE, format: '&3%message%'}
+      Purple: {name: '&5&l[!] &5Purple', material: PURPLE_STAINED_GLASS_PANE, format: '&5%message%'}
+      Blue: {name: '&1&l[!] &1Blue', material: BLUE_STAINED_GLASS_PANE, format: '&1%message%'}
+      Green: {name: '&2&l[!] &2Green', material: GREEN_STAINED_GLASS_PANE, format: '&2%message%'}
+      Red: {name: '&c&l[!] &cRed', material: RED_STAINED_GLASS_PANE, format: '&c%message%'}
+      Rainbow: {name: '&fR&ea&6i&bn&2b&4o&7w', material: EXPERIENCE_BOTTLE, format: rainbow}
+      Mint: {name: '&#3effb0&l[!] &#3effb0Mint', material: LIME_STAINED_GLASS_PANE, format: '&#3effb0%message%'}
+      Ocean: {name: '<gradient:#00c3ff:#ffff1c>[!] Ocean</gradient>', material: LIGHT_BLUE_STAINED_GLASS_PANE, format: '<gradient:#00c3ff:#ffff1c>%message%</gradient>'}
+      Sunset: {name: '<gradient:#ff512f:#f09819:#dd2476>[!] Sunset</gradient>', material: ORANGE_STAINED_GLASS_PANE, format: '<gradient:#ff512f:#f09819:#dd2476>%message%</gradient>'}
   NameColor:
     Enabled: true
 
@@ -467,6 +622,8 @@ Moderation:
 
   CommandProtect:
     Enabled: true
+    # hide ProtectedCommands from tab-complete for players not in AllowedPlayers
+    HideFromTabComplete: false
 
   ClearChat:
     Enabled: true
@@ -638,6 +795,17 @@ Misc:
   Vanish:
     Enabled: true
     Permission: essentials.vanish
+    # hide real join/quit messages for vanished players
+    SilentJoinQuit: true
+    # broadcast a fake quit on /vanish and a fake join on unvanish
+    # uses DisableJoinLeaveMsg's Join/QuitMessage when that's enabled (empty = nothing sent)
+    FakeJoinQuitMessages: false
+    # show a VANISHED reminder in the action bar while vanished
+    ActionBar: true
+    # vanished players don't pick up items (the item disappearing gives you away)
+    PreventItemPickup: true
+    # mobs ignore vanished players
+    PreventMobTargeting: true
 
   BucketStacker:
     Enabled: false

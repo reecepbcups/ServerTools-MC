@@ -132,6 +132,12 @@ public class Messaging extends BaseCommand implements Listener {
 			}
 		}
 
+		// looks sent to the sender, the target just never sees it
+		if (Ignore.isIgnoring(target, sender)) {
+			Util.coloredMessage(sender, FORMAT_SEND.replace("%name%", target.getName()).replace("%msg%", msg));
+			return;
+		}
+
 		String sendName = sender.getName();
 		String toName = target.getName();
 

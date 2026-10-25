@@ -1,6 +1,10 @@
 # BUNDLES --------------------------------------------------
 IslandBundle:
   Item: 'ENDER_CHEST'
+  # Optional: Permission, Cooldown (seconds), Limit (max uses per player)
+  # Permission: 'servertools.voucher.islandbundle'
+  # Cooldown: 3600
+  # Limit: 1
   Name: "&b&lIsland Bundle"
   Lore:
     - ''
@@ -10,7 +14,7 @@ IslandBundle:
     - '&c&lNOTE: &7You must have more than &f6 &7Members'
     - ''
     - ' &b&l* &7$750,000 &8- &bMoney'
-    - ' &b&l* &7x2 &8- &bGoblin Rank'              
+    - ' &b&l* &7x2 &8- &bGoblin Rank'
     - ' &b&l* &7x1 &8- &bSell Wand 1.00x'
     - ' &b&l* &7x3 &8- &bCactus Collector'
     - ' &b&l* &7x1 &8- &bIron Golem Spawner'
@@ -37,8 +41,8 @@ BoosterBundle:
     - '&7&oYou can obtain &f&o1 &7&oof these maximum each season.'
     - ''
     - '&c&lNOTE: &7You must be boosting the discord server.'
-    - ''           
-    - ' &d&l* &7$250,000 &8- &dMoney'        
+    - ''
+    - ' &d&l* &7$250,000 &8- &dMoney'
     - ' &d&l* &7x1 &8- &dIron Golem Spawner'
     - ' &d&l* &7x2 &8- &dCactus Collectors'
     - ' &d&l* &7x3 &8- &dEpic Key'
@@ -87,7 +91,7 @@ KingReclaim:
     - ' &b&l* &7x3 &8- &6Fantasy Key'
     - ' &b&l* &7x4 &8- &6Epic Key'
     - ' &b&l* &7x5 &8- &6Rare Key'
-    - ' &b&l* &7250x250 Island Size'      
+    - ' &b&l* &7250x250 Island Size'
     - ''
     - '&7(( &f&oClick &7to redeem the &6King Reclaim &7&o))'
   Commands:
@@ -111,7 +115,7 @@ WizardReclaim:
     - ' &b&l* &7x2 &8- &bFantasy Key'
     - ' &b&l* &7x3 &8- &bEpic Key'
     - ' &b&l* &7x4 &8- &bRare Key'
-    - ' &b&l* &7200x200 Island Size'           
+    - ' &b&l* &7200x200 Island Size'
     - ''
     - '&7(( &f&oClick &7to redeem the &bWizard Reclaim &7&o))'
   Commands:
@@ -135,7 +139,7 @@ GoblinReclaim:
     - ' &b&l* &7x1 &8- &2Fantasy Key'
     - ' &b&l* &7x2 &8- &2Epic Key'
     - ' &b&l* &7x3 &8- &2Rare Key'
-    - ' &b&l* &7150x150 Island Size'         
+    - ' &b&l* &7150x150 Island Size'
     - ''
     - '&7(( &f&oClick &7to redeem the &2Goblin Reclaim &7&o))'
   Commands:

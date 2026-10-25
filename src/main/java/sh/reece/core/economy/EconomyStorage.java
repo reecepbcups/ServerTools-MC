@@ -5,10 +5,13 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -35,6 +38,14 @@ public class EconomyStorage {
 	// statement is only ever touched off the main thread and writes stay serialized.
 	private ExecutorService writer;
 	private final Map<UUID, Long> cache = new ConcurrentHashMap<>();
+	// same balances kept sorted richest first, so top(n) reads n entries instead of sorting every
+	// account. Updated in put() under the same lock, readers iterate without one.
+	private final NavigableSet<Ranked> ranked = new ConcurrentSkipListSet<>(Ranked.ORDER);
+
+	private record Ranked(UUID id, long cents) {
+		static final Comparator<Ranked> ORDER = Comparator.comparingLong(Ranked::cents).reversed()
+			.thenComparing(Ranked::id);
+	}
 
 	// keyed by jdbc URL so a plugin reload (disable+enable without a JVM restart)
 	// hands out the SAME instance instead of opening a fresh connection. Other
@@ -70,7 +81,7 @@ public class EconomyStorage {
 		try (PreparedStatement st = conn.prepareStatement("SELECT uuid, cents FROM balances");
 				ResultSet rs = st.executeQuery()) {
 			while (rs.next()) {
-				cache.put(UUID.fromString(rs.getString("uuid")), rs.getLong("cents"));
+				cache(UUID.fromString(rs.getString("uuid")), rs.getLong("cents"));
 			}
 		}
 		// one reusable statement for all writes - every mutation is synchronized, so
@@ -123,7 +134,7 @@ public class EconomyStorage {
 		if (cache.containsKey(id)) {
 			return false;
 		}
-		cache.put(id, startingCents);
+		cache(id, startingCents);
 		enqueueUpsert(id, name, startingCents);
 		return true;
 	}
@@ -187,10 +198,12 @@ public class EconomyStorage {
 	/** Highest balances first, capped at limit. */
 	public Map<UUID, Long> top(int limit) {
 		Map<UUID, Long> out = new LinkedHashMap<>();
-		cache.entrySet().stream()
-			.sorted(Map.Entry.<UUID, Long>comparingByValue().reversed())
-			.limit(limit)
-			.forEach(e -> out.put(e.getKey(), e.getValue()));
+		for (Ranked r : ranked) {
+			if (out.size() >= limit) {
+				break;
+			}
+			out.put(r.id(), r.cents());
+		}
 		return out;
 	}
 
@@ -199,8 +212,17 @@ public class EconomyStorage {
 	}
 
 	private void put(UUID id, String name, long cents) {
-		cache.put(id, cents);
+		cache(id, cents);
 		enqueueUpsert(id, name, cents);
+	}
+
+	// callers hold the lock (or are still opening), so cache and ranked never disagree for long
+	private void cache(UUID id, long cents) {
+		Long old = cache.put(id, cents);
+		if (old != null) {
+			ranked.remove(new Ranked(id, old));
+		}
+		ranked.add(new Ranked(id, cents));
 	}
 
 	// hand the write to the background thread; the cache already holds the truth,

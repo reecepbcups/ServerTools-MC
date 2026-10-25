@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ public class CommandProtection extends BaseCommand implements Listener {
 	private FileConfiguration config;
 	private String FILENAME;
 	private String password;
+	private boolean hideFromTabComplete;
 
 	private Set<String> ProtectedCommands;
 	private Set<String> AllowedPlayers;
@@ -42,6 +44,7 @@ public class CommandProtection extends BaseCommand implements Listener {
 
 			ProtectedCommands = new HashSet<>(config.getStringList("ProtectedCommands"));
 			password = config.getString("password", "");
+			hideFromTabComplete = plugin.getConfig().getBoolean("Moderation.CommandProtect.HideFromTabComplete", false);
 
 			FailedPassAttempts = new HashMap<String, Long>();
 		}
@@ -75,6 +78,17 @@ public class CommandProtection extends BaseCommand implements Listener {
 		}
 	}
 
+	@EventHandler
+	public void hideFromTabComplete(PlayerCommandSendEvent e) {
+		if(!hideFromTabComplete) return;
+
+		Player p = e.getPlayer();
+		if(AllowedPlayers.contains(p.getName()) || AllowedPlayers.contains(p.getUniqueId().toString())) return;
+
+		// commands arrive without the slash, and may be namespaced (e.g. "bukkit:pl")
+		e.getCommands().removeIf(c -> ProtectedCommands.contains("/" + c.substring(c.indexOf(':') + 1)));
+	}
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
@@ -95,6 +109,7 @@ public class CommandProtection extends BaseCommand implements Listener {
 					if(!AllowedPlayers.contains(PName)) {
 						AllowedPlayers.add(PName);
 						Util.coloredMessage(p, "&aAdded too cmdbypass");
+						p.updateCommands(); // resend tab-complete list
 					} else {
 						Util.coloredMessage(p, "&eYou are already logged in");
 					}
@@ -124,6 +139,7 @@ public class CommandProtection extends BaseCommand implements Listener {
 			if(AllowedPlayers.contains(PName)) {
 				AllowedPlayers.remove(PName);
 				Util.coloredMessage(p, "&cRemoved from allowing cmdbypass");
+				p.updateCommands();
 			}
 			return true;
 

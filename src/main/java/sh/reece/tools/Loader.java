@@ -46,7 +46,7 @@ public class Loader {
 
 	private static final String[][] PHASES = {
 		{"Commands",      "sh.reece.cmds", "sh.reece.bungee"},
-		{"Core Features", "sh.reece.core", "sh.reece.core.warp", "sh.reece.core.economy", "sh.reece.core.hologram"},
+		{"Core Features", "sh.reece.core", "sh.reece.core.warp", "sh.reece.core.economy", "sh.reece.core.hologram", "sh.reece.core.kit", "sh.reece.core.teleport"},
 		{"Chat",          "sh.reece.chat"},
 		{"Events",        "sh.reece.events"},
 		{"Hoppers",       "sh.reece.hoppers"},
@@ -84,7 +84,12 @@ public class Loader {
 	private void loadPlaceholderAPI() {
 		plugin.setPAPIStatus(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"));
 		if (Main.isPAPIEnabled()) {
-			(new ServerToolsPlaceholders()).register();
+			(new ServerToolsPlaceholders("stools")).register();
+			(new ServerToolsPlaceholders("servertools")).register();
+			// fills in for %essentials_nickname% on servers that moved off Essentials
+			if (Bukkit.getPluginManager().getPlugin("Essentials") == null) {
+				(new ServerToolsPlaceholders("essentials")).register();
+			}
 			executionTimer.info("PAPI");
 		}
 	}

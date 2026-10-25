@@ -3,6 +3,7 @@ package sh.reece.core;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -12,15 +13,21 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import sh.reece.tools.AlternateCommandHandler;
@@ -47,6 +54,11 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 	// [NAME: {itemstack, commands, VoucherID}]
 	private static final HashMap<String, List<Object>> VOUCHERS = new HashMap<String, List<Object>>();
+	// tagged vouchers are found by id; untagged ones from older versions by display name
+	private static final NamespacedKey VOUCHER_KEY = new NamespacedKey("servertools", "voucher");
+	private static final HashMap<String, List<Object>> VOUCHERS_BY_ID = new HashMap<String, List<Object>>();
+	// right click fires constantly, so anything not made of a voucher material is dropped before reading meta
+	private static final Set<Material> VOUCHER_MATERIALS = EnumSet.noneOf(Material.class);
 	//private static List<Inventory> previewVouchersGUIs = new ArrayList<Inventory>();
 	//private static HashMap<String, Integer> playerPreviewPage = new HashMap<String, Integer>();
 	private ConfigUtils configUtils;
@@ -87,7 +99,11 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	public void createPreviewGUI() {
 
 		InvName = configUtils.lang("VOUCHER_GUI_NAME");
-    	GUI = Bukkit.createInventory(null, 54, InvName);
+    	GUI = Bukkit.createInventory(new GuiHolder(), 54, InvName);
+    	// rebuilt on reload, so drop vouchers that left the config
+    	VOUCHERS.clear();
+    	VOUCHERS_BY_ID.clear();
+    	VOUCHER_MATERIALS.clear();
 
     	//int slot = 0;
     	ItemStack VoucherItem;
@@ -112,7 +128,15 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
     		//voucherValues.add(lore);
     		voucherValues.add(config.getStringList(voucher+".Commands"));
     		voucherValues.add(voucher);
+    		// what vouchers given out before the tag existed look like, to match them just as strictly
+    		ItemStack legacy = VoucherItem.clone();
+    		ItemMeta legacyMeta = legacy.getItemMeta();
+    		legacyMeta.getPersistentDataContainer().remove(VOUCHER_KEY);
+    		legacy.setItemMeta(legacyMeta);
+    		voucherValues.add(legacy);
     		VOUCHERS.put(Util.color(config.getString(voucher+".Name")), voucherValues);
+    		VOUCHERS_BY_ID.put(voucher, voucherValues);
+    		VOUCHER_MATERIALS.add(VoucherItem.getType());
     	}
 
 	}
@@ -170,6 +194,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
         meta.setDisplayName(displayName);
         meta.setLore(lore);
+        meta.getPersistentDataContainer().set(VOUCHER_KEY, PersistentDataType.STRING, voucherID);
         item.setItemMeta(meta);
 
         if(Glowing) {
@@ -192,50 +217,66 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 			ItemStack item = e.getItem();
 
-			if(!item.hasItemMeta()) {
+			if(!VOUCHER_MATERIALS.contains(item.getType()) || !item.hasItemMeta()) {
 				return;
 			}
 
-			if(!item.getItemMeta().hasDisplayName()) {
+			// read only view, no meta copy
+			String taggedID = item.getPersistentDataContainer().get(VOUCHER_KEY, PersistentDataType.STRING);
+			List<Object> voucher;
+			if(taggedID != null) {
+				voucher = VOUCHERS_BY_ID.get(taggedID);
+				// the tag alone isn't proof, it can be copied onto another item. Must match the real voucher exactly
+				if(voucher != null && !item.isSimilar((ItemStack) voucher.get(0))) {
+					voucher = null;
+				}
+			} else {
+				ItemMeta meta = item.getItemMeta();
+				if(!meta.hasDisplayName() || !meta.hasLore()) {
+					return;
+				}
+				voucher = VOUCHERS.get(meta.getDisplayName());
+				// material, name, lore, enchants, flags: everything but the tag older vouchers don't have
+				if(voucher != null && !item.isSimilar((ItemStack) voucher.get(3))) {
+					voucher = null;
+				}
+			}
+			if(voucher == null) {
 				return;
 			}
-			if(!item.getItemMeta().hasLore()) {
-				return;
-			}
 
+			// vouchers are never placed, even when redeeming works (ENDER_CHEST etc.)
+			e.setCancelled(true);
 
-			String displayName = Util.color(item.getItemMeta().getDisplayName());
-			//Util.coloredBroadcast("has displayname " + displayName);
-
-			if(!VOUCHERS.containsKey(displayName)) {
-				//Util.coloredBroadcast("vopuchers contains " + displayName);
+			@SuppressWarnings("unchecked") List<String> commands = (List<String>) voucher.get(1);
+			if(commands == null) {
 				return;
 			}
 
 			Player p = e.getPlayer();
-			if(item.isSimilar((ItemStack) VOUCHERS.get(displayName).get(0))) {
+			String voucherID = voucher.get(2).toString();
+			if(!canRedeem(p, voucherID)) {
+				return;
+			}
 
-				@SuppressWarnings("unchecked") List<String> commands = (List<String>) VOUCHERS.get(displayName).get(1);
-				if(commands != null) {
+			// take it from the hand that clicked. Clearing the main hand let an offhand voucher be reused forever
+			EquipmentSlot hand = e.getHand() == null ? EquipmentSlot.HAND : e.getHand();
+			p.getInventory().setItem(hand, item.getAmount() > 1 ? item.asQuantity(item.getAmount() - 1) : null);
 
-					Util.removeItemFromPlayer(p, item, 1);
+			for(String cmd : commands) {
 
-					String voucherID = VOUCHERS.get(displayName).get(2).toString();
-					for(String cmd : commands) {
+				cmd = cmd.replace("%player%", p.getName())
+						.replace("%voucher%", voucherID);
+				Util.consoleMSG(cmd);
 
-						cmd = cmd.replace("%player%", p.getName())
-								.replace("%voucher%", voucherID);
-						Util.consoleMSG(cmd);
+				Util.console(cmd);
+			}
 
-						Util.console(cmd);
-					}
-
-					if(RedeemMessage.length() > 0) {
-						Util.coloredMessage(p,
-							RedeemMessage.replace("%voucher%", displayName)
-							.replace("%voucherid%", voucherID));
-					}
-				}
+			if(RedeemMessage.length() > 0) {
+				String displayName = ((ItemStack) voucher.get(0)).getItemMeta().getDisplayName();
+				Util.coloredMessage(p,
+					RedeemMessage.replace("%voucher%", displayName)
+					.replace("%voucherid%", voucherID));
 			}
 		}
 
@@ -245,10 +286,51 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 
 
+	// Usage stored in player PDC so cooldowns and limits survive restarts.
+	private boolean canRedeem(Player p, String voucherID) {
+		String perm = config.getString(voucherID+".Permission");
+		if(perm != null && !perm.isEmpty() && !p.hasPermission(perm)) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_NO_PERMISSION").replace("%permission%", perm));
+			return false;
+		}
+
+		String safeID = voucherID.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "_");
+		PersistentDataContainer pdc = p.getPersistentDataContainer();
+		NamespacedKey usesKey = new NamespacedKey("servertools", "voucher_uses_" + safeID);
+		NamespacedKey lastKey = new NamespacedKey("servertools", "voucher_last_" + safeID);
+
+		int limit = config.getInt(voucherID+".Limit", 0);
+		int uses = pdc.getOrDefault(usesKey, PersistentDataType.INTEGER, 0);
+		if(limit > 0 && uses >= limit) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_LIMIT_REACHED").replace("%limit%", String.valueOf(limit)));
+			return false;
+		}
+
+		long cooldownMs = config.getLong(voucherID+".Cooldown", 0) * 1000L;
+		long now = System.currentTimeMillis();
+		long remaining = pdc.getOrDefault(lastKey, PersistentDataType.LONG, 0L) + cooldownMs - now;
+		if(cooldownMs > 0 && remaining > 0) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_ON_COOLDOWN").replace("%seconds%", String.valueOf((remaining + 999) / 1000)));
+			return false;
+		}
+
+		if(limit > 0) {
+			pdc.set(usesKey, PersistentDataType.INTEGER, uses + 1);
+		}
+		if(cooldownMs > 0) {
+			pdc.set(lastKey, PersistentDataType.LONG, now);
+		}
+		return true;
+	}
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-		if(sender instanceof ConsoleCommandSender) {
+		// rcon is a RemoteConsoleCommandSender, not ConsoleCommandSender
+		if(!(sender instanceof Player)) {
+			if(args.length == 0) {
+				return true;
+			}
 			switch (args[0]) {
 			case "give":
 				// /voucher give Reecepbcups <voucher> [amount]
@@ -257,7 +339,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 					return true;
 				}
 				int amount = 1;
-				if(Util.isInt(args[3])) {
+				if(args.length >= 4 && Util.isInt(args[3])) {
 					amount = Integer.valueOf(args[3]);
 				}
 				givePlayerVoucher(args[1], args[2], amount);
@@ -340,7 +422,8 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
 
-		if(event.getView().getTitle().equalsIgnoreCase(InvName)) {
+		// holder check instead of comparing titles, which builds a string on every click server wide
+		if(event.getView().getTopInventory().getHolder(false) instanceof GuiHolder) {
 			if(clicked == null) {
 				return;
 			}
@@ -349,6 +432,13 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 		}
 	}
 
+
+	private static final class GuiHolder implements InventoryHolder {
+		@Override
+		public Inventory getInventory() {
+			return GUI;
+		}
+	}
 
 	private static final List<String> possibleArugments = Arrays.asList("give", "giveall", "list");
 	private final List<String> result = new ArrayList<String>();
