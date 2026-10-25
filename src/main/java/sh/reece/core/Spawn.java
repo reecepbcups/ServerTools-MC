@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -35,7 +36,7 @@ public class Spawn implements Listener, CommandExecutor {
 
 	private static Set<String> voidDisabledWorlds = new HashSet<>();
 	private String voidmsg, spawnOnInitJoin, spawnFirstUniqueJoinOnly;
-	private boolean voidTPEnabled;
+	private boolean voidTPEnabled, respawnAtSpawn, respawnRespectBed;
 	private ConfigUtils configUtils;
 	
 	public Spawn(Main instance) {
@@ -55,6 +56,9 @@ public class Spawn implements Listener, CommandExecutor {
 			spawnOnInitJoin = plugin.getConfig().getString(Section+".onJoinInstantly");
 			spawnFirstUniqueJoinOnly = plugin.getConfig().getString(Section+".spawnFirstUniqueJoinOnly");
 			
+			respawnAtSpawn = plugin.getConfig().getBoolean(Section+".respawnAtSpawn.Enabled", true);
+			respawnRespectBed = plugin.getConfig().getBoolean(Section+".respawnAtSpawn.respectBedAndAnchor", true);
+
 			voidTPEnabled = plugin.getConfig().getBoolean(Section+".teleportWhenInVoid.Enabled", false);			
 
 			voidmsg = plugin.getConfig().getString(Section+".teleportWhenInVoid.message");
@@ -164,8 +168,15 @@ public class Spawn implements Listener, CommandExecutor {
 		}
 	}
 
-	@EventHandler(ignoreCancelled = true) //(priority = EventPriority.HIGHEST)
+	// LOWEST so island/home plugins listening later can override us
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerKillEvent(PlayerRespawnEvent e) {
+		if (!respawnAtSpawn || spawnLoc == null || spawnLoc.isEmpty()) {
+			return;
+		}
+		if (respawnRespectBed && (e.isBedSpawn() || e.isAnchorSpawn())) {
+			return;
+		}
 		e.setRespawnLocation(getSpawnLocation());
 	}
 	
