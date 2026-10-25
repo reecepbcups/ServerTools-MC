@@ -3,6 +3,7 @@ package sh.reece.core;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -16,11 +17,14 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import sh.reece.tools.AlternateCommandHandler;
@@ -218,9 +222,14 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 				@SuppressWarnings("unchecked") List<String> commands = (List<String>) VOUCHERS.get(displayName).get(1);
 				if(commands != null) {
 
+					String voucherID = VOUCHERS.get(displayName).get(2).toString();
+					if(!canRedeem(p, voucherID)) {
+						e.setCancelled(true);
+						return;
+					}
+
 					Util.removeItemFromPlayer(p, item, 1);
 
-					String voucherID = VOUCHERS.get(displayName).get(2).toString();
 					for(String cmd : commands) {
 
 						cmd = cmd.replace("%player%", p.getName())
@@ -244,6 +253,43 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	}
 
 
+
+	// Usage stored in player PDC so cooldowns and limits survive restarts.
+	private boolean canRedeem(Player p, String voucherID) {
+		String perm = config.getString(voucherID+".Permission");
+		if(perm != null && !perm.isEmpty() && !p.hasPermission(perm)) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_NO_PERMISSION").replace("%permission%", perm));
+			return false;
+		}
+
+		String safeID = voucherID.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "_");
+		PersistentDataContainer pdc = p.getPersistentDataContainer();
+		NamespacedKey usesKey = new NamespacedKey("servertools", "voucher_uses_" + safeID);
+		NamespacedKey lastKey = new NamespacedKey("servertools", "voucher_last_" + safeID);
+
+		int limit = config.getInt(voucherID+".Limit", 0);
+		int uses = pdc.getOrDefault(usesKey, PersistentDataType.INTEGER, 0);
+		if(limit > 0 && uses >= limit) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_LIMIT_REACHED").replace("%limit%", String.valueOf(limit)));
+			return false;
+		}
+
+		long cooldownMs = config.getLong(voucherID+".Cooldown", 0) * 1000L;
+		long now = System.currentTimeMillis();
+		long remaining = pdc.getOrDefault(lastKey, PersistentDataType.LONG, 0L) + cooldownMs - now;
+		if(cooldownMs > 0 && remaining > 0) {
+			Util.coloredMessage(p, configUtils.lang("VOUCHER_ON_COOLDOWN").replace("%seconds%", String.valueOf((remaining + 999) / 1000)));
+			return false;
+		}
+
+		if(limit > 0) {
+			pdc.set(usesKey, PersistentDataType.INTEGER, uses + 1);
+		}
+		if(cooldownMs > 0) {
+			pdc.set(lastKey, PersistentDataType.LONG, now);
+		}
+		return true;
+	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
