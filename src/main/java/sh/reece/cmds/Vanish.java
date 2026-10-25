@@ -19,6 +19,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
+import sh.reece.disabled.DisableJLMsg;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
 import sh.reece.utiltools.Schedulers;
@@ -35,11 +36,18 @@ public class Vanish extends BaseCommand implements Listener {
 	private final Set<UUID> vanished = ConcurrentHashMap.newKeySet();
 	private final boolean silentJoinQuit;
 	private final boolean fakeMessages;
+	// when DisableJoinLeaveMsg is on, fakes mirror its custom messages (empty = none)
+	private final boolean customJoinQuit;
+	private final String customJoin;
+	private final String customQuit;
 
 	public Vanish(Main instance) {
 		super(instance, "Misc.Vanish", "vanish");
 		silentJoinQuit = plugin.getConfig().getBoolean(section + ".SilentJoinQuit", true);
 		fakeMessages = plugin.getConfig().getBoolean(section + ".FakeJoinQuitMessages", false);
+		customJoinQuit = configUtils.enabledInConfig(DisableJLMsg.SECTION + ".Enabled");
+		customJoin = plugin.getConfig().getString(DisableJLMsg.SECTION + ".JoinMessage", "");
+		customQuit = plugin.getConfig().getString(DisableJLMsg.SECTION + ".QuitMessage", "");
 		if (isEnabled() && plugin.getConfig().getBoolean(section + ".ActionBar", true)) {
 			Schedulers.globalTimer(plugin, this::sendActionBars, 40L, 40L);
 		}
@@ -84,7 +92,7 @@ public class Vanish extends BaseCommand implements Listener {
 	private void vanish(Player p) {
 		vanished.add(p.getUniqueId());
 		hideFromOthers(p);
-		broadcastFake(p, "VANISH_FAKE_QUIT");
+		broadcastFake(p, false);
 		Util.coloredMessage(p, configUtils.lang("VANISH_ENABLED"));
 	}
 
@@ -97,11 +105,16 @@ public class Vanish extends BaseCommand implements Listener {
 		}
 	}
 
-	private void broadcastFake(Player p, String langKey) {
+	private void broadcastFake(Player p, boolean join) {
 		if (!fakeMessages) {
 			return;
 		}
-		String msg = configUtils.lang(langKey).replace("%player%", p.getName());
+		String msg = customJoinQuit
+				? DisableJLMsg.format(p, join ? customJoin : customQuit)
+				: configUtils.lang(join ? "VANISH_FAKE_JOIN" : "VANISH_FAKE_QUIT").replace("%player%", p.getName());
+		if (msg.isEmpty()) {
+			return;
+		}
 		for (Player online : Bukkit.getOnlinePlayers()) {
 			online.sendMessage(msg);
 		}
@@ -115,7 +128,7 @@ public class Vanish extends BaseCommand implements Listener {
 			Schedulers.entity(plugin, online, () -> online.showPlayer(plugin, p));
 		}
 
-		broadcastFake(p, "VANISH_FAKE_JOIN");
+		broadcastFake(p, true);
 		Util.coloredMessage(p, configUtils.lang("VANISH_DISABLED"));
 	}
 

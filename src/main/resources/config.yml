@@ -671,6 +671,7 @@ Misc:
     # hide real join/quit messages for vanished players
     SilentJoinQuit: true
     # broadcast a fake quit on /vanish and a fake join on unvanish
+    # uses DisableJoinLeaveMsg's Join/QuitMessage when that's enabled (empty = nothing sent)
     FakeJoinQuitMessages: false
     # show a VANISHED reminder in the action bar while vanished
     ActionBar: true

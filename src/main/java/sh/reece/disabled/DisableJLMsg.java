@@ -13,18 +13,16 @@ import sh.reece.utiltools.Util;
 
 public class DisableJLMsg extends ToggleableListener {
 
-	private static final String SECTION = "Disabled.DisableJoinLeaveMsg";
+	public static final String SECTION = "Disabled.DisableJoinLeaveMsg";
 
 	// Empty = hide the message (original behaviour).
 	private final String joinMsg;
 	private final String quitMsg;
-	private final boolean papiSupport;
 
 	public DisableJLMsg(Main instance) {
 		super(instance, SECTION);
 		joinMsg = instance.getConfig().getString(SECTION + ".JoinMessage", "");
 		quitMsg = instance.getConfig().getString(SECTION + ".QuitMessage", "");
-		papiSupport = Main.isPAPIEnabled();
 	}
 
 
@@ -43,14 +41,15 @@ public class DisableJLMsg extends ToggleableListener {
 		e.setQuitMessage(format(e.getPlayer(), quitMsg));
 	}
 
-	private String format(Player p, String msg) {
+	// public so Vanish can send the same custom messages for fake join/quit.
+	public static String format(Player p, String msg) {
 		if (msg.isEmpty()) {
 			return "";
 		}
 		msg = ConfigUtils.replaceVariable(msg)
 				.replace("%player%", p.getName())
 				.replace("%displayname%", p.getDisplayName());
-		if (papiSupport) {
+		if (Main.isPAPIEnabled()) {
 			msg = PlaceholderAPI.setPlaceholders(p, msg);
 		}
 		return Util.color(msg);

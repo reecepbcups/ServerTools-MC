@@ -218,13 +218,14 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 			Player p = e.getPlayer();
 			if(item.isSimilar((ItemStack) VOUCHERS.get(displayName).get(0))) {
+				// vouchers are never placed, even when redeeming works (ENDER_CHEST etc.)
+				e.setCancelled(true);
 
 				@SuppressWarnings("unchecked") List<String> commands = (List<String>) VOUCHERS.get(displayName).get(1);
 				if(commands != null) {
 
 					String voucherID = VOUCHERS.get(displayName).get(2).toString();
 					if(!canRedeem(p, voucherID)) {
-						e.setCancelled(true);
 						return;
 					}
 
@@ -294,7 +295,11 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
-		if(sender instanceof ConsoleCommandSender) {
+		// rcon is a RemoteConsoleCommandSender, not ConsoleCommandSender
+		if(!(sender instanceof Player)) {
+			if(args.length == 0) {
+				return true;
+			}
 			switch (args[0]) {
 			case "give":
 				// /voucher give Reecepbcups <voucher> [amount]
@@ -303,7 +308,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 					return true;
 				}
 				int amount = 1;
-				if(Util.isInt(args[3])) {
+				if(args.length >= 4 && Util.isInt(args[3])) {
 					amount = Integer.valueOf(args[3]);
 				}
 				givePlayerVoucher(args[1], args[2], amount);

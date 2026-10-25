@@ -115,7 +115,10 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 			String key = entry.getKey();
 			ConfigurationSection c = entry.getValue();
 
-			Material material = Material.matchMaterial(c.getString("material", "WHITE_STAINED_GLASS_PANE"));
+			// no inline defaults: getString(path, def) skips the jar defaults, which are all
+			// that's loaded on the first boot after an upgrade
+			String materialName = c.getString("material");
+			Material material = materialName == null ? null : Material.matchMaterial(materialName);
 			if (material == null) {
 				material = Material.WHITE_STAINED_GLASS_PANE;
 			}
@@ -128,7 +131,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 			lore.add("");
 			lore.add(configUtils.lang("CHATCOLOR_SELECT"));
 
-			createDisplay(ColorINV, new ItemStack(material, 1), slot, c.getString("name", key), lore);
+			createDisplay(ColorINV, new ItemStack(material, 1), slot, Objects.requireNonNullElse(c.getString("name"), key), lore);
 			SlotKeys.put(slot, key);
 			slot++;
 		}
@@ -152,7 +155,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 		if (c == null) {
 			return stored.startsWith("&") ? stored + msg : msg;
 		}
-		String format = c.getString("format", "%message%");
+		String format = Objects.requireNonNullElse(c.getString("format"), "%message%");
 		if (format.equalsIgnoreCase("rainbow")) {
 			return rainbowFormat(msg);
 		}
