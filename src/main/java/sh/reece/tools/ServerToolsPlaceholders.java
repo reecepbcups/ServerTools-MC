@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import sh.reece.GUI.ChatColor;
+import sh.reece.core.Nickname;
 import sh.reece.cmds.Visibility;
 import sh.reece.moderation.CommandSpy;
 import sh.reece.moderation.StaffAFK;
@@ -11,11 +12,22 @@ import sh.reece.utiltools.Util;
 
 public class ServerToolsPlaceholders extends PlaceholderExpansion {
 
-	public ServerToolsPlaceholders() { }
-	
+	// %stools_% and %servertools_% get everything. %essentials_% only answers what we replace, so other
+	// essentials_ placeholders stay unparsed instead of showing an error.
+	private final String identifier;
+
+	public ServerToolsPlaceholders(String identifier) {
+		this.identifier = identifier;
+	}
 
 	public String getIdentifier() {
-		return "stools"; // %stools_
+		return identifier;
+	}
+
+	// keep the expansion registered through /papi reload
+	@Override
+	public boolean persist() {
+		return true;
 	}
 
 	public String getAuthor() {
@@ -35,6 +47,16 @@ public class ServerToolsPlaceholders extends PlaceholderExpansion {
 
 		// fast path: nearly all placeholders have no "_" arg, so avoid split()'s
 		// String[] allocation on every per-player per-tick request.
+		if (player != null && identifier.equals("nickname")) { // %stools_nickname%
+			return Nickname.displayName(player);
+		}
+		if (player != null && identifier.equals("nickname_stripped")) {
+			return org.bukkit.ChatColor.stripColor(Nickname.displayName(player));
+		}
+		if (this.identifier.equals("essentials")) {
+			return null;
+		}
+
 		int underscore = identifier.indexOf('_');
 		String key = underscore == -1 ? identifier : identifier.substring(0, underscore);
 

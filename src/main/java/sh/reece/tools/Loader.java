@@ -84,7 +84,12 @@ public class Loader {
 	private void loadPlaceholderAPI() {
 		plugin.setPAPIStatus(Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI"));
 		if (Main.isPAPIEnabled()) {
-			(new ServerToolsPlaceholders()).register();
+			(new ServerToolsPlaceholders("stools")).register();
+			(new ServerToolsPlaceholders("servertools")).register();
+			// fills in for %essentials_nickname% on servers that moved off Essentials
+			if (Bukkit.getPluginManager().getPlugin("Essentials") == null) {
+				(new ServerToolsPlaceholders("essentials")).register();
+			}
 			executionTimer.info("PAPI");
 		}
 	}
