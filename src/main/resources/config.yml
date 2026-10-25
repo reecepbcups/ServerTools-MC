@@ -154,6 +154,22 @@ Disabled:
 Core:
   Ping:
     Enabled: false
+  # /ptime <day/night/12:00/reset> [player], a time of day only you see
+  PlayerTime:
+    Enabled: true
+    Permission: essentials.ptime
+    OthersPerm: essentials.ptime.others
+  # /time shows every world, /time <day/12:00/add 1000> [world/all] changes it
+  Time:
+    Enabled: true
+    Permission: essentials.time
+    SetPerm: essentials.time.set
+  # /ignore <player> hides their chat and drops their /msg. /ignore lists who
+  Ignore:
+    Enabled: true
+    Permission: essentials.ignore
+    # staff with this can't be ignored
+    ExemptPerm: essentials.ignoreexempt
   Realname:
     Enabled: false
     Permission: essentials.realname

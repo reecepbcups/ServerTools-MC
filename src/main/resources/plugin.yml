@@ -251,6 +251,19 @@ commands:
     aliases: [warps, setwarp, delwarp, remwarp, addwarp, warpinfo]
     description: Does warp stuff for warping
 
+  ptime:
+    usage: /<command> <day/night/12:00/reset> [player]
+    aliases: [playertime]
+    description: Set the time of day only you see
+  time:
+    usage: /<command> [day/night/12:00/add <ticks>] [world/all]
+    aliases: [day, night]
+    description: Show or change the world time
+  ignore:
+    usage: /<command> [player]
+    aliases: [unignore]
+    description: Hide a player's chat and messages
+
   kit:
     usage: /<command> [kit] [player]
     aliases: [kits, createkit, delkit, deletekit, showkit, kitreset]
