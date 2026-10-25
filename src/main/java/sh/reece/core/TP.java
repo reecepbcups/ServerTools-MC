@@ -1,7 +1,10 @@
 package sh.reece.core;
 
+import sh.reece.core.teleport.TeleportAction;
+import sh.reece.core.teleport.Teleporter;
 import sh.reece.tools.BaseCommand;
 import sh.reece.tools.Main;
+import sh.reece.utiltools.Schedulers;
 import sh.reece.utiltools.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -9,22 +12,32 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TP extends BaseCommand {
 
-	private String TPPerm, TPAPerm, TPHerePerm;
+	private String TPPerm, TPAPerm, TPHerePerm, TPAHerePerm;
+	private long expireMillis;
+	private TeleportAction tpaAction;
 
-	private final Map<UUID, UUID> currentRequest = new HashMap<>();
+	// here = the receiver moves to the sender (/tpahere)
+	private record Request(UUID from, boolean here) {}
+
+	// concurrent since Folia runs each player's commands on their own region thread
+	private final Map<UUID, Request> currentRequest = new ConcurrentHashMap<>();
 
 	public TP(Main instance) {
-		super(instance, "Core.Teleport", "teleport", "tp", "tpo", "tpa", "tphere", "tpaccept", "tpdeny", "tpyes", "tpno", "tpcancel");
+		super(instance, "Core.Teleport", "teleport", "tp", "tpo", "tpa", "tpahere", "tphere", "tpaccept", "tpdeny", "tpyes", "tpno", "tpcancel");
 		if (isEnabled()) {
 			TPPerm = plugin.getConfig().getString(section + ".Permissions.TP");
 			TPAPerm = plugin.getConfig().getString(section + ".Permissions.TPA");
 			TPHerePerm = plugin.getConfig().getString(section + ".Permissions.TPHere");
+			TPAHerePerm = plugin.getConfig().getString(section + ".Permissions.TPAHere", "tools.tpahere");
+			expireMillis = Math.max(1, plugin.getConfig().getInt(section + ".RequestExpireSeconds", 60)) * 1000L;
+			tpaAction = TeleportAction.fromConfig(plugin.getConfig(), section);
 		}
 	}
 
@@ -45,14 +58,18 @@ public class TP extends BaseCommand {
 		switch (label.toLowerCase()) {
 		case "tpaccept":
 		case "tpyes":
-			if (currentRequest.containsKey(p.getUniqueId())) {
-				Player from = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
+			Request accepted = currentRequest.remove(p.getUniqueId());
+			if (accepted != null) {
+				Player from = Bukkit.getPlayer(accepted.from());
 				if (from != null) {
 					Util.coloredMessage(from, configUtils.lang("TELEPORT_HASACCEPTED").replace("%player%", p.getName()));
-					from.teleportAsync(p.getLocation());
+					if (accepted.here()) {
+						move(p, from, from);
+					} else {
+						move(from, p, from);
+					}
 				}
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_ACCEPTED").replace("%player%", from != null ? from.getName() : "?"));
-				currentRequest.remove(p.getUniqueId());
 
 			} else {
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_NOREQUEST"));
@@ -62,13 +79,13 @@ public class TP extends BaseCommand {
 		case "tpcancel":
 		case "tpdeny":
 		case "tpno":
-			if (currentRequest.containsKey(p.getUniqueId())) {
-				Player from = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
+			Request denied = currentRequest.remove(p.getUniqueId());
+			if (denied != null) {
+				Player from = Bukkit.getPlayer(denied.from());
 				if (from != null) {
 					Util.coloredMessage(from, configUtils.lang("TELEPORT_HASDENIED").replace("%player%", p.getName()));
 				}
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_DENIED").replace("%player%", from != null ? from.getName() : "?"));
-				currentRequest.remove(p.getUniqueId());
 			} else {
 				Util.coloredMessage(p, configUtils.lang("TELEPORT_NOREQUEST"));
 			}
@@ -111,7 +128,14 @@ public class TP extends BaseCommand {
 
 				case "tpa":
 					if (checkPerm(p, label, TPAPerm)) {
-						sendRequest(p, target);
+						sendRequest(p, target, false);
+						return true;
+					}
+					break;
+
+				case "tpahere":
+					if (checkPerm(p, label, TPAHerePerm)) {
+						sendRequest(p, target, true);
 						return true;
 					}
 					break;
@@ -163,17 +187,46 @@ public class TP extends BaseCommand {
 		return true;
 	}
 
-	private void sendRequest(Player from, Player to) {
+	private void sendRequest(Player from, Player to, boolean here) {
+		// the sender pays, so check cooldown and balance before bothering the other player
+		Teleporter teleporter = Teleporter.get();
+		if (teleporter != null && !teleporter.canStart(from, tpaAction)) {
+			return;
+		}
+
 		Util.coloredMessage(from, configUtils.lang("TELEPORT_SENT_REQUEST").replace("%player%", to.getName()));
 
-		Util.coloredMessage(to, configUtils.lang("TELEPORT_GOT_REQUEST1").replace("%player%", from.getName()));
+		Util.coloredMessage(to, configUtils.lang(here ? "TELEPORT_GOT_HERE_REQUEST1" : "TELEPORT_GOT_REQUEST1").replace("%player%", from.getName()));
 		Util.coloredMessage(to, configUtils.lang("TELEPORT_GOT_REQUEST2").replace("%player%", from.getName()));
-		currentRequest.put(to.getUniqueId(), from.getUniqueId());
+		Request request = new Request(from.getUniqueId(), here);
+		currentRequest.put(to.getUniqueId(), request);
+
+		// only expire this exact request, a newer one replaced it otherwise
+		Schedulers.asyncLater(plugin, () -> {
+			if (currentRequest.remove(to.getUniqueId(), request)) {
+				Player sender = Bukkit.getPlayer(request.from());
+				if (sender != null) {
+					Util.coloredMessage(sender, configUtils.lang("TELEPORT_TIMEOUT"));
+				}
+			}
+		}, expireMillis);
+	}
+
+	// mover goes to destination's location once the warmup ends, the requester pays
+	private void move(Player mover, Player destination, Player payer) {
+		Teleporter teleporter = Teleporter.get();
+		if (teleporter == null) {
+			mover.teleportAsync(destination.getLocation());
+			return;
+		}
+		teleporter.teleport(mover, payer, tpaAction,
+			() -> CompletableFuture.completedFuture(destination.isOnline() ? destination.getLocation() : null),
+			destination.getName());
 	}
 
 	public boolean killRequest(Player p) {
 		if (currentRequest.containsKey(p.getUniqueId())) {
-			Player loser = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()));
+			Player loser = Bukkit.getPlayer(currentRequest.get(p.getUniqueId()).from());
 			if (loser != null) {
 				loser.sendMessage(configUtils.lang("TELEPORT_TIMEOUT"));
 			}

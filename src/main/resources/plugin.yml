@@ -201,7 +201,7 @@ commands:
     description: Heal or feed players
   teleport:
     usage: /tp(o), /tpa, /tphere
-    aliases: [tp, tpo, tpa, tphere, tpaccept, tpdeny, tpyes, tpno]
+    aliases: [tp, tpo, tpa, tpahere, tphere, tpaccept, tpdeny, tpyes, tpno]
     description: Heal or feed players
   workbench:
     usage: /workbench
@@ -235,6 +235,17 @@ commands:
     aliases: [m, msg, r, message, socialspy, disablemessaging, disablemessage, disablemsg, tpm, togglepms, togglemsg, togglemessaging]
     description: Message or reply to a player 
 
+  home:
+    usage: /<command> [name]
+    aliases: [homes, sethome, delhome]
+    description: Teleport to and manage your homes
+  back:
+    usage: /<command>
+    description: Go back to your last location
+  rtp:
+    usage: /<command> [world]
+    aliases: [wild, randomtp]
+    description: Teleport somewhere random
   warp:
     usage: /<command> [player]
     aliases: [warps, setwarp, delwarp, remwarp, addwarp, warpinfo]

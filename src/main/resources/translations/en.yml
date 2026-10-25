@@ -122,6 +122,7 @@ TELEPORT_SELF: "&cYou can not teleport yourself."
 TELEPORT_TO: "&aTeleported to &f%player%" 
 TELEPORT_SENT_REQUEST: "&fTeleport request sent to &a%player%"
 TELEPORT_GOT_REQUEST1: "\n&n%player%&f has sent you a teleport request"
+TELEPORT_GOT_HERE_REQUEST1: "\n&n%player%&f wants you to teleport to them"
 TELEPORT_GOT_REQUEST2: "         &fType &a/tpaccept&f or&c /tpdeny\n"
 TELEPORT_TIMEOUT: "Your teleport request timed out."
 

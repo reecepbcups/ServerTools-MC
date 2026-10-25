@@ -265,6 +265,13 @@ Core:
       TP: essentials.tp
       TPA: essentials.tpa
       TPHere: essentials.tphere
+      TPAHere: tools.tpahere
+    # unanswered /tpa and /tpahere requests drop after this
+    RequestExpireSeconds: 60
+    # warmup is on whoever moves, cooldown and cost on whoever sent the request
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
   Spawn:
     Enabled: true
     CommandPermission: spawn.use
@@ -309,6 +316,81 @@ Core:
     # hide one time kits from /kits once used
     SkipUsedOneTimeKits: false
     AllowUnsafeEnchantments: false
+
+  # shared by homes, back, rtp and tpa. each one sets its own Warmup/Cooldown (seconds) and Cost
+  TeleportSettings:
+    CancelWarmupOnMove: true
+    CancelWarmupOnDamage: true
+    BypassWarmupPerm: tools.teleport.bypass.warmup
+    BypassCooldownPerm: tools.teleport.bypass.cooldown
+    BypassCostPerm: tools.teleport.bypass.cost
+
+  # /home [name], /homes, /sethome [name], /delhome <name>
+  # staff with OthersPerm can use player:name, e.g. /home steve:base
+  Homes:
+    Enabled: true
+    Permission: tools.home
+    OthersPerm: tools.home.others
+    # everyone gets 'default'. other tiers need LimitPermPrefix + tier, e.g. tools.homes.limit.vip
+    # highest tier wins, -1 = unlimited
+    LimitPermPrefix: tools.homes.limit.
+    Limits:
+      default: 3
+      vip: 5
+      mvp: 10
+      staff: -1
+    DisabledWorlds: []
+    # homes live in memory, Homes.yml is only written when something changed
+    SaveIntervalMinutes: 5
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
+
+  # /back to where you were before your last teleport
+  Back:
+    Enabled: true
+    Permission: tools.back
+    # with this you can also /back to where you died
+    OnDeathPerm: tools.back.ondeath
+    # no /back point is saved when leaving these worlds
+    DisabledWorlds: []
+    Warmup: 3
+    Cooldown: 0
+    Cost: 0
+
+  # /rtp [world], staff can /rtp <player> [world]
+  RandomTeleport:
+    Enabled: true
+    Permission: tools.rtp
+    OthersPerm: tools.rtp.others
+    # picking a world by name needs this + the world, e.g. tools.rtp.world.world_nether
+    WorldPermPrefix: tools.rtp.world.
+    # used when the player's current world isn't listed below
+    DefaultWorld: world
+    # only these worlds can be rtp'd in. players land between MinRadius and MaxRadius from the center
+    Worlds:
+      world:
+        CenterX: 0
+        CenterZ: 0
+        MinRadius: 200
+        MaxRadius: 5000
+    # spots tried before giving up
+    MaxAttempts: 10
+    UnsafeBlocks:
+    - LAVA
+    - WATER
+    - MAGMA_BLOCK
+    - CACTUS
+    - FIRE
+    - SOUL_FIRE
+    - CAMPFIRE
+    - SOUL_CAMPFIRE
+    - SWEET_BERRY_BUSH
+    - POWDER_SNOW
+    - POINTED_DRIPSTONE
+    Warmup: 3
+    Cooldown: 300
+    Cost: 0
 
 Commands:
   Countdown:

@@ -124,6 +124,7 @@ TELEPORT_SELF: "&cDu kannst dich nicht, zu dir selbst teleportieren."
 TELEPORT_TO: "&aTeleportiere zu &f%player%" 
 TELEPORT_SENT_REQUEST: "&fTeleportationsanfrage an &a%player% &fgesendet"
 TELEPORT_GOT_REQUEST1: "\n&n%player%&f hat dir eine Teleportationsanfrage geschickt"
+TELEPORT_GOT_HERE_REQUEST1: "\n&n%player%&f möchte, dass du dich zu ihm teleportierst"
 TELEPORT_GOT_REQUEST2: "         &fSchreibe &a/tpaccept&f oder&c /tpdeny\n"
 TELEPORT_TIMEOUT: "Deine Teleportationsanfrage ist abgelaufen."
 
