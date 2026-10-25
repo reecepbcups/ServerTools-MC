@@ -16,6 +16,7 @@ import sh.reece.utiltools.TextUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import static net.kyori.adventure.text.Component.text;
@@ -34,10 +35,19 @@ public final class HologramCommand extends BaseCommand {
     private static final double REMOVE_NEAR_RADIUS = 2.0D;
 
     private static final List<String> SUB_COMMANDS =
-            List.of("create", "remove", "show", "hide", "list", "teleport", "removenear", "reload");
+            List.of("create", "set", "remove", "show", "hide", "list", "teleport", "removenear", "reload");
 
     private static final List<String> KEYED_SUB_COMMANDS =
-            List.of("remove", "delete", "show", "hide", "teleport", "tp");
+            List.of("set", "remove", "delete", "show", "hide", "teleport", "tp");
+
+    private static final Map<String, List<String>> SET_OPTIONS = Map.of(
+            Hologram.BILLBOARD_KEY, List.of("center", "fixed", "vertical", "horizontal"),
+            Hologram.YAW_KEY, List.of("here", "0", "90", "180", "-90"),
+            Hologram.PITCH_KEY, List.of("here", "0"),
+            Hologram.BACKGROUND_KEY, List.of("default", "#00000000", "#80000000"),
+            Hologram.SEE_THROUGH_KEY, List.of("true", "false"),
+            Hologram.SHADOW_KEY, List.of("true", "false"),
+            Hologram.UPDATE_INTERVAL_KEY, List.of("0", "20", "100", "1200"));
 
     private final HologramFeature feature;
     private final String adminPermission;
@@ -69,6 +79,7 @@ public final class HologramCommand extends BaseCommand {
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "create" -> create(sender, key);
+            case "set" -> set(sender, key, args.length >= 3 ? args[2] : null, args.length >= 4 ? args[3] : null);
             case "remove", "delete" -> remove(sender, key);
             case "show" -> show(sender, key);
             case "hide" -> hide(sender, key);
@@ -109,6 +120,60 @@ public final class HologramCommand extends BaseCommand {
 
         this.feature.load();
         send(sender, "<green>Created <white>", key, "<green> at your location.");
+    }
+
+    private void set(final CommandSender sender, final String key, final String option, final String value) {
+        if (key == null || option == null || value == null || !SET_OPTIONS.containsKey(option.toLowerCase(Locale.ROOT))) {
+            send(sender, "<white>/hologram <gray>set <name> <" + String.join("|", SET_OPTIONS.keySet().stream().sorted().toList()) + "> <value>");
+            return;
+        }
+
+        final FileConfiguration config = config();
+        if (!config.contains(key)) {
+            unknown(sender, key);
+            return;
+        }
+
+        final String path = key + "." + option.toLowerCase(Locale.ROOT);
+        final Object previous = config.get(path);
+        final Object parsed;
+        try {
+            parsed = setValue(sender, option.toLowerCase(Locale.ROOT), value);
+            config.set(path, parsed);
+            // parse is the source of truth for what a valid entry looks like
+            Hologram.parse(key, config.getConfigurationSection(key));
+        } catch (final RuntimeException e) {
+            config.set(path, previous);
+            send(sender, "<red>Invalid value <white>", value, "<red> for " + option + ".");
+            return;
+        }
+
+        this.configUtils.saveConfig(config, HologramFeature.CONFIG_FILE);
+        this.feature.load();
+        send(sender, "<green>Set <white>", key, "<green> " + option + " to <white>" + parsed + "<green>.");
+    }
+
+    /** {@code here} on yaw or pitch takes the player's facing, so a fixed board can face where they stand. */
+    private static Object setValue(final CommandSender sender, final String option, final String value) {
+        return switch (option) {
+            case Hologram.YAW_KEY, Hologram.PITCH_KEY -> {
+                if (value.equalsIgnoreCase("here") && sender instanceof Player player) {
+                    final Location facing = player.getLocation();
+                    // the text's front faces back along the player's view
+                    yield (double) Math.round(option.equals(Hologram.YAW_KEY)
+                            ? Location.normalizeYaw(facing.getYaw() + 180F) : -facing.getPitch());
+                }
+                yield Double.parseDouble(value);
+            }
+            case Hologram.SEE_THROUGH_KEY, Hologram.SHADOW_KEY -> {
+                if (!value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false")) {
+                    throw new IllegalArgumentException(value);
+                }
+                yield Boolean.parseBoolean(value);
+            }
+            case Hologram.UPDATE_INTERVAL_KEY -> Long.parseLong(value);
+            default -> value.toLowerCase(Locale.ROOT);
+        };
     }
 
     private void remove(final CommandSender sender, final String key) {
@@ -231,7 +296,7 @@ public final class HologramCommand extends BaseCommand {
     private void sendHelp(final CommandSender sender) {
         send(sender, "<yellow><bold>ServerTools Holograms");
         for (final String usage : new String[] {
-                "create <name>", "remove <name>", "show <name>", "hide <name>",
+                "create <name>", "set <name> <option> <value>", "remove <name>", "show <name>", "hide <name>",
                 "teleport <name>", "list", "removenear", "reload" }) {
             send(sender, "<white>/hologram <gray>" + usage);
         }
@@ -249,6 +314,15 @@ public final class HologramCommand extends BaseCommand {
             }
             if (args[0].equalsIgnoreCase("create")) {
                 return List.of("<name>");
+            }
+        }
+
+        if (args[0].equalsIgnoreCase("set")) {
+            if (args.length == 3) {
+                return startingWith(SET_OPTIONS.keySet().stream().sorted().toList(), args[2]);
+            }
+            if (args.length == 4) {
+                return startingWith(SET_OPTIONS.getOrDefault(args[2].toLowerCase(Locale.ROOT), List.of()), args[3]);
             }
         }
 
