@@ -16,6 +16,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Transformation;
+import org.joml.Vector3f;
 import sh.reece.core.economy.Money;
 import sh.reece.tools.ConfigUtils;
 import sh.reece.tools.Main;
@@ -54,13 +56,19 @@ public record Hologram(String key, List<String> lines, Location location, Appear
     private static final Pattern BALTOP = Pattern.compile("%baltop_(\\d{1,3})_(name|balance)%");
     private static final Map<UUID, String> NAMES = new ConcurrentHashMap<>();
 
+    public static final String BRIGHTNESS_KEY = "brightness";
+    public static final String VIEW_DISTANCE_KEY = "view-distance";
+    public static final String SCALE_KEY = "scale";
+
     /**
-     * How each line's display looks. A null background keeps the vanilla grey box.
+     * How each line's display looks. A null background keeps the vanilla grey box, a null brightness
+     * takes the light of the block it sits in, a viewRange of 0 keeps the vanilla distance.
      */
     public record Appearance(Display.Billboard billboard, float yaw, float pitch, Color background,
-                             boolean seeThrough, boolean shadow) {
-        public static final Appearance DEFAULT =
-                new Appearance(Display.Billboard.CENTER, 0F, 0F, null, false, false);
+                             boolean seeThrough, boolean shadow, Display.Brightness brightness,
+                             float viewRange, Vector3f scale) {
+        public static final Appearance DEFAULT = new Appearance(Display.Billboard.CENTER, 0F, 0F, null,
+                false, false, null, 0F, new Vector3f(1F, 1F, 1F));
     }
 
     /**
@@ -153,7 +161,8 @@ public record Hologram(String key, List<String> lines, Location location, Appear
         current.setYaw(this.appearance.yaw());
         current.setPitch(this.appearance.pitch());
         for (int i = 0; i < this.lines.size(); i++) {
-            current = current.clone().subtract(0, LINE_SPACING, 0);
+            // bigger text needs taller rows or the lines overlap
+            current = current.clone().subtract(0, LINE_SPACING * this.appearance.scale().y(), 0);
 
             // a blank line is a gap: it moves the cursor down but gets no entity. Judged on the raw
             // line so a placeholder that resolves empty keeps its slot for refresh
@@ -170,6 +179,15 @@ public record Hologram(String key, List<String> lines, Location location, Appear
                 }
                 display.setSeeThrough(this.appearance.seeThrough());
                 display.setShadowed(this.appearance.shadow());
+                if (this.appearance.brightness() != null) {
+                    display.setBrightness(this.appearance.brightness());
+                }
+                if (this.appearance.viewRange() > 0) {
+                    display.setViewRange(this.appearance.viewRange());
+                }
+                final Transformation base = display.getTransformation();
+                display.setTransformation(new Transformation(base.getTranslation(), base.getLeftRotation(),
+                        this.appearance.scale(), base.getRightRotation()));
                 display.text(rendered.get(index));
                 display.getPersistentDataContainer().set(IDENTIFIER_KEY, PersistentDataType.STRING, this.key);
                 display.getPersistentDataContainer().set(LINE_KEY, PersistentDataType.INTEGER, index);
@@ -259,10 +277,45 @@ public record Hologram(String key, List<String> lines, Location location, Appear
                 (float) section.getDouble(PITCH_KEY, 0D),
                 parseColor(section.getString(BACKGROUND_KEY, "default")),
                 section.getBoolean(SEE_THROUGH_KEY, false),
-                section.getBoolean(SHADOW_KEY, false));
+                section.getBoolean(SHADOW_KEY, false),
+                parseBrightness(section.getString(BRIGHTNESS_KEY)),
+                // view range is in units of 64 blocks
+                (float) Math.max(0D, section.getDouble(VIEW_DISTANCE_KEY, 0D)) / 64F,
+                parseScale(section.getString(SCALE_KEY)));
 
         return new Hologram(key, section.getStringList(TEXT_KEY), location, appearance,
                 section.getLong(UPDATE_INTERVAL_KEY, 0L));
+    }
+
+    /** {@code 15} for both block and sky light, or {@code block,sky}. Null keeps the world's light. */
+    public static Display.Brightness parseBrightness(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        final String[] parts = value.split(",");
+        final int block = Integer.parseInt(parts[0].trim());
+        final int sky = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : block;
+        if (block < 0 || block > 15 || sky < 0 || sky > 15) {
+            throw new IllegalArgumentException("brightness must be 0 to 15, got " + value);
+        }
+        return new Display.Brightness(block, sky);
+    }
+
+    /** {@code 1.5} for every axis, or {@code x,y,z}. */
+    public static Vector3f parseScale(final String value) {
+        if (value == null || value.isBlank()) {
+            return new Vector3f(1F, 1F, 1F);
+        }
+        final String[] parts = value.split(",");
+        if (parts.length == 1) {
+            final float all = Float.parseFloat(parts[0].trim());
+            return new Vector3f(all, all, all);
+        }
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("scale must be one number or x,y,z, got " + value);
+        }
+        return new Vector3f(Float.parseFloat(parts[0].trim()), Float.parseFloat(parts[1].trim()),
+                Float.parseFloat(parts[2].trim()));
     }
 
     /**

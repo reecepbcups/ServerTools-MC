@@ -13,6 +13,9 @@
 #   see-through:     true = readable through blocks
 #   shadow:          true = drop shadow on the text
 #   update-interval: ticks between placeholder refreshes (20 = 1s), 0 = never
+#   brightness:      15 = full bright like it's lit (or block,sky e.g. 15,15). Leave out to use the world's light
+#   view-distance:   blocks away it can be seen from (vanilla is about 64)
+#   scale:           1.5 makes it 50% bigger, or x,y,z e.g. 2,2,1
 #
 # Built in leaderboard placeholders (rank 1 to 999):
 #   %baltop_1_name%  %baltop_1_balance%

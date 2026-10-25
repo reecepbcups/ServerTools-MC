@@ -786,6 +786,10 @@ Misc:
     FakeJoinQuitMessages: false
     # show a VANISHED reminder in the action bar while vanished
     ActionBar: true
+    # vanished players don't pick up items (the item disappearing gives you away)
+    PreventItemPickup: true
+    # mobs ignore vanished players
+    PreventMobTargeting: true
 
   BucketStacker:
     Enabled: false

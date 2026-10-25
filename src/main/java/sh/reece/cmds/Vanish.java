@@ -13,6 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -41,6 +43,8 @@ public class Vanish extends BaseCommand implements Listener {
 	private final boolean customJoinQuit;
 	private final String customJoin;
 	private final String customQuit;
+	private final boolean preventPickup;
+	private final boolean preventMobTargeting;
 
 	public Vanish(Main instance) {
 		super(instance, "Misc.Vanish", "vanish");
@@ -49,6 +53,8 @@ public class Vanish extends BaseCommand implements Listener {
 		customJoinQuit = configUtils.enabledInConfig(DisableJLMsg.SECTION + ".Enabled");
 		customJoin = plugin.getConfig().getString(DisableJLMsg.SECTION + ".JoinMessage", "");
 		customQuit = plugin.getConfig().getString(DisableJLMsg.SECTION + ".QuitMessage", "");
+		preventPickup = plugin.getConfig().getBoolean(section + ".PreventItemPickup", true);
+		preventMobTargeting = plugin.getConfig().getBoolean(section + ".PreventMobTargeting", true);
 		if (isEnabled() && plugin.getConfig().getBoolean(section + ".ActionBar", true)) {
 			actionBar = LegacyComponentSerializer.legacySection().deserialize(configUtils.lang("VANISH_ACTIONBAR"));
 			Schedulers.globalTimer(plugin, this::sendActionBars, 40L, 40L);
@@ -162,6 +168,23 @@ public class Vanish extends BaseCommand implements Listener {
 			if (vanishedPlayer != null && vanishedPlayer != joined) {
 				Schedulers.entity(plugin, joined, () -> joined.hidePlayer(plugin, vanishedPlayer));
 			}
+		}
+	}
+
+	// picking items up makes them vanish off the ground, which gives the player away
+	@EventHandler(ignoreCancelled = true)
+	public void onPickup(EntityPickupItemEvent e) {
+		if (preventPickup && !vanished.isEmpty() && vanished.contains(e.getEntity().getUniqueId())) {
+			e.setCancelled(true);
+		}
+	}
+
+	// fires a lot from mobs, so the empty check comes first
+	@EventHandler(ignoreCancelled = true)
+	public void onTarget(EntityTargetLivingEntityEvent e) {
+		if (preventMobTargeting && !vanished.isEmpty() && e.getTarget() instanceof Player target
+				&& vanished.contains(target.getUniqueId())) {
+			e.setCancelled(true);
 		}
 	}
 
