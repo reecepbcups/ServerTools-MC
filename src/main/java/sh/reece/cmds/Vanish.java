@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import sh.reece.disabled.DisableJLMsg;
@@ -49,15 +50,21 @@ public class Vanish extends BaseCommand implements Listener {
 		customJoin = plugin.getConfig().getString(DisableJLMsg.SECTION + ".JoinMessage", "");
 		customQuit = plugin.getConfig().getString(DisableJLMsg.SECTION + ".QuitMessage", "");
 		if (isEnabled() && plugin.getConfig().getBoolean(section + ".ActionBar", true)) {
+			actionBar = LegacyComponentSerializer.legacySection().deserialize(configUtils.lang("VANISH_ACTIONBAR"));
 			Schedulers.globalTimer(plugin, this::sendActionBars, 40L, 40L);
+		} else {
+			actionBar = null;
 		}
 	}
+
+	// parsed once, lang only changes on reload which builds a new Vanish
+	private final Component actionBar;
 
 	private void sendActionBars() {
 		if (vanished.isEmpty()) {
 			return;
 		}
-		var bar = LegacyComponentSerializer.legacySection().deserialize(configUtils.lang("VANISH_ACTIONBAR"));
+		var bar = actionBar;
 		for (UUID id : vanished) {
 			Player p = Bukkit.getPlayer(id);
 			if (p != null) {

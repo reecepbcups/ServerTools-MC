@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +52,7 @@ public record Hologram(String key, List<String> lines, Location location, Appear
 
     // %baltop_<rank>_name% and %baltop_<rank>_balance%, ranks start at 1
     private static final Pattern BALTOP = Pattern.compile("%baltop_(\\d{1,3})_(name|balance)%");
+    private static final Map<UUID, String> NAMES = new ConcurrentHashMap<>();
 
     /**
      * How each line's display looks. A null background keeps the vanilla grey box.
@@ -103,7 +105,7 @@ public record Hologram(String key, List<String> lines, Location location, Appear
             if (sweepLegacy) {
                 eraseLegacy(world);
             }
-            draw(world, render(plugin, this.lines));
+            draw(world, Template.of(this.lines).render(plugin));
         });
         return true;
     }
@@ -126,14 +128,24 @@ public record Hologram(String key, List<String> lines, Location location, Appear
      * @return null when {@code update-interval} is off
      */
     public ScheduledTask scheduleRefresh(final Main plugin) {
-        if (this.updateInterval <= 0 || this.location.getWorld() == null) {
+        final World world = this.location.getWorld();
+        if (this.updateInterval <= 0 || world == null) {
+            return null;
+        }
+        // nothing to refresh when every line is plain text
+        final Template template = Template.of(this.lines);
+        if (!template.dynamic()) {
             return null;
         }
 
-        // unloaded chunk means nobody is looking, so finding no displays is fine
-        return Bukkit.getRegionScheduler().runAtFixedRate(plugin, this.location,
-                (task) -> refresh(this.location.getWorld(), render(plugin, this.lines)),
-                this.updateInterval, this.updateInterval);
+        final int chunkX = this.location.getBlockX() >> 4;
+        final int chunkZ = this.location.getBlockZ() >> 4;
+        return Bukkit.getRegionScheduler().runAtFixedRate(plugin, this.location, (task) -> {
+            // unloaded chunk means nobody is looking, so skip the placeholder work too
+            if (world.isChunkLoaded(chunkX, chunkZ)) {
+                refresh(world, template.render(plugin));
+            }
+        }, this.updateInterval, this.updateInterval);
     }
 
     private void draw(final World world, final List<Component> rendered) {
@@ -276,17 +288,39 @@ public record Hologram(String key, List<String> lines, Location location, Appear
         TextUtil.consoleMessage(TextUtil.color("<red>[!] Hologram <white>").append(text(key)).append(TextUtil.color("<red> ")).append(text(problem)));
     }
 
-    private static List<Component> render(final Main plugin, final List<String> lines) {
-        // one sort per render, not one per placeholder
-        final Map<UUID, Long> top = needsBalTop(lines) && plugin.getEconomyStorage() != null
-                ? plugin.getEconomyStorage().top(maxRank(lines)) : Map.of();
-        final List<UUID> ranked = List.copyOf(top.keySet());
+    /**
+     * Lines without a % never change, so they are parsed once here. Only the rest are rendered per refresh.
+     *
+     * @param fixed   parsed line, or null when the line has placeholders
+     * @param maxRank deepest %baltop_N_...% rank used, 0 for none
+     */
+    private record Template(List<String> lines, Component[] fixed, boolean dynamic, int maxRank) {
 
-        return lines.stream().map((line) -> render(replaceBalTop(line, ranked, top, plugin.getCurrencySymbol()))).toList();
-    }
+        static Template of(final List<String> lines) {
+            final Component[] fixed = new Component[lines.size()];
+            boolean dynamic = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).indexOf('%') >= 0) {
+                    dynamic = true;
+                } else {
+                    fixed[i] = Hologram.render(lines.get(i));
+                }
+            }
+            return new Template(lines, fixed, dynamic, Hologram.maxRank(lines));
+        }
 
-    private static boolean needsBalTop(final List<String> lines) {
-        return lines.stream().anyMatch((line) -> BALTOP.matcher(line).find());
+        List<Component> render(final Main plugin) {
+            final Map<UUID, Long> top = this.maxRank > 0 && plugin.getEconomyStorage() != null
+                    ? plugin.getEconomyStorage().top(this.maxRank) : Map.of();
+            final List<UUID> ranked = List.copyOf(top.keySet());
+
+            final List<Component> out = new ArrayList<>(this.lines.size());
+            for (int i = 0; i < this.lines.size(); i++) {
+                out.add(this.fixed[i] != null ? this.fixed[i]
+                        : Hologram.render(replaceBalTop(this.lines.get(i), ranked, top, plugin.getCurrencySymbol())));
+            }
+            return out;
+        }
     }
 
     private static int maxRank(final List<String> lines) {
@@ -316,7 +350,8 @@ public record Hologram(String key, List<String> lines, Location location, Appear
             if (match.group(2).equals("balance")) {
                 return Matcher.quoteReplacement(Money.format(top.get(id), symbol));
             }
-            final String name = Bukkit.getOfflinePlayer(id).getName();
+            // offline name lookups can hit the disk, and the top players rarely change
+            final String name = NAMES.computeIfAbsent(id, (key) -> Bukkit.getOfflinePlayer(key).getName());
             return Matcher.quoteReplacement(name == null ? id.toString() : name);
         });
     }

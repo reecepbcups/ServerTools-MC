@@ -17,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -34,7 +35,8 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 	public Random rand = new Random();
 	public static Boolean isEnabled;
 
-	public static HashMap<String, String> ChatColorHash = new HashMap<String, String>();
+	// read from the async chat thread while the main thread writes
+	public static Map<String, String> ChatColorHash = new java.util.concurrent.ConcurrentHashMap<String, String>();
 
 	public static List<String> EMPTY_LORE = new ArrayList<String>();
 	public static List<String> RainbowColors;
@@ -104,7 +106,7 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 	public void initCreateInv() {
 		int rows = Math.max(1, Math.min(6, (Colors.size() + 8) / 9));
-		ColorINV = Bukkit.createInventory(null, rows * 9, InvName);
+		ColorINV = Bukkit.createInventory(new GuiHolder(), rows * 9, InvName);
 		SlotKeys.clear();
 
 		int slot = 0;
@@ -206,7 +208,8 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
-		if (event.getView().getTitle().equalsIgnoreCase(InvName)) {
+		// holder check instead of comparing titles, which builds a string on every click server wide
+		if (event.getView().getTopInventory().getHolder(false) instanceof GuiHolder) {
 
 			ItemStack clicked = event.getCurrentItem();
 			if (clicked == null || !clicked.hasItemMeta()) {
@@ -230,6 +233,13 @@ public class ChatColor extends BaseCommand implements Listener, Unloadable {
 
 			p.closeInventory();
 			event.setCancelled(true);
+		}
+	}
+
+	private static final class GuiHolder implements InventoryHolder {
+		@Override
+		public Inventory getInventory() {
+			return ColorINV;
 		}
 	}
 

@@ -99,6 +99,27 @@ final class KitData {
         this.dirty = true;
     }
 
+    /**
+     * Drops records whose cooldown is over, so the file holds active cooldowns instead of every claim ever made.
+     * One time kits and kits that aren't loaded right now are kept.
+     */
+    void prune(final Map<String, Kit> kits, final long now) {
+        for (final Map.Entry<UUID, Map<String, Long>> player : this.used.entrySet()) {
+            final Map<String, Long> claims = player.getValue();
+            for (final Map.Entry<String, Long> claim : claims.entrySet()) {
+                final Kit kit = kits.get(claim.getKey());
+                if (kit != null && kit.delaySeconds() >= 0 && kit.nextUse(claim.getValue(), now) == 0
+                        // only if unchanged, a claim may have landed since we read it
+                        && claims.remove(claim.getKey(), claim.getValue())) {
+                    this.dirty = true;
+                }
+            }
+            if (claims.isEmpty()) {
+                this.used.remove(player.getKey(), claims);
+            }
+        }
+    }
+
     /** Writes the file if anything changed. Safe from any thread, synchronized so two saves never interleave. */
     synchronized void saveIfDirty() {
         if (!this.dirty) return;

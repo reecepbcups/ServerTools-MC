@@ -14,6 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -22,6 +23,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +53,11 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 	// [NAME: {itemstack, commands, VoucherID}]
 	private static final HashMap<String, List<Object>> VOUCHERS = new HashMap<String, List<Object>>();
+	// tagged vouchers are found by id; untagged ones from older versions by display name
+	private static final NamespacedKey VOUCHER_KEY = new NamespacedKey("servertools", "voucher");
+	private static final HashMap<String, List<Object>> VOUCHERS_BY_ID = new HashMap<String, List<Object>>();
+	// right click fires constantly, so anything not made of a voucher material is dropped before reading meta
+	private static final Set<Material> VOUCHER_MATERIALS = EnumSet.noneOf(Material.class);
 	//private static List<Inventory> previewVouchersGUIs = new ArrayList<Inventory>();
 	//private static HashMap<String, Integer> playerPreviewPage = new HashMap<String, Integer>();
 	private ConfigUtils configUtils;
@@ -91,7 +98,11 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	public void createPreviewGUI() {
 
 		InvName = configUtils.lang("VOUCHER_GUI_NAME");
-    	GUI = Bukkit.createInventory(null, 54, InvName);
+    	GUI = Bukkit.createInventory(new GuiHolder(), 54, InvName);
+    	// rebuilt on reload, so drop vouchers that left the config
+    	VOUCHERS.clear();
+    	VOUCHERS_BY_ID.clear();
+    	VOUCHER_MATERIALS.clear();
 
     	//int slot = 0;
     	ItemStack VoucherItem;
@@ -117,6 +128,8 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
     		voucherValues.add(config.getStringList(voucher+".Commands"));
     		voucherValues.add(voucher);
     		VOUCHERS.put(Util.color(config.getString(voucher+".Name")), voucherValues);
+    		VOUCHERS_BY_ID.put(voucher, voucherValues);
+    		VOUCHER_MATERIALS.add(VoucherItem.getType());
     	}
 
 	}
@@ -174,6 +187,7 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
         meta.setDisplayName(displayName);
         meta.setLore(lore);
+        meta.getPersistentDataContainer().set(VOUCHER_KEY, PersistentDataType.STRING, voucherID);
         item.setItemMeta(meta);
 
         if(Glowing) {
@@ -196,56 +210,60 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 
 			ItemStack item = e.getItem();
 
-			if(!item.hasItemMeta()) {
+			if(!VOUCHER_MATERIALS.contains(item.getType()) || !item.hasItemMeta()) {
 				return;
 			}
 
-			if(!item.getItemMeta().hasDisplayName()) {
+			// read only view, no meta copy
+			String taggedID = item.getPersistentDataContainer().get(VOUCHER_KEY, PersistentDataType.STRING);
+			List<Object> voucher;
+			if(taggedID != null) {
+				voucher = VOUCHERS_BY_ID.get(taggedID);
+			} else {
+				ItemMeta meta = item.getItemMeta();
+				if(!meta.hasDisplayName() || !meta.hasLore()) {
+					return;
+				}
+				voucher = VOUCHERS.get(meta.getDisplayName());
+				// name + lore, since isSimilar fails on the tag older vouchers don't have
+				if(voucher != null && !meta.getLore().equals(((ItemStack) voucher.get(0)).getItemMeta().getLore())) {
+					voucher = null;
+				}
+			}
+			if(voucher == null) {
 				return;
 			}
-			if(!item.getItemMeta().hasLore()) {
-				return;
-			}
 
+			// vouchers are never placed, even when redeeming works (ENDER_CHEST etc.)
+			e.setCancelled(true);
 
-			String displayName = Util.color(item.getItemMeta().getDisplayName());
-			//Util.coloredBroadcast("has displayname " + displayName);
-
-			if(!VOUCHERS.containsKey(displayName)) {
-				//Util.coloredBroadcast("vopuchers contains " + displayName);
+			@SuppressWarnings("unchecked") List<String> commands = (List<String>) voucher.get(1);
+			if(commands == null) {
 				return;
 			}
 
 			Player p = e.getPlayer();
-			if(item.isSimilar((ItemStack) VOUCHERS.get(displayName).get(0))) {
-				// vouchers are never placed, even when redeeming works (ENDER_CHEST etc.)
-				e.setCancelled(true);
+			String voucherID = voucher.get(2).toString();
+			if(!canRedeem(p, voucherID)) {
+				return;
+			}
 
-				@SuppressWarnings("unchecked") List<String> commands = (List<String>) VOUCHERS.get(displayName).get(1);
-				if(commands != null) {
+			Util.removeItemFromPlayer(p, item, 1);
 
-					String voucherID = VOUCHERS.get(displayName).get(2).toString();
-					if(!canRedeem(p, voucherID)) {
-						return;
-					}
+			for(String cmd : commands) {
 
-					Util.removeItemFromPlayer(p, item, 1);
+				cmd = cmd.replace("%player%", p.getName())
+						.replace("%voucher%", voucherID);
+				Util.consoleMSG(cmd);
 
-					for(String cmd : commands) {
+				Util.console(cmd);
+			}
 
-						cmd = cmd.replace("%player%", p.getName())
-								.replace("%voucher%", voucherID);
-						Util.consoleMSG(cmd);
-
-						Util.console(cmd);
-					}
-
-					if(RedeemMessage.length() > 0) {
-						Util.coloredMessage(p,
-							RedeemMessage.replace("%voucher%", displayName)
-							.replace("%voucherid%", voucherID));
-					}
-				}
+			if(RedeemMessage.length() > 0) {
+				String displayName = ((ItemStack) voucher.get(0)).getItemMeta().getDisplayName();
+				Util.coloredMessage(p,
+					RedeemMessage.replace("%voucher%", displayName)
+					.replace("%voucherid%", voucherID));
 			}
 		}
 
@@ -391,7 +409,8 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 	public void onInventoryClick(InventoryClickEvent event) {
 		ItemStack clicked = event.getCurrentItem();
 
-		if(event.getView().getTitle().equalsIgnoreCase(InvName)) {
+		// holder check instead of comparing titles, which builds a string on every click server wide
+		if(event.getView().getTopInventory().getHolder(false) instanceof GuiHolder) {
 			if(clicked == null) {
 				return;
 			}
@@ -400,6 +419,13 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 		}
 	}
 
+
+	private static final class GuiHolder implements InventoryHolder {
+		@Override
+		public Inventory getInventory() {
+			return GUI;
+		}
+	}
 
 	private static final List<String> possibleArugments = Arrays.asList("give", "giveall", "list");
 	private final List<String> result = new ArrayList<String>();

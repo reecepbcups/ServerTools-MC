@@ -100,7 +100,12 @@ public final class KitFeature implements Unloadable {
 
         load();
         this.saveTask = Schedulers.globalTimer(plugin,
-                () -> Schedulers.async(plugin, this.data::saveIfDirty), SAVE_PERIOD_TICKS, SAVE_PERIOD_TICKS);
+                () -> Schedulers.async(plugin, this::pruneAndSave), SAVE_PERIOD_TICKS, SAVE_PERIOD_TICKS);
+    }
+
+    private void pruneAndSave() {
+        this.data.prune(this.kits, System.currentTimeMillis());
+        this.data.saveIfDirty();
     }
 
     /** First start only: an existing kits file moves over as is, since the format is the same. */
@@ -464,7 +469,7 @@ public final class KitFeature implements Unloadable {
             this.saveTask.cancel();
         }
         if (this.data != null) {
-            this.data.saveIfDirty();
+            pruneAndSave();
         }
     }
 }

@@ -27,8 +27,17 @@ public class Nickname extends BaseCommand implements Listener {
 
 	private static final String FILE = "nicknames.yml";
 
-	// raw nicknames with & codes, keyed by player. Read from the async chat thread and PAPI.
-	private static final Map<UUID, String> nicks = new ConcurrentHashMap<>();
+	// read from the async chat thread and PAPI (TAB asks per player per refresh), so every form
+	// is colored once when the nick is set instead of on each read
+	private record Nick(String raw, String colored, String prefixed, String stripped) {
+		static Nick of(String raw) {
+			String colored = Util.color(raw);
+			return new Nick(raw, colored, PREFIX + colored, ChatColor.stripColor(colored));
+		}
+	}
+
+	private static final Map<UUID, Nick> nicks = new ConcurrentHashMap<>();
+	// PREFIX is stored colored
 	private static String PREFIX = "", BypassPrefixPerm = "";
 
 	private final File file;
@@ -38,7 +47,7 @@ public class Nickname extends BaseCommand implements Listener {
 		this.file = new File(plugin.getDataFolder(), FILE);
 		nicks.clear();
 		if (isEnabled()) {
-			PREFIX = plugin.getConfig().getString(section + ".prefix", "");
+			PREFIX = Util.color(plugin.getConfig().getString(section + ".prefix", ""));
 			BypassPrefixPerm = plugin.getConfig().getString(section + ".prefixBypass", "");
 			load();
 			// re-apply for anyone already online after a reload
@@ -50,12 +59,11 @@ public class Nickname extends BaseCommand implements Listener {
 
 	/** The name a player shows as in chat: prefix + nickname, or their real name when they have none. */
 	public static String displayName(Player player) {
-		String nick = nicks.get(player.getUniqueId());
+		Nick nick = nicks.get(player.getUniqueId());
 		if (nick == null) {
 			return player.getName();
 		}
-		String colored = Util.color(nick);
-		return player.hasPermission(BypassPrefixPerm) ? colored : Util.color(PREFIX) + colored;
+		return player.hasPermission(BypassPrefixPerm) ? nick.colored() : nick.prefixed();
 	}
 
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -72,8 +80,8 @@ public class Nickname extends BaseCommand implements Listener {
 	}
 
 	private static void apply(Player p) {
-		String nick = nicks.get(p.getUniqueId());
-		String name = nick == null ? p.getName() : Util.color(nick);
+		Nick nick = nicks.get(p.getUniqueId());
+		String name = nick == null ? p.getName() : nick.colored();
 		p.setDisplayName(name);
 		p.setPlayerListName(name);
 	}
@@ -97,7 +105,8 @@ public class Nickname extends BaseCommand implements Listener {
 
 		} else {
 			// length limits count what players see, not the & codes
-			String visible = ChatColor.stripColor(Util.color(args[0]));
+			Nick nick = Nick.of(args[0]);
+			String visible = nick.stripped();
 
 			if (visible.length() < 3) {
 				Util.coloredMessage(p, "&c[!] Your nickname is too short");
@@ -110,7 +119,7 @@ public class Nickname extends BaseCommand implements Listener {
 				return true;
 			}
 
-			nicks.put(p.getUniqueId(), args[0]);
+			nicks.put(p.getUniqueId(), nick);
 			message = "&a[+] Your nickname has been changed to &f" + args[0];
 		}
 
@@ -126,9 +135,8 @@ public class Nickname extends BaseCommand implements Listener {
 				return true;
 			}
 		}
-		for (Map.Entry<UUID, String> entry : nicks.entrySet()) {
-			if (!entry.getKey().equals(self)
-					&& ChatColor.stripColor(Util.color(entry.getValue())).equalsIgnoreCase(visible)) {
+		for (Map.Entry<UUID, Nick> entry : nicks.entrySet()) {
+			if (!entry.getKey().equals(self) && entry.getValue().stripped().equalsIgnoreCase(visible)) {
 				return true;
 			}
 		}
@@ -139,7 +147,7 @@ public class Nickname extends BaseCommand implements Listener {
 		YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
 		for (String key : yaml.getKeys(false)) {
 			try {
-				nicks.put(UUID.fromString(key), yaml.getString(key));
+				nicks.put(UUID.fromString(key), Nick.of(yaml.getString(key)));
 			} catch (IllegalArgumentException e) {
 				Util.consoleMSG("&cSkipping bad player id " + key + " in " + FILE);
 			}
@@ -149,7 +157,7 @@ public class Nickname extends BaseCommand implements Listener {
 	// synchronized so two quick changes can't write the file out of order
 	private synchronized void save() {
 		YamlConfiguration yaml = new YamlConfiguration();
-		nicks.forEach((id, nick) -> yaml.set(id.toString(), nick));
+		nicks.forEach((id, nick) -> yaml.set(id.toString(), nick.raw()));
 		try {
 			yaml.save(file);
 		} catch (IOException e) {
