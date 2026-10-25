@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
@@ -127,6 +128,12 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
     		//voucherValues.add(lore);
     		voucherValues.add(config.getStringList(voucher+".Commands"));
     		voucherValues.add(voucher);
+    		// what vouchers given out before the tag existed look like, to match them just as strictly
+    		ItemStack legacy = VoucherItem.clone();
+    		ItemMeta legacyMeta = legacy.getItemMeta();
+    		legacyMeta.getPersistentDataContainer().remove(VOUCHER_KEY);
+    		legacy.setItemMeta(legacyMeta);
+    		voucherValues.add(legacy);
     		VOUCHERS.put(Util.color(config.getString(voucher+".Name")), voucherValues);
     		VOUCHERS_BY_ID.put(voucher, voucherValues);
     		VOUCHER_MATERIALS.add(VoucherItem.getType());
@@ -219,14 +226,18 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 			List<Object> voucher;
 			if(taggedID != null) {
 				voucher = VOUCHERS_BY_ID.get(taggedID);
+				// the tag alone isn't proof, it can be copied onto another item. Must match the real voucher exactly
+				if(voucher != null && !item.isSimilar((ItemStack) voucher.get(0))) {
+					voucher = null;
+				}
 			} else {
 				ItemMeta meta = item.getItemMeta();
 				if(!meta.hasDisplayName() || !meta.hasLore()) {
 					return;
 				}
 				voucher = VOUCHERS.get(meta.getDisplayName());
-				// name + lore, since isSimilar fails on the tag older vouchers don't have
-				if(voucher != null && !meta.getLore().equals(((ItemStack) voucher.get(0)).getItemMeta().getLore())) {
+				// material, name, lore, enchants, flags: everything but the tag older vouchers don't have
+				if(voucher != null && !item.isSimilar((ItemStack) voucher.get(3))) {
 					voucher = null;
 				}
 			}
@@ -248,7 +259,9 @@ public class Vouchers implements Listener, CommandExecutor, TabCompleter {
 				return;
 			}
 
-			Util.removeItemFromPlayer(p, item, 1);
+			// take it from the hand that clicked. Clearing the main hand let an offhand voucher be reused forever
+			EquipmentSlot hand = e.getHand() == null ? EquipmentSlot.HAND : e.getHand();
+			p.getInventory().setItem(hand, item.getAmount() > 1 ? item.asQuantity(item.getAmount() - 1) : null);
 
 			for(String cmd : commands) {
 

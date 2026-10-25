@@ -11,8 +11,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.regex.Pattern;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -38,7 +41,11 @@ public class Nickname extends BaseCommand implements Listener {
 
 	private static final Map<UUID, Nick> nicks = new ConcurrentHashMap<>();
 	// PREFIX is stored colored
-	private static String PREFIX = "", BypassPrefixPerm = "";
+	private static String PREFIX = "", BypassPrefixPerm = "", ColorPerm = "";
+
+	// raw input cap, so a 20 character nick can't carry hundreds of color codes into chat and tab
+	private static final int MAX_RAW_LENGTH = 64;
+	private static final Pattern VISIBLE_NAME = Pattern.compile("[A-Za-z0-9_]+");
 
 	private final File file;
 
@@ -49,6 +56,7 @@ public class Nickname extends BaseCommand implements Listener {
 		if (isEnabled()) {
 			PREFIX = Util.color(plugin.getConfig().getString(section + ".prefix", ""));
 			BypassPrefixPerm = plugin.getConfig().getString(section + ".prefixBypass", "");
+			ColorPerm = plugin.getConfig().getString(section + ".colorPerm", "nickname.color");
 			load();
 			// re-apply for anyone already online after a reload
 			for (Player online : Bukkit.getOnlinePlayers()) {
@@ -108,7 +116,18 @@ public class Nickname extends BaseCommand implements Listener {
 			Nick nick = Nick.of(args[0]);
 			String visible = nick.stripped();
 
-			if (visible.length() < 3) {
+			// coloring changed nothing means there were no codes or gradients in it
+			if (!nick.colored().equals(args[0]) && !p.hasPermission(ColorPerm)) {
+				Util.coloredMessage(p, "&c[!] You can't use colors in your nickname");
+				return true;
+			} else if (args[0].length() > MAX_RAW_LENGTH) {
+				Util.coloredMessage(p, "&c[!] Your nickname has too many color codes");
+				return true;
+			} else if (!VISIBLE_NAME.matcher(visible).matches()) {
+				// same characters as real usernames, so look-alike letters can't dodge the name check
+				Util.coloredMessage(p, "&c[!] Nicknames can only use letters, numbers and _");
+				return true;
+			} else if (visible.length() < 3) {
 				Util.coloredMessage(p, "&c[!] Your nickname is too short");
 				return true;
 			} else if (visible.length() > 20) {
@@ -130,6 +149,11 @@ public class Nickname extends BaseCommand implements Listener {
 	}
 
 	private static boolean isNameTaken(String visible, UUID self) {
+		// anyone who has ever joined, online or not, so staff can't be impersonated while offline
+		OfflinePlayer known = Bukkit.getOfflinePlayerIfCached(visible);
+		if (known != null && !known.getUniqueId().equals(self)) {
+			return true;
+		}
 		for (Player online : Bukkit.getOnlinePlayers()) {
 			if (!online.getUniqueId().equals(self) && online.getName().equalsIgnoreCase(visible)) {
 				return true;

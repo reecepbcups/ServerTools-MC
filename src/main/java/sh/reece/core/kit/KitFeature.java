@@ -216,17 +216,22 @@ public final class KitFeature implements Unloadable {
         return raw.indexOf('{') >= 0 || (Main.isPAPIEnabled() && raw.indexOf('%') >= 0);
     }
 
-    private static String expand(String raw, final Player player) {
+    /**
+     * PAPI runs before the {...} keywords, so a nickname holding a %placeholder% is never expanded.
+     * Commands always get the real name: a nick can match another player's name.
+     */
+    private static String expand(String raw, final Player player, final boolean command) {
+        if (Main.isPAPIEnabled() && raw.indexOf('%') >= 0) {
+            raw = PlaceholderAPI.setPlaceholders(player, raw);
+        }
         if (raw.indexOf('{') >= 0) {
-            final String display = PlainTextComponentSerializer.plainText().serialize(player.displayName());
+            final String display = command ? player.getName()
+                    : PlainTextComponentSerializer.plainText().serialize(player.displayName());
             raw = raw.replace("{USERNAME}", player.getName())
                     .replace("{player}", player.getName())
                     .replace("{PLAYER}", display)
                     .replace("{DISPLAYNAME}", display)
                     .replace("{WORLD}", player.getWorld().getName());
-        }
-        if (Main.isPAPIEnabled() && raw.indexOf('%') >= 0) {
-            raw = PlaceholderAPI.setPlaceholders(player, raw);
         }
         return raw;
     }
@@ -243,8 +248,8 @@ public final class KitFeature implements Unloadable {
 
         for (final Kit.Entry entry : kit.entries()) {
             switch (entry.kind()) {
-                case MONEY -> money.add(expand(entry.raw(), player));
-                case COMMAND -> commands.add(expand(entry.raw(), player));
+                case MONEY -> money.add(expand(entry.raw(), player, true));
+                case COMMAND -> commands.add(expand(entry.raw(), player, true));
                 case ITEM -> {
                     final ItemStack item = item(kit, entry, player);
                     if (item == null) continue;
@@ -307,7 +312,7 @@ public final class KitFeature implements Unloadable {
         try {
             return entry.template() != null
                     ? entry.template().clone()
-                    : KitItems.parse(expand(entry.raw(), player), this.allowUnsafe);
+                    : KitItems.parse(expand(entry.raw(), player, false), this.allowUnsafe);
         } catch (final RuntimeException e) {
             LOGGER.warn("Kit {}: skipping '{}': {}", kit.name(), entry.raw(), e.getMessage());
             return null;
@@ -324,7 +329,7 @@ public final class KitFeature implements Unloadable {
                     if (item != null) items.add(item);
                 }
                 case MONEY -> items.add(label(Material.GOLD_INGOT, "&6$" + entry.raw()));
-                case COMMAND -> items.add(label(Material.PAPER, "&7/" + expand(entry.raw(), player)));
+                case COMMAND -> items.add(label(Material.PAPER, "&7/" + expand(entry.raw(), player, true)));
             }
         }
         return items;

@@ -175,6 +175,8 @@ Core:
     Permission: nickname.use
     prefix: '~'
     prefixBypass: nickname.prefixbypass
+    # needed for & codes, hex and gradients in a nick
+    colorPerm: nickname.color
   Top:
     Enabled: true
     Permission: essentials.top
