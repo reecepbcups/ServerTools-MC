@@ -2,9 +2,11 @@ package sh.reece.core.kit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
+import org.bukkit.block.Banner;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /** Turns kit item lines ({@code dpickaxe 1 efficiency:5 name:&bDrill} or {@code @<base64>}) into items. */
@@ -41,6 +44,26 @@ final class KitItems {
     private static final Pattern UNESCAPED_UNDERSCORE = Pattern.compile("(?<!\\\\)_");
     private static final Pattern UNESCAPED_PIPE = Pattern.compile("(?<!\\\\)\\|");
     private static final Pattern VALID_KEY = Pattern.compile("[a-z0-9_.\\-/]+");
+
+    // old Bukkit field names (pre 1.20.5) that existing kit files still use
+    private static final Map<String, String> LEGACY_ENCHANTS = Map.ofEntries(
+            Map.entry("protection_environmental", "protection"),
+            Map.entry("protection_fire", "fire_protection"),
+            Map.entry("protection_fall", "feather_falling"),
+            Map.entry("protection_explosions", "blast_protection"),
+            Map.entry("protection_projectile", "projectile_protection"),
+            Map.entry("water_worker", "aqua_affinity"),
+            Map.entry("damage_all", "sharpness"),
+            Map.entry("damage_undead", "smite"),
+            Map.entry("damage_arthropods", "bane_of_arthropods"),
+            Map.entry("loot_bonus_mobs", "looting"),
+            Map.entry("loot_bonus_blocks", "fortune"),
+            Map.entry("dig_speed", "efficiency"),
+            Map.entry("arrow_damage", "power"),
+            Map.entry("arrow_knockback", "punch"),
+            Map.entry("arrow_fire", "flame"),
+            Map.entry("arrow_infinite", "infinity"),
+            Map.entry("luck", "luck_of_the_sea"));
 
     private KitItems() {}
 
@@ -138,6 +161,15 @@ final class KitItems {
             skull.setPlayerProfile(Bukkit.createProfile(value));
         } else if (value != null && (key.equals("color") || key.equals("colour")) && meta instanceof LeatherArmorMeta leather) {
             leather.setColor(color(value));
+        } else if (value != null && key.equals("basecolor") && meta instanceof BlockStateMeta stateMeta
+                && stateMeta.getBlockState() instanceof Banner banner) {
+            // shields: the rgb has to land on one of the 16 dye colors
+            final DyeColor dye = DyeColor.getByColor(color(value));
+            if (dye == null) {
+                throw new IllegalArgumentException("basecolor " + value + " isn't a dye color");
+            }
+            banner.setBaseColor(dye);
+            stateMeta.setBlockState(banner);
         } else if (value != null && key.equals("itemflags")) {
             for (final String flag : value.split(",")) {
                 meta.addItemFlags(ItemFlag.valueOf(flag.trim().toUpperCase(Locale.ROOT)));
@@ -174,7 +206,10 @@ final class KitItems {
         Enchantment enchantment = VALID_KEY.matcher(key).matches()
                 ? Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key)) : null;
         if (enchantment == null) {
-            final String alias = KitAliases.get().enchant(key);
+            String alias = KitAliases.get().enchant(key);
+            if (alias == null) {
+                alias = LEGACY_ENCHANTS.get(key);
+            }
             enchantment = alias == null ? null : Registry.ENCHANTMENT.get(NamespacedKey.minecraft(alias));
         }
         if (enchantment == null) {
